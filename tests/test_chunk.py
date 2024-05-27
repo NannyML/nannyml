@@ -252,7 +252,7 @@ def test_size_based_chunker_returns_last_chunk_that_is_partially_filled(sample_c
     assert len(sut[-1]) == expected_last_chunk_size
 
 
-def test_size_based_chunker_works_when_data_set_is_multiple_of_chunk_size(sample_chunk_data):
+def test_size_based_chunker_works_when_data_set_is_multiple_of_chunk_size(sample_chunk_data):  # noqa: D103
     chunk_size = 1000
     data = sample_chunk_data.loc[0:19999, :]
     chunker = SizeBasedChunker(chunk_size)

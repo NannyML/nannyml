@@ -36,7 +36,7 @@ def multiclass_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noq
 
 
 @pytest.fixture(scope='module')
-def performance_calculator() -> PerformanceCalculator:
+def performance_calculator() -> PerformanceCalculator:  # noqa: D103
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred_proba={
@@ -52,7 +52,7 @@ def performance_calculator() -> PerformanceCalculator:
 
 
 @pytest.fixture(scope='module')
-def realized_performance_metrics(multiclass_data) -> pd.DataFrame:
+def realized_performance_metrics(multiclass_data) -> pd.DataFrame:  # noqa: D103
     performance_calculator = PerformanceCalculator(
         y_pred_proba={
             'prepaid_card': 'y_pred_proba_prepaid_card',
@@ -71,7 +71,7 @@ def realized_performance_metrics(multiclass_data) -> pd.DataFrame:
 
 
 @pytest.fixture(scope='module')
-def no_timestamp_metrics(performance_calculator, multiclass_data) -> pd.DataFrame:
+def no_timestamp_metrics(performance_calculator, multiclass_data) -> pd.DataFrame:  # noqa: D103
     performance_calculator.fit(multiclass_data[0])
     results = performance_calculator.calculate(
         multiclass_data[1].merge(multiclass_data[2], left_index=True, right_index=True)
@@ -133,7 +133,7 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         ('true_highstreet_card_pred_highstreet_card', [1457, 1536, 1451, 1450, 1488, 1322, 1346, 1397, 1353, 1354]),
     ],
 )
-def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
+def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):  # noqa: D103
     metric_values = realized_performance_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
@@ -158,7 +158,9 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
         ('true_highstreet_card_pred_highstreet_card', [1457, 1536, 1451, 1450, 1488, 1322, 1346, 1397, 1353, 1354]),
     ],
 )
-def test_metric_values_without_timestamps_are_calculated_correctly(no_timestamp_metrics, metric, expected):
+def test_metric_values_without_timestamps_are_calculated_correctly(  # noqa: D103
+    no_timestamp_metrics, metric, expected
+):
     metric_values = no_timestamp_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
@@ -174,7 +176,9 @@ def test_metric_values_without_timestamps_are_calculated_correctly(no_timestamp_
         MulticlassClassificationAccuracy,
     ],
 )
-def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls, multiclass_data):
+def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(  # noqa: D103
+    caplog, metric_cls, multiclass_data
+):
     reference = multiclass_data[0]
     metric = metric_cls(
         y_pred_proba={
@@ -205,7 +209,9 @@ def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
         MulticlassClassificationAccuracy,
     ],
 )
-def test_metric_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(caplog, metric_cls, multiclass_data):
+def test_metric_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(  # noqa: D103
+    caplog, metric_cls, multiclass_data
+):
     reference = multiclass_data[0]
     metric = metric_cls(
         y_pred_proba={

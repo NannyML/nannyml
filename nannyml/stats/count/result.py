@@ -36,6 +36,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
         timestamp_column_name: Optional[str],
         chunker: Chunker,
     ):
+        """Initialize result class."""
         super().__init__(results_data)
 
         self.timestamp_column_name = timestamp_column_name
@@ -43,6 +44,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
         self.chunker = chunker
 
     def keys(self) -> List[Key]:
+        """Get Keys."""
         return [
             Key(
                 properties=(self.simple_stats_metric,),
@@ -56,10 +58,7 @@ class Result(Abstract1DResult, ResultCompareMixin):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """
-
-        Parameters
-        ----------
+        """Plot results.
 
         Returns
         -------
@@ -83,7 +82,6 @@ class Result(Abstract1DResult, ResultCompareMixin):
         ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
 
         """
-
         return plot_metrics(
             self,
             title='Rows Count',

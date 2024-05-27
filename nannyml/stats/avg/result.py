@@ -19,7 +19,6 @@ from nannyml._typing import Key
 from nannyml.base import PerColumnResult
 from nannyml.chunk import Chunker
 
-# from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots.blueprints.comparisons import ResultCompareMixin
 from nannyml.plots.blueprints.metrics import plot_metrics
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -36,6 +35,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         timestamp_column_name: Optional[str],
         chunker: Chunker,
     ):
+        """Initalize results class."""
         super().__init__(results_data, column_names)
 
         self.timestamp_column_name = timestamp_column_name
@@ -43,6 +43,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         self.chunker = chunker
 
     def keys(self) -> List[Key]:
+        """Get Keys."""
         return [
             Key(
                 properties=(column_name,),
@@ -57,10 +58,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         *args,
         **kwargs,
     ) -> go.Figure:
-        """
-
-        Parameters
-        ----------
+        """Plot results.
 
         Returns
         -------
@@ -84,7 +82,6 @@ class Result(PerColumnResult, ResultCompareMixin):
         ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
 
         """
-
         return plot_metrics(
             self,
             title='Averaged Values ',

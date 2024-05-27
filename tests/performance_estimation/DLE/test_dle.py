@@ -2,6 +2,8 @@
 #
 #  License: Apache Software License 2.0
 
+"""Tests."""
+
 from copy import copy
 from typing import List, Optional, Tuple
 
@@ -18,18 +20,18 @@ from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
 
 
-class FakeEstimatorResult(Abstract1DResult):
+class FakeEstimatorResult(Abstract1DResult):  # noqa: D101
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
         return self
 
-    def keys(self) -> List[Key]:
+    def keys(self) -> List[Key]:  # noqa: D102
         return []
 
-    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:
+    def plot(self, *args, **kwargs) -> plotly.graph_objects.Figure:  # noqa: D102
         return plotly.graph_objects.Figure()
 
 
-class FakeEstimator(AbstractEstimator):
+class FakeEstimator(AbstractEstimator):  # noqa: D101
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs) -> Self:
         return self
 
@@ -38,19 +40,19 @@ class FakeEstimator(AbstractEstimator):
 
 
 @pytest.fixture(scope='module')
-def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
+def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame]:  # noqa: D103
     reference, analysis, _ = load_synthetic_car_price_dataset()
 
     return reference, analysis
 
 
 @pytest.fixture(scope='module')
-def regression_feature_columns(regression_data) -> List[str]:
+def regression_feature_columns(regression_data) -> List[str]:  # noqa: D103
     return [col for col in regression_data[0].columns if col not in ['y_pred', 'y_true', 'timestamp']]
 
 
 @pytest.fixture(scope='module')
-def direct_error_estimator(regression_feature_columns) -> DLE:
+def direct_error_estimator(regression_feature_columns) -> DLE:  # noqa: D103
     return DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -62,7 +64,7 @@ def direct_error_estimator(regression_feature_columns) -> DLE:
 
 
 @pytest.fixture(scope='module')
-def estimates(regression_data, direct_error_estimator):
+def estimates(regression_data, direct_error_estimator):  # noqa: D103
     reference, analysis = regression_data
 
     # Get rid of negative values for log based metrics
@@ -75,7 +77,7 @@ def estimates(regression_data, direct_error_estimator):
 
 
 @pytest.fixture(scope='module')
-def hypertuned_estimates(regression_data, direct_error_estimator: DLE):
+def hypertuned_estimates(regression_data, direct_error_estimator: DLE):  # noqa: D103
     direct_error_estimator.tune_hyperparameters = True
     direct_error_estimator.hyperparameter_tuning_config = {
         "time_budget": 3,  # total running time in seconds
@@ -100,7 +102,7 @@ def hypertuned_estimates(regression_data, direct_error_estimator: DLE):
 
 
 @pytest.fixture(scope='module')
-def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DLE):
+def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DLE):  # noqa: D103
     direct_error_estimator.hyperparameters = {
         'boosting_type': 'gbdt',
         'class_weight': None,
@@ -140,7 +142,9 @@ def custom_hyperparameter_estimates(regression_data, direct_error_estimator: DLE
     'metrics, expected',
     [('mae', ['mae']), (['mae', 'mape'], ['mae', 'mape']), (None, ['mae', 'mape', 'mse', 'rmse', 'msle', 'rmsle'])],
 )
-def test_dle_create_with_single_or_list_of_metrics(regression_feature_columns, metrics, expected):
+def test_dle_create_with_single_or_list_of_metrics(  # noqa: D103
+    regression_feature_columns, metrics, expected
+):
     sut = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -152,7 +156,9 @@ def test_dle_create_with_single_or_list_of_metrics(regression_feature_columns, m
     assert [metric.column_name for metric in sut.metrics] == expected
 
 
-def test_direct_error_estimator_does_not_tune_hyperparameters_by_default(regression_feature_columns):
+def test_direct_error_estimator_does_not_tune_hyperparameters_by_default(  # noqa: D103
+    regression_feature_columns
+):
     sut = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -164,7 +170,9 @@ def test_direct_error_estimator_does_not_tune_hyperparameters_by_default(regress
     assert not sut.tune_hyperparameters
 
 
-def test_direct_error_estimator_has_default_hyperparameter_tuning_config(regression_feature_columns):
+def test_direct_error_estimator_has_default_hyperparameter_tuning_config(  # noqa: D103
+    regression_feature_columns
+):
     sut = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -176,7 +184,9 @@ def test_direct_error_estimator_has_default_hyperparameter_tuning_config(regress
     assert sut.hyperparameter_tuning_config
 
 
-def test_direct_error_estimator_sets_custom_hyperparameter_tuning_config_when_given(regression_feature_columns):
+def test_direct_error_estimator_sets_custom_hyperparameter_tuning_config_when_given(  # noqa: D103
+    regression_feature_columns
+):
     sut = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -201,7 +211,9 @@ def test_direct_error_estimator_sets_custom_hyperparameter_tuning_config_when_gi
         ('rmsle', [0.30588, 0.30343, 0.31093, 0.44589, 0.44013, 0.43933]),
     ],
 )
-def test_direct_error_estimation_yields_correct_results_for_metric(estimates, metric, expected):
+def test_direct_error_estimation_yields_correct_results_for_metric(  # noqa: D103
+    estimates, metric, expected
+):
     sut = estimates.filter(period='analysis').to_df()
     all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
@@ -217,7 +229,7 @@ def test_direct_error_estimation_yields_correct_results_for_metric(estimates, me
         ('rmsle', [0.31401, 0.30202, 0.30642, 0.42822, 0.4468, 0.42381]),
     ],
 )
-def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertuning(
+def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertuning(  # noqa: D103
     hypertuned_estimates, metric, expected
 ):
     sut = hypertuned_estimates.filter(period='analysis').to_df()
@@ -235,20 +247,22 @@ def test_direct_error_estimation_yields_correct_results_for_metric_with_hypertun
         ('rmsle', [0.31401, 0.30202, 0.30642, 0.42822, 0.4468, 0.42381]),
     ],
 )
-def test_direct_error_estimation_yields_correct_results_for_metric_with_custom_hyperparameters(
+def test_direct_error_estimation_yields_correct_results_for_metric_with_custom_hyperparameters(  # noqa: D103
     custom_hyperparameter_estimates, metric, expected
 ):
     sut = custom_hyperparameter_estimates.filter(period='analysis').to_df()
     all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
-def test_result_plot_raises_invalid_args_exception_when_given_incorrect_kind(estimates):
+def test_result_plot_raises_invalid_args_exception_when_given_incorrect_kind(estimates):  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         _ = estimates.plot(kind='foo')
 
 
 # See https://github.com/NannyML/nannyml/issues/192
-def test_dle_returns_distinct_but_consistent_results_when_reused(regression_data, direct_error_estimator):
+def test_dle_returns_distinct_but_consistent_results_when_reused(  # noqa: D103
+    regression_data, direct_error_estimator
+):
     reference, analysis = regression_data
 
     # Get rid of negative values for log based metrics
@@ -266,13 +280,13 @@ def test_dle_returns_distinct_but_consistent_results_when_reused(regression_data
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_dle_result_filter_should_preserve_data_with_default_args(estimates):
+def test_dle_result_filter_should_preserve_data_with_default_args(estimates):  # noqa: D103
     filtered_result = estimates.filter()
     assert filtered_result.data.equals(estimates.data)
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_dle_result_filter_metrics(estimates):
+def test_dle_result_filter_metrics(estimates):  # noqa: D103
     filtered_result = estimates.filter(metrics=["mae"])
     columns = tuple(set(metric for (metric, _) in filtered_result.data.columns if metric != "chunk"))
     assert columns == ("mae",)
@@ -280,7 +294,7 @@ def test_dle_result_filter_metrics(estimates):
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_dle_result_filter_period(estimates):
+def test_dle_result_filter_period(estimates):  # noqa: D103
     ref_period = estimates.data.loc[estimates.data.loc[:, ("chunk", "period")] == "reference", :]
     filtered_result = estimates.filter(period="reference")
     assert filtered_result.data.equals(ref_period)
@@ -319,7 +333,7 @@ def test_dle_result_filter_period(estimates):
         },
     ],
 )
-def test_cbpe_with_custom_thresholds(custom_thresholds, regression_feature_columns):
+def test_cbpe_with_custom_thresholds(custom_thresholds, regression_feature_columns):  # noqa: D103
     est = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -335,7 +349,7 @@ def test_cbpe_with_custom_thresholds(custom_thresholds, regression_feature_colum
     assert sut == expected_thresholds
 
 
-def test_dle_with_default_thresholds(regression_feature_columns):
+def test_dle_with_default_thresholds(regression_feature_columns):  # noqa: D103
     est = DLE(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -350,7 +364,9 @@ def test_dle_with_default_thresholds(regression_feature_columns):
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
-def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_error_estimator, metric):
+def test_result_plot_with_string_metric_returns_plotly_figure(  # noqa: D103
+    estimates, direct_error_estimator, metric
+):
     _ = MetricFactory.create(
         key=metric,
         problem_type=ProblemType.REGRESSION,
@@ -369,7 +385,9 @@ def test_result_plot_with_string_metric_returns_plotly_figure(estimates, direct_
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
-def test_result_plot_with_metric_object_returns_plotly_figure(estimates, direct_error_estimator, metric):
+def test_result_plot_with_metric_object_returns_plotly_figure(  # noqa: D103
+    estimates, direct_error_estimator, metric
+):
     _metric = MetricFactory.create(
         key=metric,
         problem_type=ProblemType.REGRESSION,
@@ -388,7 +406,9 @@ def test_result_plot_with_metric_object_returns_plotly_figure(estimates, direct_
 
 
 @pytest.mark.parametrize('metric', ['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'])
-def test_result_plot_contains_reference_data_when_plot_reference_set_to_true(estimates, metric):
+def test_result_plot_contains_reference_data_when_plot_reference_set_to_true(  # noqa: D103
+    estimates, metric
+):
     sut = estimates.plot(metric=metric, plot_reference=True)
     assert len(sut.to_dict()['data'][2]['x']) > 0
     assert len(sut.to_dict()['data'][2]['y']) > 0
@@ -424,3 +444,21 @@ def test_binary_classification_result_plots_raise_no_exceptions(estimator_args, 
         _ = sut.plot(**plot_args)
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_input_dataframes_are_not_altered_by_calculator(regression_data):  # noqa: D103
+    reference, monitored = regression_data
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    estimator = DLE(
+        feature_column_names=[
+            col for col in reference2.columns if col not in ['y_true', 'y_pred', 'timestamp']
+        ],
+        y_true='y_true',
+        y_pred='y_pred',
+        metrics=['mae', 'mape', 'rmse'],
+    )
+    estimator.fit(reference2)
+    results = estimator.estimate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

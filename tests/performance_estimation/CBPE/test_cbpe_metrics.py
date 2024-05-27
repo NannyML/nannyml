@@ -1,3 +1,5 @@
+"""Tests."""
+
 import pandas as pd
 import pytest
 
@@ -2593,7 +2595,7 @@ from nannyml.thresholds import ConstantThreshold
         'default_with_timestamp_normalization_pred_business_norm_none',
     ],
 )
-def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expected):
+def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expected):  # noqa: D103
     ref_df, ana_df, _ = load_synthetic_binary_classification_dataset()
     cbpe = CBPE(
         y_pred_proba='y_pred_proba',
@@ -3375,7 +3377,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         'default_with_timestamp',
     ],
 )
-def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, expected):
+def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, expected):  # noqa: D103
     ref_df, ana_df, _ = load_synthetic_multiclass_classification_dataset()
     cbpe = CBPE(
         y_pred_proba={
@@ -3439,7 +3441,7 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
         BinaryClassificationConfusionMatrix,
     ],
 )
-def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls):
+def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls):  # noqa: D103, E501
     reference, _, _ = load_synthetic_binary_classification_dataset()
 
     # TODO: move this from CBPE to metrics

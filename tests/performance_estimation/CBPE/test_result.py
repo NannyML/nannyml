@@ -1,6 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Tests."""
+
 from typing import Tuple
 
 import numpy as np
@@ -57,7 +60,9 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
         ('business_value', ['business_value']),
     ],
 )
-def test_filter_on_metric_name_returns_only_matching_components(estimates: Result, metric, component_column_names):
+def test_filter_on_metric_name_returns_only_matching_components(  # noqa: D103
+    estimates: Result, metric, component_column_names
+):
     sut = estimates.filter(metrics=metric).to_df().columns
 
     for col in component_column_names:
@@ -79,7 +84,9 @@ def test_filter_on_metric_name_returns_only_matching_components(estimates: Resul
         ('business_value', ['business_value']),
     ],
 )
-def test_filter_on_metric_component_returns_only_matching_components(estimates: Result, metric, component_column_names):
+def test_filter_on_metric_component_returns_only_matching_components(  # noqa: D103
+    estimates: Result, metric, component_column_names
+):
     sut = estimates.filter(metrics=metric).to_df().columns
 
     for col in component_column_names:
@@ -95,7 +102,7 @@ def test_filter_on_metric_component_returns_only_matching_components(estimates: 
         (['business_value', 'true_positive'], ['business_value', 'true_positive']),
     ],
 )
-def test_filter_on_multiple_metric_component_returns_matching_components(
+def test_filter_on_multiple_metric_component_returns_matching_components(  # noqa: D103
     estimates: Result, metric, component_column_names
 ):
     sut = estimates.filter(metrics=metric).to_df().columns
@@ -104,7 +111,7 @@ def test_filter_on_multiple_metric_component_returns_matching_components(
         assert col in sut
 
 
-def test_filter_on_both_metric_and_component_names_returns_all_matching_components(estimates):
+def test_filter_on_both_metric_and_component_names_returns_all_matching_components(estimates):  # noqa: D103
     sut = estimates.filter(metrics=['confusion_matrix', 'true_positive', 'business_value']).to_df().columns
 
     assert 'false_positive' in sut
@@ -115,12 +122,12 @@ def test_filter_on_both_metric_and_component_names_returns_all_matching_componen
     assert 'business_value' in sut
 
 
-def test_filter_on_non_existing_metric_raises_invalid_arguments_exception(estimates):
+def test_filter_on_non_existing_metric_raises_invalid_arguments_exception(estimates):  # noqa: D103
     with pytest.raises(InvalidArgumentsException, match="invalid metric 'foo'"):
         _ = estimates.filter(metrics=['foo'])
 
 
-def test_filter_on_non_calculated_metric_raises_invalid_arguments_exception(binary_classification_data):
+def test_filter_on_non_calculated_metric_raises_invalid_arguments_exception(binary_classification_data):  # noqa: D103
     reference, analysis = binary_classification_data
     estimator = CBPE(  # type: ignore
         timestamp_column_name='timestamp',

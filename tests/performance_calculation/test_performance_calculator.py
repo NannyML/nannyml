@@ -35,7 +35,7 @@ def data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D103
 
 
 @pytest.fixture()
-def performance_calculator() -> PerformanceCalculator:
+def performance_calculator() -> PerformanceCalculator:  # noqa: D103
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred_proba='y_pred_proba',
@@ -47,7 +47,7 @@ def performance_calculator() -> PerformanceCalculator:
 
 
 @pytest.fixture(scope='module')
-def performance_result(data) -> Result:
+def performance_result(data) -> Result:  # noqa: D103
     calc = PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -95,7 +95,7 @@ def test_calculator_init_should_set_metrics(performance_calculator):  # noqa: D1
 
 
 @pytest.mark.parametrize('metrics, expected', [('roc_auc', ['roc_auc']), (['roc_auc', 'f1'], ['roc_auc', 'f1'])])
-def test_performance_calculator_create_with_single_or_list_of_metrics(metrics, expected):
+def test_performance_calculator_create_with_single_or_list_of_metrics(metrics, expected):  # noqa: D103
     calc = PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -114,7 +114,7 @@ def test_performance_calculator_create_with_single_or_list_of_metrics(metrics, e
         "regression",
     ],
 )
-def test_performance_calculator_create_raises_exception_when_y_pred_not_given_and_problem_type_not_binary_clf(
+def test_performance_calculator_create_raises_exception_when_y_pred_not_given_and_problem_type_not_binary_clf(  # noqa: D103, E501
     problem,
 ):
     with pytest.raises(InvalidArgumentsException, match=f"'y_pred' can not be 'None' for problem type {problem}"):
@@ -134,7 +134,9 @@ def test_performance_calculator_create_raises_exception_when_y_pred_not_given_an
         (['roc_auc', 'f1', 'average_precision', 'precision'], "['f1', 'precision']"),
     ],
 )
-def test_performance_calculator_create_without_y_pred_raises_exception_when_metrics_require_it(metric, expected):
+def test_performance_calculator_create_without_y_pred_raises_exception_when_metrics_require_it(  # noqa: D103
+    metric, expected
+):
     with pytest.raises(InvalidArgumentsException, match=expected):
         _ = PerformanceCalculator(
             timestamp_column_name='timestamp',
@@ -146,7 +148,7 @@ def test_performance_calculator_create_without_y_pred_raises_exception_when_metr
 
 
 @pytest.mark.parametrize('metric', ['roc_auc', 'average_precision'])
-def test_performance_calculator_create_without_y_pred_works_when_metrics_dont_require_it(metric):
+def test_performance_calculator_create_without_y_pred_works_when_metrics_dont_require_it(metric):  # noqa: D103
     try:
         _ = PerformanceCalculator(
             timestamp_column_name='timestamp',
@@ -302,7 +304,7 @@ def test_calculator_calculate_should_support_partial_bool_targets(data, performa
         },
     ],
 )
-def test_performance_calculator_with_custom_thresholds(custom_thresholds):
+def test_performance_calculator_with_custom_thresholds(custom_thresholds):  # noqa: D103
     calc = PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -318,7 +320,7 @@ def test_performance_calculator_with_custom_thresholds(custom_thresholds):
     assert sut == expected_thresholds
 
 
-def test_performance_calculator_with_default_thresholds():
+def test_performance_calculator_with_default_thresholds():  # noqa: D103
     calc = PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -333,7 +335,7 @@ def test_performance_calculator_with_default_thresholds():
 
 
 # See https://github.com/NannyML/nannyml/issues/192
-def test_calculator_returns_distinct_but_consistent_results_when_reused(data, performance_calculator):
+def test_calculator_returns_distinct_but_consistent_results_when_reused(data, performance_calculator):  # noqa: D103
     reference, analysis, target = data
 
     data = analysis.merge(target, on='id')
@@ -348,13 +350,13 @@ def test_calculator_returns_distinct_but_consistent_results_when_reused(data, pe
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_performance_calculator_result_filter_should_preserve_data_with_default_args(performance_result):
+def test_performance_calculator_result_filter_should_preserve_data_with_default_args(performance_result):  # noqa: D103
     filtered_result = performance_result.filter()
     assert filtered_result.data.equals(performance_result.data)
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_performance_calculator_result_filter_metrics(performance_result):
+def test_performance_calculator_result_filter_metrics(performance_result):  # noqa: D103
     filtered_result = performance_result.filter(metrics=['roc_auc'])
     columns = tuple(set(metric for (metric, _) in filtered_result.data.columns if metric != 'chunk'))
     assert columns == ('roc_auc',)
@@ -362,7 +364,7 @@ def test_performance_calculator_result_filter_metrics(performance_result):
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_performance_calculator_result_filter_period(performance_result):
+def test_performance_calculator_result_filter_period(performance_result):  # noqa: D103
     ref_period = performance_result.data.loc[performance_result.data.loc[:, ('chunk', 'period')] == 'reference', :]
     filtered_result = performance_result.filter(period='reference')
     assert filtered_result.data.equals(ref_period)
@@ -466,7 +468,7 @@ def test_binary_classification_result_plots_raise_no_exceptions(calc_args, plot_
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_binary_classification_calculate_without_prediction_column():
+def test_binary_classification_calculate_without_prediction_column():  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
     try:
         calc = PerformanceCalculator(
@@ -480,3 +482,63 @@ def test_binary_classification_calculate_without_prediction_column():
         _ = calc.calculate(analysis.merge(analysis_targets, on='id'))
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_input_dataframes_are_not_altered_by_bin_class_calculator(data):  # noqa: D103
+    reference, monitored, targets = data
+    reference2 = reference.copy(deep=True)
+    monitored = monitored.merge(targets, left_index=True, right_index=True)
+    monitored2 = monitored.copy(deep=True)
+    calc = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        y_true='work_home_actual',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_input_dataframes_are_not_altered_by_multiclass_calculator(data):  # noqa: D103
+    reference, monitored, targets = load_synthetic_multiclass_classification_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored = monitored.merge(targets, left_index=True, right_index=True)
+    monitored2 = monitored.copy(deep=True)
+    calc = PerformanceCalculator(
+        timestamp_column_name='timestamp',
+        y_pred='y_pred',
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card'
+        },
+        y_true='y_true',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_multiclass',
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_input_dataframes_are_not_altered_by_regression_calculator(data):  # noqa: D103
+    reference, monitored, targets = load_synthetic_car_price_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored = monitored.merge(targets, left_index=True, right_index=True)
+    monitored2 = monitored.copy(deep=True)
+    calc = PerformanceCalculator(
+        y_pred='y_pred',
+        y_true='y_true',
+        timestamp_column_name='timestamp',
+        problem_type='regression',
+        metrics=['mae', 'mape', 'mse', 'msle', 'rmse', 'rmsle'],
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

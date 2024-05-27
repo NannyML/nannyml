@@ -1,13 +1,16 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Tests."""
+
 import numpy as np
 from sklearn.preprocessing import LabelBinarizer
 
 import nannyml.sampling_error.multiclass_classification as mse
 
 
-def test_multiclass_auroc_sampling_error():
+def test_multiclass_auroc_sampling_error():  # noqa: D103
     np.random.seed(1)
     n_classes = 3
     chunk = [i for i in range(50)]
@@ -28,7 +31,7 @@ def test_multiclass_auroc_sampling_error():
     assert np.round(sampling_error, 4) == 0.0149
 
 
-def test_multiclass_auroc_sampling_error_with_mean_of_y_true_over_point_5():
+def test_multiclass_auroc_sampling_error_with_mean_of_y_true_over_point_5():  # noqa: D103
     np.random.seed(1)
     n_classes = 3
     chunk = [i for i in range(50)]
@@ -51,7 +54,7 @@ def test_multiclass_auroc_sampling_error_with_mean_of_y_true_over_point_5():
     assert np.round(sampling_error, 4) == 0.0237
 
 
-def test_multiclass_f1_sampling_error():
+def test_multiclass_f1_sampling_error():  # noqa: D103
     np.random.seed(1)
     n_classes = 3
     chunk = [i for i in range(50)]
@@ -72,7 +75,7 @@ def test_multiclass_f1_sampling_error():
     assert np.round(sampling_error, 4) == 0.0440
 
 
-def test_multiclass_precision_sampling_error():
+def test_multiclass_precision_sampling_error():  # noqa: D103
     np.random.seed(1)
     n_classes = 3
     chunk = [i for i in range(50)]
@@ -93,7 +96,7 @@ def test_multiclass_precision_sampling_error():
     assert np.round(sampling_error, 4) == 0.0668
 
 
-def test_multiclass_recall_sampling_error():
+def test_multiclass_recall_sampling_error():  # noqa: D103
     np.random.seed(1)
     n_classes = 3
     chunk = [i for i in range(50)]
@@ -114,7 +117,7 @@ def test_multiclass_recall_sampling_error():
     assert np.round(sampling_error, 4) == 0.0668
 
 
-def test_multiclass_specificity_sampling_error():
+def test_multiclass_specificity_sampling_error():  # noqa: D103
     np.random.seed(1)
     n_classes = 3
     chunk = [i for i in range(50)]
@@ -135,7 +138,7 @@ def test_multiclass_specificity_sampling_error():
     assert np.round(sampling_error, 4) == 0.0471
 
 
-def test_multiclass_accuracy_sampling_error():
+def test_multiclass_accuracy_sampling_error():  # noqa: D103
     np.random.seed(1)
     n_classes = 3
     chunk = [i for i in range(50)]

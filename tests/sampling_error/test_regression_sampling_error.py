@@ -2,13 +2,15 @@
 #
 #  License: Apache Software License 2.0
 
+"""Tests."""
+
 import numpy as np
 import pandas as pd
 
 import nannyml.sampling_error.regression as rse
 
 
-def test_mae_sampling_error():
+def test_mae_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -21,7 +23,7 @@ def test_mae_sampling_error():
     assert np.round(sampling_error, 4) == 0.0334
 
 
-def test_mape_sampling_error():
+def test_mape_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -34,7 +36,7 @@ def test_mape_sampling_error():
     assert np.round(sampling_error, 4) == 14.0368
 
 
-def test_mse_sampling_error():
+def test_mse_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -47,7 +49,7 @@ def test_mse_sampling_error():
     assert np.round(sampling_error, 4) == 0.028
 
 
-def test_msle_sampling_error():
+def test_msle_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -60,7 +62,7 @@ def test_msle_sampling_error():
     assert np.round(sampling_error, 4) == 0.0134
 
 
-def test_rmse_sampling_error():
+def test_rmse_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)
@@ -73,7 +75,7 @@ def test_rmse_sampling_error():
     assert np.round(sampling_error, 4) == 0.0346
 
 
-def test_rmsle_sampling_error():
+def test_rmsle_sampling_error():  # noqa: D103
     np.random.seed(1)
     sample_size = 50
     chunk = np.random.random(sample_size)

@@ -2,6 +2,8 @@
 #
 #  License: Apache Software License 2.0
 
+"""Tests."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -313,8 +315,8 @@ def test_output_drift_calculator_for_regression_problems():  # noqa: D103
         'default_with_timestamp',
     ],
 )
-def test_univariate_statistical_drift_calculator_for_regression_works_with_chunker(
-    calculator_opts, expected  # noqa: D103
+def test_univariate_statistical_drift_calculator_for_regression_works_with_chunker(  # noqa: D103
+    calculator_opts, expected
 ):
     reference, analysis, _ = load_synthetic_car_price_dataset()
     calc = UnivariateDriftCalculator(
@@ -537,8 +539,8 @@ def test_univariate_statistical_drift_calculator_for_regression_works_with_chunk
         'default_with_timestamp',
     ],
 )
-def test_univariate_statistical_drift_calculator_for_binary_classification_works_with_chunker(
-    calculator_opts, expected  # noqa: D103
+def test_univariate_statistical_drift_calculator_for_binary_classification_works_with_chunker(  # noqa: D103
+    calculator_opts, expected
 ):
     reference, analysis, _ = load_synthetic_binary_classification_dataset()
     reference['y_pred'] = reference['y_pred'].astype("category")
@@ -771,8 +773,8 @@ def test_univariate_statistical_drift_calculator_for_binary_classification_works
         'default_with_timestamp',
     ],
 )
-def test_univariate_statistical_drift_calculator_for_multiclass_classification_works_with_chunker(
-    calculator_opts, expected  # noqa: D103
+def test_univariate_statistical_drift_calculator_for_multiclass_classification_works_with_chunker(  # noqa: D103
+    calculator_opts, expected
 ):
     reference, analysis, _ = load_synthetic_multiclass_classification_dataset()
     calc = UnivariateDriftCalculator(

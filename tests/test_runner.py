@@ -1,6 +1,9 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+
+"""Tests."""
+
 import tempfile
 
 import pytest
@@ -19,7 +22,7 @@ from nannyml.runner import run
 
 @pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
-def test_runner_executes_for_binary_classification_without_exceptions(timestamp_column_name):
+def test_runner_executes_for_binary_classification_without_exceptions(timestamp_column_name):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
     analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
 
@@ -56,7 +59,7 @@ def test_runner_executes_for_binary_classification_without_exceptions(timestamp_
 
 @pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
-def test_runner_executes_for_multiclass_classification_without_exceptions(timestamp_column_name):
+def test_runner_executes_for_multiclass_classification_without_exceptions(timestamp_column_name):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
     analysis_with_targets = analysis.merge(analysis_targets, left_index=True, right_index=True)
 
@@ -97,7 +100,7 @@ def test_runner_executes_for_multiclass_classification_without_exceptions(timest
 
 @pytest.mark.slow
 @pytest.mark.parametrize('timestamp_column_name', [None, 'timestamp'], ids=['without_timestamp', 'with_timestamp'])
-def test_runner_executes_for_regression_without_exceptions(timestamp_column_name):
+def test_runner_executes_for_regression_without_exceptions(timestamp_column_name):  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
     analysis_with_targets = analysis.join(analysis_targets)
 
@@ -132,7 +135,7 @@ def test_runner_executes_for_regression_without_exceptions(timestamp_column_name
 
 
 @pytest.mark.slow
-def test_runner_executes_for_binary_classification_with_database_writer_without_exceptions():
+def test_runner_executes_for_binary_classification_with_database_writer_without_exceptions():  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_binary_classification_dataset()
     analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
 
@@ -168,7 +171,7 @@ def test_runner_executes_for_binary_classification_with_database_writer_without_
 
 
 @pytest.mark.slow
-def test_runner_executes_for_multiclass_classification_with_database_writer_without_exceptions():
+def test_runner_executes_for_multiclass_classification_with_database_writer_without_exceptions():  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_multiclass_classification_dataset()
     analysis_with_targets = analysis.merge(analysis_targets, left_index=True, right_index=True)
 
@@ -208,7 +211,7 @@ def test_runner_executes_for_multiclass_classification_with_database_writer_with
 
 
 @pytest.mark.slow
-def test_runner_executes_for_regression_with_database_writer_without_exceptions():
+def test_runner_executes_for_regression_with_database_writer_without_exceptions():  # noqa: D103
     reference, analysis, analysis_targets = load_synthetic_car_price_dataset()
     analysis_with_targets = analysis.join(analysis_targets)
 

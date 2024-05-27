@@ -24,7 +24,7 @@ def regression_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noq
 
 
 @pytest.fixture(scope='module')
-def performance_calculator() -> PerformanceCalculator:
+def performance_calculator() -> PerformanceCalculator:  # noqa: D103
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred='y_pred',
@@ -35,7 +35,7 @@ def performance_calculator() -> PerformanceCalculator:
 
 
 @pytest.fixture(scope='module')
-def realized_performance_metrics(performance_calculator, regression_data) -> pd.DataFrame:
+def realized_performance_metrics(performance_calculator, regression_data) -> pd.DataFrame:  # noqa: D103
     # Get rid of negative values for log based metrics
     reference = regression_data[0][~(regression_data[0]['y_pred'] < 0)]
     analysis = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
@@ -46,7 +46,7 @@ def realized_performance_metrics(performance_calculator, regression_data) -> pd.
 
 
 @pytest.fixture(scope='module')
-def no_timestamp_metrics(regression_data) -> pd.DataFrame:
+def no_timestamp_metrics(regression_data) -> pd.DataFrame:  # noqa: D103
     # Get rid of negative values for log based metrics
     reference = regression_data[0][~(regression_data[0]['y_pred'] < 0)]
     analysis = regression_data[1][~(regression_data[1]['y_pred'] < 0)]
@@ -137,7 +137,9 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         ('rmsle', [0.2655, 0.26456, 0.26399, 0.2682, 0.26924, 0.32396, 0.32375, 0.32303, 0.3236, 0.32539]),
     ],
 )
-def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
+def test_metric_values_are_calculated_correctly(  # noqa: D103
+    realized_performance_metrics, metric, expected
+):
     metric_values = realized_performance_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
@@ -184,13 +186,17 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
         ('rmsle', [0.2655, 0.26456, 0.26399, 0.2682, 0.26924, 0.32396, 0.32375, 0.32303, 0.3236, 0.32539]),
     ],
 )
-def test_metric_values_without_timestamps_are_calculated_correctly(no_timestamp_metrics, metric, expected):
+def test_metric_values_without_timestamps_are_calculated_correctly(  # noqa: D103
+    no_timestamp_metrics, metric, expected
+):
     metric_values = no_timestamp_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
 
 @pytest.mark.parametrize('metric_cls', [MAE, MAPE, MSE, MSLE, RMSE, RMSLE])
-def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls, regression_data):
+def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(  # noqa: D103
+    caplog, metric_cls, regression_data
+):
     reference = regression_data[0]
     metric = metric_cls(y_pred='y_pred', y_true='y_true', threshold=ConstantThreshold(lower=-1))
     metric.fit(reference, chunker=DefaultChunker())

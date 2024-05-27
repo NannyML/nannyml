@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Simple Statistics Sum Calculator"""
+"""Simple Statistics Sum Calculator."""
 
 from typing import Any, Dict, List, Optional, Union
 
@@ -14,7 +14,6 @@ from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_t
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
-from nannyml.stats.base import _add_alert_flag
 from nannyml.stats.sum.result import Result
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -117,20 +116,6 @@ class SummaryStatsSumCalculator(AbstractCalculator):
         for col in self.column_names:
             self._sampling_error_components[col] = reference_data[col].std()
 
-        for column in self.column_names:
-            reference_chunk_results = np.asarray(
-                [_calculate_sum_value_stats(chunk.data[column]) for chunk in self.chunker.split(reference_data)]
-            )
-            self._lower_alert_thresholds[column], self._upper_alert_thresholds[column] = calculate_threshold_values(
-                threshold=self.threshold,
-                data=reference_chunk_results,
-                lower_threshold_value_limit=self.lower_threshold_value_limit,
-                upper_threshold_value_limit=self.upper_threshold_value_limit,
-                logger=self._logger,
-                metric_name=self.simple_stats_metric,
-                override_using_none=True,
-            )
-
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
 
@@ -172,6 +157,8 @@ class SummaryStatsSumCalculator(AbstractCalculator):
         res = res.reset_index(drop=True)
 
         if self.result is None:
+            self._set_thresholds(results=res)
+            res = self._populate_thresholds(results=res)
             self.result = Result(
                 results_data=res,
                 column_names=self.column_names,
@@ -185,6 +172,7 @@ class SummaryStatsSumCalculator(AbstractCalculator):
             #       but this causes us to lose the "common behavior" in the top level 'filter' method when overriding.
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
             self.result = self.result.filter(period='reference')
+            res = self._populate_thresholds(results=res)
             self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
 
         return self.result
@@ -197,9 +185,6 @@ class SummaryStatsSumCalculator(AbstractCalculator):
             result['sampling_error'] = self._sampling_error_components[column_name] * np.sqrt(data.shape[0])
             result['upper_confidence_boundary'] = result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error']
             result['lower_confidence_boundary'] = result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error']
-            result['upper_threshold'] = self._upper_alert_thresholds[column_name]
-            result['lower_threshold'] = self._lower_alert_thresholds[column_name]
-            result['alert'] = _add_alert_flag(result)
         except Exception as exc:
             if self._logger:
                 self._logger.error(
@@ -209,11 +194,33 @@ class SummaryStatsSumCalculator(AbstractCalculator):
             result['sampling_error'] = np.NaN
             result['upper_confidence_boundary'] = np.NaN
             result['lower_confidence_boundary'] = np.NaN
-            result['upper_threshold'] = self._upper_alert_thresholds[column_name]
-            result['lower_threshold'] = self._lower_alert_thresholds[column_name]
-            result['alert'] = np.NaN
         finally:
             return result
+
+    def _set_thresholds(self, results: pd.DataFrame):
+        for column in self.column_names:
+            self._lower_alert_thresholds[column], self._upper_alert_thresholds[column] = calculate_threshold_values(
+                threshold=self.threshold,
+                data=results[(column, 'value')].to_numpy(),
+                lower_threshold_value_limit=self.lower_threshold_value_limit,
+                upper_threshold_value_limit=self.upper_threshold_value_limit,
+                override_using_none=True,
+                logger=self._logger,
+                metric_name=column,
+            )
+
+    def _populate_thresholds(self, results: pd.DataFrame):
+        for column in self.column_names:
+            results[(column, 'upper_threshold')] = self._upper_alert_thresholds[column]
+            results[(column, 'lower_threshold')] = self._lower_alert_thresholds[column]
+
+            lower_threshold = float('-inf') if self._lower_alert_thresholds[column] is None else self._lower_alert_thresholds[column]  # noqa: E501
+            upper_threshold = float('inf') if self._upper_alert_thresholds[column] is None else self._upper_alert_thresholds[column]  # noqa: E501
+            results[(column, 'alert')] = results.apply(
+                lambda row: not (lower_threshold < row[(column, 'value')] < upper_threshold),
+                axis=1,
+            )
+        return results
 
 
 def _create_multilevel_index(
@@ -229,9 +236,6 @@ def _create_multilevel_index(
             'sampling_error',
             'upper_confidence_boundary',
             'lower_confidence_boundary',
-            'upper_threshold',
-            'lower_threshold',
-            'alert',
         ]
     ]
     tuples = chunk_tuples + column_tuples

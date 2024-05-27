@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
 
-from nannyml.calibration import Calibrator, IsotonicCalibrator
+from nannyml.calibration import Calibrator, IsotonicCalibrator, NoopCalibrator
 from nannyml.datasets import (
     load_synthetic_binary_classification_dataset,
     load_synthetic_multiclass_classification_dataset,
@@ -52,7 +52,7 @@ def estimates(binary_classification_data) -> Result:  # noqa: D103
 
 
 @pytest.mark.parametrize('metrics, expected', [('roc_auc', ['roc_auc']), (['roc_auc', 'f1'], ['roc_auc', 'f1'])])
-def test_cbpe_create_with_single_or_list_of_metrics(metrics, expected):
+def test_cbpe_create_with_single_or_list_of_metrics(metrics, expected):  # noqa: D103
     sut = CBPE(
         timestamp_column_name='timestamp',
         y_true='work_home_actual',
@@ -71,7 +71,9 @@ def test_cbpe_create_with_single_or_list_of_metrics(metrics, expected):
         "regression",
     ],
 )
-def test_cbpe_create_raises_exception_when_y_pred_not_given_and_problem_type_not_binary_classification(problem):
+def test_cbpe_create_raises_exception_when_y_pred_not_given_and_problem_type_not_binary_classification(
+    problem,
+):  # noqa: D103, E501
     with pytest.raises(InvalidArgumentsException, match=f"'y_pred' can not be 'None' for problem type {problem}"):
         _ = CBPE(
             timestamp_column_name='timestamp',
@@ -89,7 +91,7 @@ def test_cbpe_create_raises_exception_when_y_pred_not_given_and_problem_type_not
         (['roc_auc', 'f1', 'average_precision', 'precision'], "['f1', 'precision']"),
     ],
 )
-def test_cbpe_create_without_y_pred_raises_exception_when_metrics_require_it(metric, expected):
+def test_cbpe_create_without_y_pred_raises_exception_when_metrics_require_it(metric, expected):  # noqa: D103
     with pytest.raises(InvalidArgumentsException, match=expected):
         _ = CBPE(
             timestamp_column_name='timestamp',
@@ -101,7 +103,7 @@ def test_cbpe_create_without_y_pred_raises_exception_when_metrics_require_it(met
 
 
 @pytest.mark.parametrize('metric', ['roc_auc', 'average_precision'])
-def test_cbpe_create_without_y_pred_works_when_metrics_dont_require_it(metric):
+def test_cbpe_create_without_y_pred_works_when_metrics_dont_require_it(metric):  # noqa: D103
     try:
         _ = CBPE(
             timestamp_column_name='timestamp',
@@ -402,7 +404,7 @@ def test_cbpe_for_binary_classification_does_not_fail_when_fitting_with_subset_o
         )
 
 
-def reduce_confidence_bounds(monkeypatch, estimator, results):
+def reduce_confidence_bounds(monkeypatch, estimator, results):  # noqa: D103
     min_confidence = results.data[('roc_auc', 'lower_confidence_boundary')].min()
     max_confidence = results.data[('roc_auc', 'upper_confidence_boundary')].max()
 
@@ -416,7 +418,7 @@ def reduce_confidence_bounds(monkeypatch, estimator, results):
     return estimator, new_lower_bound, new_upper_bound
 
 
-def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
+def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outside_appropriate_interval(  # noqa: D103, E501
     monkeypatch, binary_classification_data
 ):
     reference, analysis = binary_classification_data
@@ -438,7 +440,7 @@ def test_cbpe_for_binary_classification_does_not_output_confidence_bounds_outsid
     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
 
 
-def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_outside_appropriate_interval(
+def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_outside_appropriate_interval(  # noqa: D103, E501
     monkeypatch, multiclass_classification_data
 ):
     reference, analysis = multiclass_classification_data
@@ -463,19 +465,19 @@ def test_cbpe_for_multiclass_classification_does_not_output_confidence_bounds_ou
     assert all(sut.loc[:, ('roc_auc', 'upper_confidence_boundary')] <= new_upper_bound)
 
 
-def test_cpbe_result_filter_should_preserve_data_with_default_args(estimates):
+def test_cpbe_result_filter_should_preserve_data_with_default_args(estimates):  # noqa: D103
     filtered_result = estimates.filter()
     assert filtered_result.data.equals(estimates.data)
 
 
-def test_cpbe_result_filter_metrics(estimates):
+def test_cpbe_result_filter_metrics(estimates):  # noqa: D103
     filtered_result = estimates.filter(metrics=["roc_auc"])
     columns = tuple(set(metric for (metric, _) in filtered_result.data.columns if metric != "chunk"))
     assert columns == ("roc_auc",)
     assert filtered_result.data.shape[0] == estimates.data.shape[0]
 
 
-def test_cpbe_result_filter_period(estimates):
+def test_cpbe_result_filter_period(estimates):  # noqa: D103
     ref_period = estimates.data.loc[estimates.data.loc[:, ("chunk", "period")] == "reference", :]
     filtered_result = estimates.filter(period="reference")
     assert filtered_result.data.equals(ref_period)
@@ -492,7 +494,7 @@ def test_cpbe_result_filter_period(estimates):
         ('accuracy', 0.003746),
     ],
 )
-def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(
+def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(  # noqa: D103, E501
     binary_classification_data, metric, sampling_error
 ):
     reference, analysis = binary_classification_data
@@ -524,7 +526,7 @@ def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_
         ('accuracy', [0.003764, 0.002158, 0.002164, 0.002165, 0.083769]),
     ],
 )
-def test_cbpe_for_binary_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(
+def test_cbpe_for_binary_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(  # noqa: D103, E501
     binary_classification_data, metric, sampling_error
 ):
     reference, analysis = binary_classification_data
@@ -554,7 +556,7 @@ def test_cbpe_for_binary_classification_chunked_by_period_should_include_variabl
         ('accuracy', 0.005566),
     ],
 )
-def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(
+def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_constant_sampling_error_for_metric(  # noqa: D103, E501
     multiclass_classification_data, metric, sampling_error
 ):
     reference, analysis = multiclass_classification_data
@@ -590,7 +592,7 @@ def test_cbpe_for_multiclass_classification_chunked_by_size_should_include_const
         ('accuracy', [0.003582, 0.003515, 0.003560, 0.003477, 0.021039]),
     ],
 )
-def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(
+def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_variable_sampling_error_for_metric(  # noqa: D103, E501
     multiclass_classification_data, metric, sampling_error
 ):
     reference, analysis = multiclass_classification_data
@@ -614,7 +616,7 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
     assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
 
 
-def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classification_data):
+def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classification_data):  # noqa: D103
     reference, analysis = binary_classification_data
 
     sut = CBPE(
@@ -634,6 +636,37 @@ def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classif
     # modified on subsequent estimates.
     assert result1 is not result2
     pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
+
+
+def test_cbpe_returns_distinct_but_consistent_results_when_data_reused(binary_classification_data):  # noqa: D103
+    reference, analysis = binary_classification_data
+
+    sut = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+    )
+    sut.fit(reference)
+    result1 = sut.estimate(analysis)
+
+    sut = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+    )
+    sut.fit(reference)
+    result2 = sut.estimate(analysis)
+
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df().round(5), result2.to_df().round(5))
 
 
 @pytest.mark.parametrize(
@@ -676,7 +709,7 @@ def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classif
         },
     ],
 )
-def test_cbpe_with_custom_thresholds(custom_thresholds):
+def test_cbpe_with_custom_thresholds(custom_thresholds):  # noqa: D103
     est = CBPE(
         y_true='work_home_actual',
         y_pred='y_pred',
@@ -691,7 +724,7 @@ def test_cbpe_with_custom_thresholds(custom_thresholds):
     assert sut == expected_thresholds
 
 
-def test_cbpe_with_default_thresholds():
+def test_cbpe_with_default_thresholds():  # noqa: D103
     est = CBPE(
         y_true='work_home_actual',
         y_pred='y_pred',
@@ -704,7 +737,7 @@ def test_cbpe_with_default_thresholds():
     assert sut == DEFAULT_THRESHOLDS
 
 
-def test_cbpe_without_predictions():
+def test_cbpe_without_predictions():  # noqa: D103
     ref_df, ana_df, _ = load_synthetic_binary_classification_dataset()
     try:
         cbpe = CBPE(
@@ -724,7 +757,7 @@ def test_cbpe_without_predictions():
 
 
 @pytest.mark.filterwarnings("ignore:Too few unique values", "ignore:'y_true' contains a single class")
-def test_cbpe_fitting_does_not_generate_error_when_single_class_present():
+def test_cbpe_fitting_does_not_generate_error_when_single_class_present():  # noqa: D103
     ref_df = pd.DataFrame(
         {
             'y_true': [0] * 1000,
@@ -751,3 +784,65 @@ def test_cbpe_fitting_does_not_generate_error_when_single_class_present():
         business_value_matrix=[[1, -1], [-1, 1]],
     )
     sut.fit(ref_df)
+
+
+def test_cbpe_returns_distinct_but_consistent_results_when_reused_noopcal(binary_classification_data):  # noqa: D103
+    reference, analysis = binary_classification_data
+
+    sut = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc'],
+        problem_type='classification_binary',
+        calibrator=NoopCalibrator(),
+    )
+    sut.fit(reference)
+    result1 = sut.estimate(analysis)
+    result2 = sut.estimate(analysis)
+    assert result1 is not result2
+    pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
+
+
+def test_input_dataframes_are_not_altered_by_binary_calculator(binary_classification_data):  # noqa: D103
+    reference, monitored = binary_classification_data
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    estimator = CBPE(
+        # timestamp_column_name='timestamp',
+        chunk_size=50_000,
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['roc_auc', 'f1'],
+        problem_type='classification_binary',
+    )
+    estimator.fit(reference2)
+    results = estimator.estimate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_input_dataframes_are_not_altered_by_multiclass_calculator(multiclass_classification_data):  # noqa: D103
+    reference, monitored = multiclass_classification_data
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    estimator = CBPE(  # type: ignore
+        timestamp_column_name='timestamp',
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+        },
+        metrics=['roc_auc', 'f1'],
+        chunk_period='M',
+        problem_type='classification_multiclass',
+    )
+    estimator.fit(reference2)
+    results = estimator.estimate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

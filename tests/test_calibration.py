@@ -14,14 +14,14 @@ from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.fixture(autouse=True)
-def calibrator_factory():
+def calibrator_factory():  # noqa: D103
     # hack our way out of singleton side effects in tests.
     # we could replace this with a proper singleton pattern, but seems overkill for just tests?
     CalibratorFactory._registry = {'isotonic': IsotonicCalibrator}
 
 
-class DummyCalibrator(Mock):
-    def __init__(self, **kwargs):
+class DummyCalibrator(Mock):  # noqa: D101
+    def __init__(self, **kwargs):  # noqa: D107
         super().__init__()
         self.kwargs = kwargs
 
@@ -96,14 +96,14 @@ def test_needs_calibration_returns_false_when_roc_auc_score_equals_one():  # noq
     assert sut is False
 
 
-def test_calibrator_factory_has_isotonic_calibrator_by_default():
+def test_calibrator_factory_has_isotonic_calibrator_by_default():  # noqa: D103
     sut = CalibratorFactory._registry
     assert len(sut) == 1
     assert 'isotonic' in sut
     assert sut['isotonic'] == IsotonicCalibrator
 
 
-def test_register_new_calibrator():
+def test_register_new_calibrator():  # noqa: D103
     CalibratorFactory.register_calibrator("dummy", DummyCalibrator)
 
     sut = CalibratorFactory._registry
@@ -112,7 +112,7 @@ def test_register_new_calibrator():
     assert sut["dummy"] == DummyCalibrator
 
 
-def test_calibrator_factory_emits_warning_on_overwrite():
+def test_calibrator_factory_emits_warning_on_overwrite():  # noqa: D103
     CalibratorFactory.register(key='dummy')(DummyCalibrator)
 
     with pytest.warns(UserWarning) as record:
@@ -123,7 +123,7 @@ def test_calibrator_factory_emits_warning_on_overwrite():
     assert "re-registering calibrator with key 'dummy'" in str(record[0].message)
 
 
-def test_calibrator_factory_overwrites_existing_entries():
+def test_calibrator_factory_overwrites_existing_entries():  # noqa: D103
     CalibratorFactory.register(key='isotonic')(DummyCalibrator)
 
     sut = CalibratorFactory._registry
@@ -133,24 +133,24 @@ def test_calibrator_factory_overwrites_existing_entries():
     assert sut['isotonic'] == DummyCalibrator
 
 
-def test_calibrator_factory_create_existing_calibrator():
+def test_calibrator_factory_create_existing_calibrator():  # noqa: D103
     CalibratorFactory.register(key='dummy')(DummyCalibrator)
 
     sut = CalibratorFactory.create('dummy')
     assert isinstance(sut, DummyCalibrator)
 
 
-def test_calibrator_factory_create_nonexistent_calibrator():
+def test_calibrator_factory_create_nonexistent_calibrator():  # noqa: D103
     with pytest.raises(InvalidArgumentsException):
         CalibratorFactory.create("nonexistent")
 
 
-def test_calibrator_factory_create_default_calibrator():
+def test_calibrator_factory_create_default_calibrator():  # noqa: D103
     sut = CalibratorFactory.create()
     assert isinstance(sut, IsotonicCalibrator)
 
 
-def test_calibrator_factory_passes_keyword_args_to_calibrator_constructor():
+def test_calibrator_factory_passes_keyword_args_to_calibrator_constructor():  # noqa: D103
     CalibratorFactory.register(key='dummy')(DummyCalibrator)
 
     calibrator = CalibratorFactory.create('dummy', foo='bar', baz=1)

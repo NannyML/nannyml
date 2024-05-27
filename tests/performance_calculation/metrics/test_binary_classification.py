@@ -3,6 +3,7 @@
 #  License: Apache Software License 2.0
 
 """Unit tests for performance metrics."""
+
 from typing import Optional, Tuple
 
 import numpy as np
@@ -37,7 +38,7 @@ def binary_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:  # noqa: D
     return ref_df, ana_df, tgt_df
 
 
-def performance_calculator(timestamp_column_name: Optional[str] = 'timestamp') -> PerformanceCalculator:
+def performance_calculator(timestamp_column_name: Optional[str] = 'timestamp') -> PerformanceCalculator:  # noqa: D103
     return PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred_proba='y_pred_proba',
@@ -60,14 +61,14 @@ def performance_calculator(timestamp_column_name: Optional[str] = 'timestamp') -
 
 
 @pytest.fixture(scope='module')
-def realized_performance_metrics(binary_data) -> pd.DataFrame:
+def realized_performance_metrics(binary_data) -> pd.DataFrame:  # noqa: D103
     calculator = performance_calculator().fit(binary_data[0])
     results = calculator.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='analysis')
     return results.data
 
 
 @pytest.fixture(scope='module')
-def realized_performance_alt_cm_pred(binary_data) -> pd.DataFrame:
+def realized_performance_alt_cm_pred(binary_data) -> pd.DataFrame:  # noqa: D103
     calculator = PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred_proba='y_pred_proba',
@@ -87,7 +88,7 @@ def realized_performance_alt_cm_pred(binary_data) -> pd.DataFrame:
 
 
 @pytest.fixture(scope='module')
-def realized_performance_alt_cm_true(binary_data) -> pd.DataFrame:
+def realized_performance_alt_cm_true(binary_data) -> pd.DataFrame:  # noqa: D103
     calculator = PerformanceCalculator(
         timestamp_column_name='timestamp',
         y_pred_proba='y_pred_proba',
@@ -106,14 +107,14 @@ def realized_performance_alt_cm_true(binary_data) -> pd.DataFrame:
 
 
 @pytest.fixture(scope='module')
-def no_timestamp_metrics(binary_data):
+def no_timestamp_metrics(binary_data):  # noqa: D103
     calc = performance_calculator(timestamp_column_name=None).fit(binary_data[0])
     results = calc.calculate(binary_data[1].merge(binary_data[2], on='id')).filter(period='analysis')
     return results.data
 
 
 @pytest.fixture(scope='module')
-def partial_target_metrics(binary_data):
+def partial_target_metrics(binary_data):  # noqa: D103
     partial_targets = binary_data[2][: len(binary_data[2]) // 2]
     analysis_data = binary_data[1].merge(partial_targets, on='id', how='left')
 
@@ -183,7 +184,7 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         ('false_negative', [309, 294, 271, 321, 290, 474, 484, 503, 448, 502]),
     ],
 )
-def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):
+def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):  # noqa: D103
     metric_values = realized_performance_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
@@ -212,7 +213,9 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
         ('false_negative', [0.11678, 0.10652, 0.09776, 0.11597, 0.10745, 0.16521, 0.16870, 0.17375, 0.15583, 0.17814]),
     ],
 )
-def test_alt_cm_pred_values_are_calculated_correctly(realized_performance_alt_cm_pred, metric, expected):
+def test_alt_cm_pred_values_are_calculated_correctly(  # noqa: D103
+    realized_performance_alt_cm_pred, metric, expected
+):
     metric_values = realized_performance_alt_cm_pred.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
@@ -226,7 +229,9 @@ def test_alt_cm_pred_values_are_calculated_correctly(realized_performance_alt_cm
         ('false_negative', [0.11949, 0.11961, 0.11157, 0.12933, 0.11540, 0.18983, 0.19168, 0.20096, 0.18050, 0.19617]),
     ],
 )
-def test_alt_cm_true_values_are_calculated_correctly(realized_performance_alt_cm_true, metric, expected):
+def test_alt_cm_true_values_are_calculated_correctly(  # noqa: D103
+    realized_performance_alt_cm_true, metric, expected
+):
     metric_values = realized_performance_alt_cm_true.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
@@ -247,7 +252,9 @@ def test_alt_cm_true_values_are_calculated_correctly(realized_performance_alt_cm
         ('false_negative', [309, 294, 271, 321, 290, 474, 484, 503, 448, 502]),
     ],
 )
-def test_metric_values_without_timestamp_are_calculated_correctly(no_timestamp_metrics, metric, expected):
+def test_metric_values_without_timestamp_are_calculated_correctly(  # noqa: D103
+    no_timestamp_metrics, metric, expected
+):
     metric_values = no_timestamp_metrics.loc[:, (metric, 'value')]
     assert (round(metric_values, 5) == expected).all()
 
@@ -268,7 +275,9 @@ def test_metric_values_without_timestamp_are_calculated_correctly(no_timestamp_m
         ('false_negative', [309, 294, 271, 321, 290, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
     ],
 )
-def test_metric_values_with_partial_targets_are_calculated_correctly(partial_target_metrics, metric, expected):
+def test_metric_values_with_partial_targets_are_calculated_correctly(  # noqa: D103
+    partial_target_metrics, metric, expected
+):
     metric_values = partial_target_metrics.loc[:, (metric, 'value')]
     assert np.array_equal(round(metric_values, 5), expected, equal_nan=True)
 
@@ -284,7 +293,9 @@ def test_metric_values_with_partial_targets_are_calculated_correctly(partial_tar
         BinaryClassificationAccuracy,
     ],
 )
-def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, metric_cls, binary_data):
+def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(  # noqa: D103
+    caplog, metric_cls, binary_data
+):
     reference = binary_data[0]
     metric = metric_cls(
         y_pred_proba='y_pred_proba', y_pred='y_pred', y_true='work_home_actual', threshold=ConstantThreshold(lower=-1)
@@ -308,7 +319,9 @@ def test_metric_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
         BinaryClassificationAccuracy,
     ],
 )
-def test_metric_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(caplog, metric_cls, binary_data):
+def test_metric_logs_warning_when_upper_threshold_is_overridden_by_metric_limits(  # noqa: D103
+    caplog, metric_cls, binary_data
+):
     reference = binary_data[0]
     metric = metric_cls(
         y_pred_proba='y_pred_proba', y_pred='y_pred', y_true='work_home_actual', threshold=ConstantThreshold(upper=2)

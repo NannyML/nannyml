@@ -1,6 +1,7 @@
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
 #
 #  License: Apache Software License 2.0
+"""Test comparison plots."""
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
@@ -18,12 +19,12 @@ from nannyml.performance_estimation.confidence_based import Result as CBPEResult
 
 
 @pytest.fixture(scope='module')
-def chunker() -> Chunker:
+def chunker() -> Chunker:  # noqa: D103
     return SizeBasedChunker(chunk_size=5000)
 
 
 @pytest.fixture(scope='module')
-def data_reconstruction_results(chunker) -> DataReconstructionResult:
+def data_reconstruction_results(chunker) -> DataReconstructionResult:  # noqa: D103
     ref, ana, _ = load_synthetic_binary_classification_dataset()
     column_names = [col for col in ref.columns if col not in ['identifier', 'work_home_actual', 'timestamp']]
     calc = DataReconstructionDriftCalculator(column_names=column_names, chunker=chunker).fit(ref)
@@ -33,7 +34,7 @@ def data_reconstruction_results(chunker) -> DataReconstructionResult:
 
 
 @pytest.fixture(scope='module')
-def univariate_drift_results(chunker) -> UnivariateDriftResult:
+def univariate_drift_results(chunker) -> UnivariateDriftResult:  # noqa: D103
     ref, ana, _ = load_synthetic_binary_classification_dataset()
     column_names = [col for col in ref.columns if col not in ['identifier', 'work_home_actual', 'timestamp']]
     calc = UnivariateDriftCalculator(column_names=column_names, chunker=chunker).fit(ref)
@@ -43,7 +44,7 @@ def univariate_drift_results(chunker) -> UnivariateDriftResult:
 
 
 @pytest.fixture(scope='module')
-def realized_performance_results(chunker) -> RealizedPerformanceResult:
+def realized_performance_results(chunker) -> RealizedPerformanceResult:  # noqa: D103
     ref, ana, tgt = load_synthetic_binary_classification_dataset()
     calc = PerformanceCalculator(
         metrics=['f1'],
@@ -59,7 +60,7 @@ def realized_performance_results(chunker) -> RealizedPerformanceResult:
 
 
 @pytest.fixture(scope='module')
-def cbpe_results(chunker) -> CBPEResult:
+def cbpe_results(chunker) -> CBPEResult:  # noqa: D103
     ref, ana, tgt = load_synthetic_binary_classification_dataset()
     est = CBPE(
         metrics=['f1'],
@@ -91,14 +92,14 @@ def cbpe_results(chunker) -> CBPEResult:
         (lazy_fixture('cbpe_results'), lazy_fixture('realized_performance_results')),
     ],
 )
-def test_comparison_plot_raises_no_exceptions(result_1, result_2):
+def test_comparison_plot_raises_no_exceptions(result_1, result_2):  # noqa: D103
     try:
         _ = result_1.compare(result_2).plot().show()
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_comparison_plot_comparing_multiple_metrics_raises_invalid_arguments_exception(chunker, cbpe_results):
+def test_comparison_plot_comparing_multiple_metrics_raises_invalid_arguments_exception(chunker, cbpe_results):  # noqa: D103, E501
     ref, ana, tgt = load_synthetic_binary_classification_dataset()
     calc = PerformanceCalculator(
         metrics=['f1', 'roc_auc'],

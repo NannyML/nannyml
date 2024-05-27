@@ -154,7 +154,7 @@ class NoopCalibrator(Calibrator):
 
     def fit(self, y_pred_proba: np.ndarray, y_true: np.ndarray, *args, **kwargs):
         """Fit nothing and just return the calibrator."""
-        return self
+        pass
 
     def calibrate(self, y_pred_proba: np.ndarray, *args, **kwargs):
         """Calibrate nothing and just return the original ``y_pred_proba`` inputs."""

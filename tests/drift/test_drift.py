@@ -15,10 +15,12 @@ from nannyml._typing import Key, Result, Self
 from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from nannyml.drift.multivariate.domain_classifier import DomainClassifierCalculator
 from nannyml.drift.univariate.calculator import DEFAULT_THRESHOLDS, UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
+from nannyml.datasets import load_synthetic_car_loan_dataset
 
 
 @pytest.fixture(scope="module")
@@ -120,7 +122,7 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
 
 
 @pytest.fixture(scope="module")
-def univariate_drift_result(sample_drift_data) -> Result:
+def univariate_drift_result(sample_drift_data) -> Result:  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
@@ -138,7 +140,7 @@ class SimpleDriftResult(Abstract1DResult):
         """Fake plot."""
         return plotly.graph_objects.Figure()
 
-    def keys(self) -> List[Key]:
+    def keys(self) -> List[Key]:  # noqa: D102
         return []
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
@@ -181,7 +183,9 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(sa
 
 
 @pytest.mark.parametrize('column_names, expected', [('f1', ['f1']), (['f1', 'f2'], ['f1', 'f2'])])
-def test_univariate_drift_calculator_create_with_single_or_list_of_column_names(column_names, expected):
+def test_univariate_drift_calculator_create_with_single_or_list_of_column_names(  # noqa: D103
+    column_names, expected
+):
     calc = UnivariateDriftCalculator(
         column_names=column_names,
         timestamp_column_name='timestamp',
@@ -199,7 +203,9 @@ def test_univariate_drift_calculator_create_with_single_or_list_of_column_names(
         (None, ['jensen_shannon']),
     ],
 )
-def test_univariate_drift_calculator_create_with_single_or_list_of_continuous_methods(continuous_methods, expected):
+def test_univariate_drift_calculator_create_with_single_or_list_of_continuous_methods(  # noqa: D103
+    continuous_methods, expected
+):
     calc = UnivariateDriftCalculator(
         column_names=['f1'],
         timestamp_column_name='timestamp',
@@ -213,7 +219,9 @@ def test_univariate_drift_calculator_create_with_single_or_list_of_continuous_me
     'categorical_methods, expected',
     [('chi2', ['chi2']), (['chi2', 'jensen_shannon'], ['chi2', 'jensen_shannon']), (None, ['jensen_shannon'])],
 )
-def test_univariate_drift_calculator_create_with_single_or_list_of_categorical_methods(categorical_methods, expected):
+def test_univariate_drift_calculator_create_with_single_or_list_of_categorical_methods(  # noqa: D103
+    categorical_methods, expected
+):
     calc = UnivariateDriftCalculator(
         column_names=['f1'],
         timestamp_column_name='timestamp',
@@ -226,7 +234,9 @@ def test_univariate_drift_calculator_create_with_single_or_list_of_categorical_m
 @pytest.mark.parametrize(
     'treat_as_categorical, expected', [('first', ['first']), (['first', 'second'], ['first', 'second']), (None, [])]
 )
-def test_univariate_drift_calculator_create_with_treat_as_categorical_columns(treat_as_categorical, expected):
+def test_univariate_drift_calculator_create_with_treat_as_categorical_columns(  # noqa: D103
+    treat_as_categorical, expected
+):
     calc = UnivariateDriftCalculator(
         column_names=['first', 'second', 'third'],
         treat_as_categorical=treat_as_categorical,
@@ -239,7 +249,7 @@ def test_univariate_drift_calculator_create_with_treat_as_categorical_columns(tr
     assert sut == expected
 
 
-def test_univariate_drift_calculator_treat_as_categorical_for_continuous_column(sample_drift_data):
+def test_univariate_drift_calculator_treat_as_categorical_for_continuous_column(sample_drift_data):  # noqa: D103
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
         treat_as_categorical='f1',
@@ -254,7 +264,9 @@ def test_univariate_drift_calculator_treat_as_categorical_for_continuous_column(
     assert sorted(calc.categorical_column_names) == expected_categorical
 
 
-def test_univariate_drift_calculator_treat_as_categorical_for_categorical_column(sample_drift_data):
+def test_univariate_drift_calculator_treat_as_categorical_for_categorical_column(  # noqa: D103
+    sample_drift_data
+):
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
         treat_as_categorical='f3',
@@ -269,7 +281,9 @@ def test_univariate_drift_calculator_treat_as_categorical_for_categorical_column
     assert sorted(calc.categorical_column_names) == expected_categorical
 
 
-def test_univariate_drift_calculator_treat_as_categorical_for_non_existing_column(sample_drift_data, caplog):
+def test_univariate_drift_calculator_treat_as_categorical_for_non_existing_column(  # noqa: D103
+    sample_drift_data, caplog
+):
     caplog.set_level(logging.INFO)
 
     calc = UnivariateDriftCalculator(
@@ -288,7 +302,7 @@ def test_univariate_drift_calculator_treat_as_categorical_for_non_existing_colum
     assert "ignoring 'treat_as_categorical' value 'foo' because it was not in listed column names" in caplog.messages
 
 
-def test_univariate_drift_calculator_without_custom_thresholds():
+def test_univariate_drift_calculator_without_custom_thresholds():  # noqa: D103
     sut = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
         treat_as_categorical='foo',
@@ -325,7 +339,7 @@ def test_univariate_drift_calculator_without_custom_thresholds():
         },
     ],
 )
-def test_univariate_drift_calculator_with_custom_thresholds(custom_thresholds):
+def test_univariate_drift_calculator_with_custom_thresholds(custom_thresholds):  # noqa: D103
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
         treat_as_categorical='foo',
@@ -341,7 +355,7 @@ def test_univariate_drift_calculator_with_custom_thresholds(custom_thresholds):
     assert sut == expected_thresholds
 
 
-def test_univariate_drift_calculator_ignores_chi2_custom_threshold(caplog, recwarn):
+def test_univariate_drift_calculator_ignores_chi2_custom_threshold(caplog, recwarn):  # noqa: D103
     caplog.set_level(logging.WARN)
 
     _ = UnivariateDriftCalculator(
@@ -518,8 +532,8 @@ def test_statistical_drift_calculator_deals_with_missing_class_labels(sample_dri
         'default_with_timestamp',
     ],
 )
-def test_univariate_statistical_drift_calculator_works_with_chunker(
-    sample_drift_data, calculator_opts, expected  # noqa: D103
+def test_univariate_statistical_drift_calculator_works_with_chunker(  # noqa: D103
+    sample_drift_data, calculator_opts, expected
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     calc = UnivariateDriftCalculator(
@@ -586,7 +600,9 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
 
 
 # See https://github.com/NannyML/nannyml/issues/192
-def test_univariate_drift_calculator_returns_distinct_but_consistent_results_when_reused(sample_drift_data):
+def test_univariate_drift_calculator_returns_distinct_but_consistent_results_when_reused(  # noqa: D103
+    sample_drift_data
+):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     sut = UnivariateDriftCalculator(
         column_names=['f1', 'f3'],
@@ -603,7 +619,7 @@ def test_univariate_drift_calculator_returns_distinct_but_consistent_results_whe
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_univariate_drift_result_extension_attributes_should_be_in_place(univariate_drift_result):
+def test_univariate_drift_result_extension_attributes_should_be_in_place(univariate_drift_result):  # noqa: D103
     # Data model is set up so f1, f2 are continuous and f3, f4 are categorical
     assert univariate_drift_result.continuous_column_names == ['f1', 'f2']
     assert univariate_drift_result.categorical_column_names == ['f3', 'f4']
@@ -621,7 +637,7 @@ def test_univariate_drift_result_extension_attributes_should_be_in_place(univari
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_univariate_drift_result_filter_should_preserve_data_with_default_args(univariate_drift_result):
+def test_univariate_drift_result_filter_should_preserve_data_with_default_args(univariate_drift_result):  # noqa: D103
     filtered_result = univariate_drift_result.filter()
     pd.testing.assert_frame_equal(filtered_result.data, univariate_drift_result.data, check_like=True)
     assert filtered_result.continuous_column_names == univariate_drift_result.continuous_column_names
@@ -634,7 +650,7 @@ def test_univariate_drift_result_filter_should_preserve_data_with_default_args(u
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_unvariate_drift_result_filter_metrics(univariate_drift_result):
+def test_unvariate_drift_result_filter_metrics(univariate_drift_result):  # noqa: D103
     filtered_result = univariate_drift_result.filter(methods=['chi2'])
     metrics = tuple(set(metric for (_, metric, _) in filtered_result.data.columns if metric != 'chunk'))
     assert metrics == ('chi2',)
@@ -650,7 +666,7 @@ def test_unvariate_drift_result_filter_metrics(univariate_drift_result):
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_unvariate_drift_result_filter_column_names(univariate_drift_result):
+def test_unvariate_drift_result_filter_column_names(univariate_drift_result):  # noqa: D103
     filtered_result = univariate_drift_result.filter(column_names=['f1', 'f2'])
     columns = tuple(sorted(set(column for (column, _, _) in filtered_result.data.columns if column != 'chunk')))
     assert columns == ('f1', 'f2')
@@ -666,7 +682,7 @@ def test_unvariate_drift_result_filter_column_names(univariate_drift_result):
 
 
 # See https://github.com/NannyML/nannyml/issues/197
-def test_univariate_drift_result_filter_period(univariate_drift_result):
+def test_univariate_drift_result_filter_period(univariate_drift_result):  # noqa: D103
     filtered_result = univariate_drift_result.filter(period='reference')
     ref_period = univariate_drift_result.data.loc[
         univariate_drift_result.data.loc[:, ('chunk', 'chunk', 'period')] == 'reference', :
@@ -762,7 +778,7 @@ def test_calculator_with_diff_methods_raise_no_exceptions(sample_drift_data, con
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_repeat_calculation_results_return_only_latest_calculation_results(sample_drift_data):
+def test_repeat_calculation_results_return_only_latest_calculation_results(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
@@ -794,7 +810,7 @@ def test_repeat_calculation_results_return_only_latest_calculation_results(sampl
     assert res2.data.loc[0, ('chunk', 'chunk', 'end_date')] == analysis_chunks[2].end_datetime
 
 
-def test_result_comparison_to_multivariate_drift_plots_raise_no_exceptions(sample_drift_data):
+def test_result_comparison_to_multivariate_drift_plots_raise_no_exceptions(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
@@ -815,7 +831,7 @@ def test_result_comparison_to_multivariate_drift_plots_raise_no_exceptions(sampl
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
 
-def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
+def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):  # noqa: D103
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     ana_data = sample_drift_data.loc[sample_drift_data['period'] == 'analysis']
 
@@ -841,3 +857,76 @@ def test_result_comparison_to_cbpe_plots_raise_no_exceptions(sample_drift_data):
         _ = result.compare(result2).plot()
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
+
+
+def test_input_dataframes_are_not_altered_by_univ_calculator():  # noqa: D103
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    feature_column_names = [
+        'car_value',
+        'salary_range',
+        'debt_to_income_ratio',
+        'loan_length',
+        'repaid_loan_on_prev_car',
+        'size_of_downpayment',
+        'driver_tenure'
+    ]
+    calc = UnivariateDriftCalculator(
+        column_names=feature_column_names,
+        treat_as_categorical=['y_pred'],
+        timestamp_column_name='timestamp',
+        continuous_methods=['kolmogorov_smirnov', 'jensen_shannon', 'wasserstein', 'hellinger'],
+        categorical_methods=['chi2', 'jensen_shannon', 'l_infinity', 'hellinger'],
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_input_dataframes_are_not_altered_by_dre_calculator():  # noqa: D103
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    feature_column_names = [
+        'car_value',
+        'salary_range',
+        'debt_to_income_ratio',
+        'loan_length',
+        'repaid_loan_on_prev_car',
+        'size_of_downpayment',
+        'driver_tenure'
+    ]
+    calc = DataReconstructionDriftCalculator(
+        column_names=feature_column_names,
+        timestamp_column_name='timestamp',
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)
+
+
+def test_input_dataframes_are_not_altered_by_dc_calculator():  # noqa: D103
+    reference, monitored, _ = load_synthetic_car_loan_dataset()
+    reference2 = reference.copy(deep=True)
+    monitored2 = monitored.copy(deep=True)
+    feature_column_names = [
+        'car_value',
+        'salary_range',
+        'debt_to_income_ratio',
+        'loan_length',
+        'repaid_loan_on_prev_car',
+        'size_of_downpayment',
+        'driver_tenure'
+    ]
+    calc = DomainClassifierCalculator(
+        feature_column_names=feature_column_names,
+        timestamp_column_name='timestamp',
+        chunk_number=1
+    )
+    calc.fit(reference2)
+    results = calc.calculate(monitored2)  # noqa: F841
+    pd.testing.assert_frame_equal(monitored, monitored2)
+    pd.testing.assert_frame_equal(reference, reference2)

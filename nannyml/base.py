@@ -367,7 +367,6 @@ class AbstractCalculator(ABC):
         """Performs a calculation on the provided data."""
         try:
             self._logger.debug(f"calculating {str(self)}")
-            data = data.copy()
             return self._calculate(data, *args, **kwargs)
         except NannyMLException:
             raise
@@ -496,7 +495,6 @@ class AbstractEstimator(ABC):
         """Trains the calculator using reference data."""
         try:
             self._logger.info(f"fitting {str(self)}")
-            reference_data = reference_data.copy()
             return self._fit(reference_data, *args, **kwargs)
         except NannyMLException:
             raise
@@ -507,7 +505,6 @@ class AbstractEstimator(ABC):
         """Performs a calculation on the provided data."""
         try:
             self._logger.info(f"estimating {str(self)}")
-            data = data.copy()
             return self._estimate(data, *args, **kwargs)
         except NannyMLException:
             raise
