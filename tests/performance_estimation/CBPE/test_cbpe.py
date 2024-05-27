@@ -71,7 +71,9 @@ def test_cbpe_create_with_single_or_list_of_metrics(metrics, expected):  # noqa:
         "regression",
     ],
 )
-def test_cbpe_create_raises_exception_when_y_pred_not_given_and_problem_type_not_binary_classification(problem):  # noqa: D103, E501
+def test_cbpe_create_raises_exception_when_y_pred_not_given_and_problem_type_not_binary_classification(
+    problem,
+):  # noqa: D103, E501
     with pytest.raises(InvalidArgumentsException, match=f"'y_pred' can not be 'None' for problem type {problem}"):
         _ = CBPE(
             timestamp_column_name='timestamp',
@@ -614,9 +616,7 @@ def test_cbpe_for_multiclass_classification_chunked_by_period_should_include_var
     assert np.array_equal(np.round(sut.loc[:, (metric, 'sampling_error')], 4), np.round(sampling_error, 4))
 
 
-def test_cbpe_returns_distinct_but_consistent_results_when_reused(  # noqa: D103
-    binary_classification_data
-):
+def test_cbpe_returns_distinct_but_consistent_results_when_reused(binary_classification_data):  # noqa: D103
     reference, analysis = binary_classification_data
 
     sut = CBPE(
@@ -638,9 +638,7 @@ def test_cbpe_returns_distinct_but_consistent_results_when_reused(  # noqa: D103
     pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
 
 
-def test_cbpe_returns_distinct_but_consistent_results_when_data_reused(  # noqa: D103
-    binary_classification_data
-):
+def test_cbpe_returns_distinct_but_consistent_results_when_data_reused(binary_classification_data):  # noqa: D103
     reference, analysis = binary_classification_data
 
     sut = CBPE(
@@ -788,9 +786,7 @@ def test_cbpe_fitting_does_not_generate_error_when_single_class_present():  # no
     sut.fit(ref_df)
 
 
-def test_cbpe_returns_distinct_but_consistent_results_when_reused_noopcal(  # noqa: D103
-    binary_classification_data
-):
+def test_cbpe_returns_distinct_but_consistent_results_when_reused_noopcal(binary_classification_data):  # noqa: D103
     reference, analysis = binary_classification_data
 
     sut = CBPE(
@@ -801,7 +797,7 @@ def test_cbpe_returns_distinct_but_consistent_results_when_reused_noopcal(  # no
         y_pred_proba='y_pred_proba',
         metrics=['roc_auc'],
         problem_type='classification_binary',
-        calibrator=NoopCalibrator()
+        calibrator=NoopCalibrator(),
     )
     sut.fit(reference)
     result1 = sut.estimate(analysis)
@@ -810,7 +806,7 @@ def test_cbpe_returns_distinct_but_consistent_results_when_reused_noopcal(  # no
     pd.testing.assert_frame_equal(result1.to_df(), result2.to_df())
 
 
-def test_input_dataframes_are_not_altered_by_multiclass_calculator(binary_classification_data):  # noqa: D103
+def test_input_dataframes_are_not_altered_by_binary_calculator(binary_classification_data):  # noqa: D103
     reference, monitored = binary_classification_data
     reference2 = reference.copy(deep=True)
     monitored2 = monitored.copy(deep=True)
