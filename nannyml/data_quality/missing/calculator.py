@@ -13,7 +13,6 @@ from pandas import MultiIndex
 
 from nannyml.base import AbstractCalculator, _list_missing
 from nannyml.chunk import Chunker
-from nannyml.data_quality.base import _add_alert_flag
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
@@ -132,23 +131,6 @@ class MissingValuesCalculator(AbstractCalculator):
             count_nan, count_tot = self._calculate_missing_value_stats(reference_data[col])
             self._sampling_error_components[col] = count_nan if self.normalize else count_nan / count_tot
 
-        for column in self.column_names:
-            reference_chunk_results = np.asarray(
-                [
-                    self._calculate_missing_value_stats(chunk.data[column])[0]
-                    for chunk in self.chunker.split(reference_data)
-                ]
-            )
-            self._lower_alert_thresholds[column], self._upper_alert_thresholds[column] = calculate_threshold_values(
-                threshold=self.threshold,
-                data=reference_chunk_results,
-                lower_threshold_value_limit=self.lower_threshold_value_limit,
-                upper_threshold_value_limit=self.upper_threshold_value_limit,
-                logger=self._logger,
-                metric_name=self.data_quality_metric,
-                override_using_none=True,
-            )
-
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
 
@@ -190,6 +172,8 @@ class MissingValuesCalculator(AbstractCalculator):
         res = res.reset_index(drop=True)
 
         if self.result is None:
+            self._set_metric_thresholds(res)
+            res = self._populate_alert_thresholds(res)
             self.result = Result(
                 results_data=res,
                 column_names=self.column_names,
@@ -202,8 +186,9 @@ class MissingValuesCalculator(AbstractCalculator):
             #       Dropping the intermediate '_filter' and directly returning the correct 'Result' class works OK
             #       but this causes us to lose the "common behavior" in the top level 'filter' method when overriding.
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
+            res = self._populate_alert_thresholds(res)
             self.result = self.result.filter(period='reference')
-            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.data = pd.concat([self.result.data, res], ignore_index=True)
 
         return self.result
 
@@ -227,11 +212,36 @@ class MissingValuesCalculator(AbstractCalculator):
             result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error'],
             -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
         )
-
-        result['upper_threshold'] = self._upper_alert_thresholds[column_name]
-        result['lower_threshold'] = self._lower_alert_thresholds[column_name]
-        result['alert'] = _add_alert_flag(result)
         return result
+
+    def _set_metric_thresholds(self, result_data: pd.DataFrame):
+        for column_name in self.column_names:
+            self._lower_alert_thresholds[column_name], self._upper_alert_thresholds[column_name] = calculate_threshold_values(  # noqa: E501
+                threshold=self.threshold,
+                data=result_data.loc[:, (column_name, 'value')],
+                lower_threshold_value_limit=self.lower_threshold_value_limit,
+                upper_threshold_value_limit=self.upper_threshold_value_limit,
+                logger=self._logger,
+            )
+
+    def _populate_alert_thresholds(self, result_data: pd.DataFrame) -> pd.DataFrame:
+        for column_name in self.column_names:
+            result_data[(column_name, 'upper_threshold')] = self._upper_alert_thresholds[column_name]
+            result_data[(column_name, 'lower_threshold')] = self._lower_alert_thresholds[column_name]
+            result_data[(column_name, 'alert')] = result_data.apply(
+                lambda row: True
+                if (
+                    row[(column_name, 'value')] > (
+                        np.inf if row[(column_name, 'upper_threshold')] is None else row[(column_name, 'upper_threshold')]  # noqa: E501
+                    )
+                    or row[(column_name, 'value')] < (
+                        -np.inf if row[(column_name, 'lower_threshold')] is None else row[(column_name, 'lower_threshold')]  # noqa: E501
+                    )
+                )
+                else False,
+                axis=1,
+            )
+        return result_data
 
 
 def _create_multilevel_index(
@@ -247,9 +257,6 @@ def _create_multilevel_index(
             'sampling_error',
             'upper_confidence_boundary',
             'lower_confidence_boundary',
-            'upper_threshold',
-            'lower_threshold',
-            'alert',
         ]
     ]
     tuples = chunk_tuples + column_tuples
