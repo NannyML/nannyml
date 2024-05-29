@@ -275,7 +275,7 @@ class DomainClassifierCalculator(AbstractCalculator):
         else:
             res = self._populate_alert_thresholds(res)
             self.result = self.result.filter(period='reference')
-            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.data = pd.concat([self.result.data, res], ignore_index=True)
         return self.result
 
     def _calculate_chunk(self, data: pd.DataFrame):
@@ -284,7 +284,7 @@ class DomainClassifierCalculator(AbstractCalculator):
         reference_X = self._reference_X
         chunk_y = np.ones(len(chunk_X))
         reference_y = np.zeros(len(reference_X))
-        X = pd.concat([reference_X, chunk_X]).reset_index(drop=True)
+        X = pd.concat([reference_X, chunk_X], ignore_index=True)
         y = np.concatenate([reference_y, chunk_y])
 
         X, y = drop_matching_duplicate_rows(X, y, self.feature_column_names)

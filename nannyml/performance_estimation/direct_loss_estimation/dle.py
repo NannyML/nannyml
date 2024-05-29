@@ -378,7 +378,7 @@ class DLE(AbstractEstimator):
             )
         else:
             self.result = self.result.filter(period='reference')
-            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.data = pd.concat([self.result.data, res], ignore_index=True)
 
         return self.result
 

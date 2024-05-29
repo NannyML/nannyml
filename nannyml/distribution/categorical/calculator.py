@@ -77,7 +77,7 @@ class CategoricalDistributionCalculator(AbstractCalculator):
             self.result = Result(result_data, self.column_names, self.timestamp_column_name, self.chunker)
         else:
             # self.result = self.result.data.loc[self.result.data['period'] == 'reference', :]
-            self.result.data = pd.concat([self.result.data, result_data]).reset_index(drop=True)
+            self.result.data = pd.concat([self.result.data, result_data], ignore_index=True)
 
         return self.result
 

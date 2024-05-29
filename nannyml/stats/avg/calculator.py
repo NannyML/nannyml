@@ -174,7 +174,7 @@ class SummaryStatsAvgCalculator(AbstractCalculator):
             #       Applicable here but to many of the base classes as well (e.g. fitting and calculating)
             self.result = self.result.filter(period='reference')
             res = self._populate_thresholds(results=res)
-            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.data = pd.concat([self.result.data, res], ignore_index=True)
 
         return self.result
 

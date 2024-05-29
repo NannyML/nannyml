@@ -215,7 +215,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         else:
             self.result = self.result.filter(period='reference')
             res = self._populate_thresholds(results=res)
-            self.result.data = pd.concat([self.result.data, res]).reset_index(drop=True)
+            self.result.data = pd.concat([self.result.data, res], ignore_index=True)
         return self.result
 
     def _calculate_chunk_record(self, data: pd.DataFrame) -> Dict[str, float]:
