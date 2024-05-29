@@ -206,7 +206,6 @@ class UnseenValuesCalculator(AbstractCalculator):
             res = self._populate_alert_thresholds(res)
             self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
-            self.result.data.sort_index(inplace=True)
 
         return self.result
 
