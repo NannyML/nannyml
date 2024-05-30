@@ -111,7 +111,6 @@ class UnivariateDriftCalculator(AbstractCalculator):
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
         thresholds: dict
-
             Defaults to::
 
                 {
@@ -136,8 +135,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
             The `chi2` method does not support custom thresholds for now. Additional research is required to determine
             how to transition from its current p-value based implementation.
 
-        computation_params : dict
-
+        computation_params: dict
             Defaults to::
 
                 {
