@@ -622,35 +622,48 @@ class WassersteinDistance(Method):
         if (
             self.calculation_method == 'auto' and self._reference_size >= 10_000
         ) or self.calculation_method == 'estimated':
-            data_histogram, _ = np.histogram(data, bins=self._bin_edges)
-            data_histogram = data_histogram / len(data)
             data_smaller = data[data < self._ref_min]
             data_bigger = data[data > self._ref_max]
-            sample_size = len(data)
-            del data
+            n_smaller = len(data_smaller)
+            n_bigger = len(data_bigger)
 
-            if len(data_smaller) > 0:
-                amount_smaller = len(data_smaller) / sample_size
-                term_smaller = wasserstein_distance(data_smaller, np.full(len(data_smaller), self._ref_min))
+            if n_smaller > 0:
+                amount_smaller = (n_smaller + 1) / len(data)
+                smaller_with_first_ref_value = np.concatenate((data_smaller, [self._ref_min]))
+                x, y = self._ecdf(smaller_with_first_ref_value)
+                term_smaller = np.sum((y)[:-1] * np.diff(x))
                 term_smaller = term_smaller * amount_smaller
             else:
                 term_smaller, amount_smaller = 0, 0
 
-            if len(data_bigger) > 0:
-                amount_bigger = len(data_bigger) / sample_size
-                term_bigger = wasserstein_distance(data_bigger, np.full(len(data_bigger), self._ref_max))
+            if n_bigger > 0:
+                amount_bigger = (n_bigger + 1) / len(data)
+                bigger_with_last_ref_value = np.concatenate(([self._ref_max], data_bigger))
+                x, y = self._ecdf(bigger_with_last_ref_value)
+                term_bigger = np.sum((1 - y)[: -1] * np.diff(x))
                 term_bigger = term_bigger * amount_bigger
             else:
                 term_bigger, amount_bigger = 0, 0
 
+            data_histogram, _ = np.histogram(data, bins=self._bin_edges)
+            data_histogram = data_histogram / len(data)
+
             data_cdf = np.cumsum(data_histogram)
             data_cdf = data_cdf + amount_smaller  # if there's some data on the left-hand side
             term_within = np.sum(np.abs(self._ref_cdf - data_cdf) * self._bin_width)
+
             distance = term_within + term_smaller + term_bigger
         else:
             distance = wasserstein_distance(self._reference_data, data)
 
         return distance
+
+    def _ecdf(self, vec: np.ndarray):
+        """Custom implementation to calculate ECDF."""
+        vec = np.sort(vec)
+        x, counts = np.unique(vec, return_counts=True)
+        cdf = np.cumsum(counts) / len(vec)
+        return x, cdf
 
 
 @MethodFactory.register(key='hellinger', feature_type=FeatureType.CONTINUOUS)
