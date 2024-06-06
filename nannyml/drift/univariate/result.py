@@ -44,7 +44,8 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
         analysis_data: pd.DataFrame = None,
         reference_data: pd.DataFrame = None,
     ):
-        """
+        """Initialize resuts class.
+
         Parameters
         ----------
         results_data: pd.DataFrame
@@ -112,6 +113,7 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
 
     @property
     def methods(self) -> List[Method]:
+        """Methods used during calculation."""
         return cast(List[Method], self.metrics)
 
     def _filter(
@@ -167,9 +169,9 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
         return continuous_values + categorical_values
 
     def keys(self) -> List[Key]:
-        """
-        Creates a list of keys for continuos and categorial columns where each Key is a `namedtuple('Key',
-        'properties display_names')`
+        """Creates a list of keys for continuos and categorial columns.
+
+        Each Key is a `namedtuple('Key', 'properties display_names')`
         """
         continuous_keys = [
             Key(properties=(column, method.column_name), display_names=(column, method.display_name))
@@ -204,6 +206,7 @@ class Result(PerMetricPerColumnResult[Method], ResultCompareMixin):
             - 'distribution'
                     plots feature distribution per :class:`~nannyml.chunk.Chunk`.
                     Joyplot for continuous features, stacked bar charts for categorical features.
+
         Returns
         -------
         fig: :class:`plotly.graph_objs._figure.Figure`

@@ -118,6 +118,16 @@ def test_wasserstein_both_continuous_analysis_with_neg_mean_medium_drift():  # n
     assert wass_dist == 3.99
 
 
+def test_wasserstein_both_continuous_analysis_estimate_with_out_of_reference_drift():  # noqa: D103
+    np.random.seed(1)
+    reference = pd.Series(np.random.normal(0, 1, 15_000), name='A')
+    analysis = pd.Series(np.random.normal(0, 10, 1_000_000), name='A')
+    wass_dist = WassersteinDistance(chunker=chunker, threshold=threshold)
+    wass_dist = wass_dist.fit(reference).calculate(analysis)
+    wass_dist = np.round(wass_dist, 3)
+    assert wass_dist == 7.180
+
+
 # ************* Hellinger Tests *************
 
 
