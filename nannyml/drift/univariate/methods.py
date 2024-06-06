@@ -582,6 +582,9 @@ class WassersteinDistance(Method):
         self._bin_width: float
         self._bin_edges: np.ndarray
         self._ref_rel_freqs: Optional[np.ndarray] = None
+        self._ref_min: float
+        self._ref_max: float
+        self._ref_cdf: np.ndarray
         self._fitted = False
         if (
             (not kwargs)
@@ -640,7 +643,7 @@ class WassersteinDistance(Method):
                 amount_bigger = (n_bigger + 1) / len(data)
                 bigger_with_last_ref_value = np.concatenate(([self._ref_max], data_bigger))
                 x, y = self._ecdf(bigger_with_last_ref_value)
-                term_bigger = np.sum((1 - y)[: -1] * np.diff(x))
+                term_bigger = np.sum((1 - y)[:-1] * np.diff(x))
                 term_bigger = term_bigger * amount_bigger
             else:
                 term_bigger, amount_bigger = 0, 0
