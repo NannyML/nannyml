@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.7] - 2024-06-07
+
+### Changed
+
+- Optimized summary stats and overall performance by avoiding unnecessary copy operations and index resets in during chunking
+  [(#390)](https://github.com/NannyML/nannyml/issues/390)
+- Optimized performance of `nannyml.base.PerMetricPerColumnResult` filter operations by adding a short-circuit path
+  when only filtering on period. [(#391)](https://github.com/NannyML/nannyml/issues/391)
+- Optimized performance of all data quality calculators by avoiding unnecessary evaluations and avoiding copy and index reset operations
+  [(#392)](https://github.com/NannyML/nannyml/issues/392)
+
+### Fixed
+
+- Fixed an issue in the Wasserstein "big data heuristic" where outliers caused the binning to cause out-of-memory errors. Thanks! [@nikml](https://github.com/nikml)!
+  [(#393)](https://github.com/NannyML/nannyml/issues/393)
+- Fixed a typo in the `salary_range` values of the synthetic car loan example dataset. `20K - 20K €` is now `20K - 40K €`.
+  [(#395)](https://github.com/NannyML/nannyml/issues/395)
+
 ## [0.10.6] - 2024-05-16
 
 ### Changed
