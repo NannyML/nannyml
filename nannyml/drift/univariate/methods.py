@@ -29,7 +29,7 @@ from scipy.spatial.distance import jensenshannon
 from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
 
 from nannyml._typing import Self
-from nannyml.base import _column_is_categorical, _remove_nans
+from nannyml.base import _remove_nans
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.thresholds import Threshold, calculate_threshold_values
@@ -44,6 +44,7 @@ class Method(abc.ABC):
         column_name: str,
         chunker: Chunker,
         threshold: Threshold,
+        feature_type: FeatureType,
         computation_params: Optional[Dict[str, Any]] = None,
         upper_threshold_limit: Optional[float] = None,
         lower_threshold_limit: Optional[float] = None,
@@ -73,6 +74,7 @@ class Method(abc.ABC):
         self.column_name = column_name
 
         self.threshold = threshold
+        self.feature_type = feature_type
         self.upper_threshold_value: Optional[float] = None
         self.lower_threshold_value: Optional[float] = None
         self.lower_threshold_value_limit: Optional[float] = lower_threshold_limit
@@ -203,6 +205,8 @@ class MethodFactory:
         if kwargs is None:
             kwargs = {}
 
+        kwargs['feature_type'] = feature_type
+
         method_class = cls.registry[key][feature_type]
         return method_class(**kwargs)
 
@@ -272,23 +276,21 @@ class JensenShannonDistance(Method):
         lower_threshold_limit : float, default=0
             An optional lower threshold for the performance metric.
         """
-        self._treat_as_type: str
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None):
         reference_data = _remove_nans(reference_data)
-        if _column_is_categorical(reference_data):
-            treat_as_type = 'cat'
-        else:
+
+        if self.feature_type == FeatureType.CONTINUOUS:
             n_unique_values = len(np.unique(reference_data))
             len_reference = len(reference_data)
-            if n_unique_values > 50 or n_unique_values / len_reference > 0.1:
-                treat_as_type = 'cont'
-            else:
-                treat_as_type = 'cat'
+            if not (n_unique_values > 50 or n_unique_values / len_reference > 0.1):
+                self._logger.warning(
+                    "Continuous feature has few unique values. Consider including in `treat_as_categorical`."
+                )
 
-        if treat_as_type == 'cont':
+        if self.feature_type == FeatureType.CONTINUOUS:
             bins = np.histogram_bin_edges(reference_data, bins='doane')
             reference_proba_in_bins = np.histogram(reference_data, bins=bins)[0] / len_reference
             self._bins = bins
@@ -299,8 +301,6 @@ class JensenShannonDistance(Method):
             self._bins = reference_unique
             self._reference_proba_in_bins = reference_proba_per_unique
 
-        self._treat_as_type = treat_as_type
-
         return self
 
     def _calculate(self, data: pd.Series):
@@ -308,14 +308,14 @@ class JensenShannonDistance(Method):
         data = _remove_nans(data)
         if data.empty:
             return np.nan
-        if self._treat_as_type == 'cont':
+        if self.feature_type == FeatureType.CONTINUOUS:
             len_data = len(data)
             data_proba_in_bins = np.histogram(data, bins=self._bins)[0] / len_data
 
         else:
             data_unique, data_counts = np.unique(data, return_counts=True)
             data_counts_dic = dict(zip(data_unique, data_counts))
-            data_count_on_ref_bins = [data_counts_dic[key] if key in data_counts_dic else 0 for key in self._bins]
+            data_count_on_ref_bins = [data_counts_dic.get(key, 0) for key in self._bins]
             data_proba_in_bins = np.array(data_count_on_ref_bins) / len(data)
 
         leftover = 1 - np.sum(data_proba_in_bins)
@@ -693,23 +693,20 @@ class HellingerDistance(Method):
             An optional lower threshold for the performance metric.
         """
 
-        self._treat_as_type: str
         self._bins: np.ndarray
         self._reference_proba_in_bins: np.ndarray
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_nans(reference_data)
-        if _column_is_categorical(reference_data):
-            treat_as_type = 'cat'
-        else:
+        if self.feature_type == FeatureType.CONTINUOUS:
             n_unique_values = len(np.unique(reference_data))
             len_reference = len(reference_data)
-            if n_unique_values > 50 or n_unique_values / len_reference > 0.1:
-                treat_as_type = 'cont'
-            else:
-                treat_as_type = 'cat'
+            if not (n_unique_values > 50 or n_unique_values / len_reference > 0.1):
+                self._logger.warning(
+                    "Continuous feature has few unique values. Consider including in `treat_as_categorical`."
+                )
 
-        if treat_as_type == 'cont':
+        if self.feature_type == FeatureType.CONTINUOUS:
             bins = np.histogram_bin_edges(reference_data, bins='doane')
             reference_proba_in_bins = np.histogram(reference_data, bins=bins)[0] / len_reference
             self._bins = bins
@@ -720,8 +717,6 @@ class HellingerDistance(Method):
             self._bins = reference_unique
             self._reference_proba_in_bins = reference_proba_per_unique
 
-        self._treat_as_type = treat_as_type
-
         return self
 
     def _calculate(self, data: pd.Series):
@@ -729,14 +724,14 @@ class HellingerDistance(Method):
         if data.empty:
             return np.nan
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
-        if self._treat_as_type == 'cont':
+        if self.feature_type == FeatureType.CONTINUOUS:
             len_data = len(data)
             data_proba_in_bins = np.histogram(data, bins=self._bins)[0] / len_data
 
         else:
             data_unique, data_counts = np.unique(data, return_counts=True)
             data_counts_dic = dict(zip(data_unique, data_counts))
-            data_count_on_ref_bins = [data_counts_dic[key] if key in data_counts_dic else 0 for key in self._bins]
+            data_count_on_ref_bins = [data_counts_dic.get(key, 0) for key in self._bins]
             data_proba_in_bins = np.array(data_count_on_ref_bins) / len(data)
 
         leftover = 1 - np.sum(data_proba_in_bins)
