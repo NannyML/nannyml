@@ -19,6 +19,7 @@ from nannyml.data_quality.unseen import UnseenValuesCalculator
 from nannyml.distribution.categorical import CategoricalDistributionCalculator
 from nannyml.distribution.continuous import ContinuousDistributionCalculator
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
+from nannyml.drift.multivariate.domain_classifier import DomainClassifierCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.io import FileReader, FilesystemStore, Writer, WriterFactory
@@ -74,7 +75,8 @@ class CalculatorFactory:
 
     registry: Dict[str, Type] = {
         'univariate_drift': UnivariateDriftCalculator,
-        'multivariate_drift': DataReconstructionDriftCalculator,
+        'reconstruction_error': DataReconstructionDriftCalculator,
+        'domain_classifier': DomainClassifierCalculator,
         'performance': PerformanceCalculator,
         'cbpe': CBPE,
         'dle': DLE,
