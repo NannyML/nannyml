@@ -47,6 +47,7 @@ class CategoricalDistributionCalculator(AbstractCalculator):
         # result_data = pd.DataFrame(columns=_create_multilevel_index(self.column_names))
         result_data = pd.DataFrame()
 
+        # TODO: We don't need to pass full dataframe - only timestamp or sample column?
         chunks = self.chunker.split(data)
         chunks_data = pd.DataFrame(
             {
