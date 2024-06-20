@@ -1,6 +1,7 @@
 """Tests."""
 
 import pandas as pd
+import numpy as np
 import pytest
 
 from nannyml.chunk import DefaultChunker, SizeBasedChunker
@@ -3462,3 +3463,106 @@ def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
         f'{metric.display_name} lower threshold value -1 overridden by '
         f'lower threshold value limit {metric.lower_threshold_value_limit}' in caplog.messages
     )
+
+
+@pytest.mark.parametrize(
+    'calculator_opts, realized',
+    [
+        (
+            {'chunk_size': 20000},
+            pd.DataFrame(
+                {
+                    'key': ['[0:19999]', '[20000:39999]', '[40000:59999]'],
+                    'realized_true_highstreet_card_pred_highstreet_card': [
+                        4912.0,
+                        4702.0,
+                        np.nan,
+                    ],
+                    'realized_true_highstreet_card_pred_prepaid_card': [
+                        870.0,
+                        1083.0,
+                        np.nan,
+                    ],
+                    'realized_true_highstreet_card_pred_upmarket_card': [
+                        799.0,
+                        1009.0,
+                        np.nan,
+                    ],
+                    'realized_true_prepaid_card_pred_highstreet_card': [
+                        846.0,
+                        1367.0,
+                        np.nan,
+                    ],
+                    'realized_true_prepaid_card_pred_prepaid_card': [
+                        5203.0,
+                        3974.0,
+                        np.nan,
+                    ],
+                    'realized_true_prepaid_card_pred_upmarket_card': [
+                        690.0,
+                        1080.0,
+                        np.nan,
+                    ],
+                    'realized_true_upmarket_card_pred_highstreet_card': [
+                        837.0,
+                        1282.0,
+                        np.nan,
+                    ],
+                    'realized_true_upmarket_card_pred_prepaid_card': [
+                        773.0,
+                        989.0,
+                        np.nan,
+                    ],
+                    'realized_true_upmarket_card_pred_upmarket_card': [
+                        5070.0,
+                        4514.0,
+                        np.nan,
+                    ],
+                }
+            ),
+        ),
+    ]
+)
+def test_cbpe_for_multiclass_classification_cm_with_nans(calculator_opts, estimated, realized):  # noqa: D103
+    """Test Nan Handling of CM MC metric."""
+    reference, analysis, targets = load_synthetic_multiclass_classification_dataset()
+    analysis = analysis.merge(targets, left_index=True, right_index=True)
+    analysis.y_true[-20_000:] = np.nan
+    cbpe = CBPE(
+        y_pred_proba={
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+        },
+        y_pred='y_pred',
+        y_true='y_true',
+        problem_type='classification_multiclass',
+        metrics=['confusion_matrix'],
+        **calculator_opts,
+    ).fit(reference)
+    result = cbpe.estimate(analysis)
+    column_names = [
+        ('true_highstreet_card_pred_highstreet_card', 'realized'),
+        ('true_highstreet_card_pred_prepaid_card', 'realized'),
+        ('true_highstreet_card_pred_upmarket_card', 'realized'),
+        ('true_prepaid_card_pred_highstreet_card', 'realized'),
+        ('true_prepaid_card_pred_prepaid_card', 'realized'),
+        ('true_prepaid_card_pred_upmarket_card', 'realized'),
+        ('true_upmarket_card_pred_highstreet_card', 'realized'),
+        ('true_upmarket_card_pred_prepaid_card', 'realized'),
+        ('true_upmarket_card_pred_upmarket_card', 'realized'),
+    ]
+    sut = result.filter(period='analysis').to_df()[[('chunk', 'key')] + column_names]
+    sut.columns = [
+        'key',
+        'realized_true_highstreet_card_pred_highstreet_card',
+        'realized_true_highstreet_card_pred_prepaid_card',
+        'realized_true_highstreet_card_pred_upmarket_card',
+        'realized_true_prepaid_card_pred_highstreet_card',
+        'realized_true_prepaid_card_pred_prepaid_card',
+        'realized_true_prepaid_card_pred_upmarket_card',
+        'realized_true_upmarket_card_pred_highstreet_card',
+        'realized_true_upmarket_card_pred_prepaid_card',
+        'realized_true_upmarket_card_pred_upmarket_card',
+    ]
+    pd.testing.assert_frame_equal(realized, sut)
