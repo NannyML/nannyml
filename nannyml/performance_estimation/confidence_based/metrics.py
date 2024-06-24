@@ -3133,29 +3133,32 @@ class MulticlassClassificationConfusionMatrix(Metric):
         return alert_thresholds
 
     def _multi_class_confusion_matrix_realized_performance(self, data: pd.DataFrame) -> Union[np.ndarray, float]:
+        # Create appropriate nan array to return in case of error
+        num_classes = len(self.classes)
+        nan_array = np.full(shape=(num_classes, num_classes), fill_value=np.nan)
         try:
             _list_missing([self.y_true, self.y_pred], data)
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
-                return np.NaN
+                return nan_array
             else:
                 raise ex
 
         data, empty = common_nan_removal(data, [self.y_true, self.y_pred])
         if empty:
             warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
-            return np.NaN
+            return nan_array
 
         y_true = data[self.y_true]
         if y_true.nunique() <= 1:
             warnings.warn(f"Too few unique values present in 'y_true', returning NaN as realized {self.display_name}.")
-            return np.NaN
+            return nan_array
         if data[self.y_pred].nunique() <= 1:
             warnings.warn(
                 f"Too few unique values present in 'y_pred', returning NaN as realized {self.display_name} score."
             )
-            return np.NaN
+            return nan_array    
 
         cm = confusion_matrix(
             data[self.y_true], data[self.y_pred], labels=self.classes, normalize=self.normalize_confusion_matrix
