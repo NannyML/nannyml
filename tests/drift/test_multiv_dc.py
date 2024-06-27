@@ -49,3 +49,26 @@ def test_default_cdd_run(binary_classification_data):
         0.9136,
     ]
     assert list(results.to_df().loc[:, ("domain_classifier_auroc", "alert")]) == [False, False, False, True, True]
+
+
+def test_cdd_run_w_timestamp(binary_classification_data):
+    """Test a default run of DC."""
+    (
+        reference,
+        analysis,
+    ) = binary_classification_data
+    calc = DomainClassifierCalculator(
+        feature_column_names=column_names1,
+        chunk_size=5_000,
+        timestamp_column_name='timestamp'
+    )
+    calc.fit(reference)
+    results = calc.calculate(analysis)
+    assert list(results.to_df().loc[:, ("domain_classifier_auroc", "value")].round(4)) == [
+        0.5020,
+        0.5002,
+        0.5174,
+        0.9108,
+        0.9136,
+    ]
+    assert list(results.to_df().loc[:, ("domain_classifier_auroc", "alert")]) == [False, False, False, True, True]
