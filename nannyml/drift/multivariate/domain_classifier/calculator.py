@@ -288,7 +288,7 @@ class DomainClassifierCalculator(AbstractCalculator):
             )
         else:
             res = self._populate_alert_thresholds(res)
-            self.result = self.result.filter(period='reference')
+            self.result = self.result.filter(period='reference')  # type: ignore
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
         return self.result
 
@@ -369,6 +369,7 @@ class DomainClassifierCalculator(AbstractCalculator):
         return result_data
 
     def tune_hyperparams(self, X: pd.DataFrame, y: np.ndarray):
+        """Train an LGBM model while also performing hyperparameter tuning."""
         with warnings.catch_warnings():
             # Ingore lightgbm's UserWarning: Using categorical_feature in Dataset.
             # We explicitly use that feature, don't spam the user
@@ -387,6 +388,7 @@ class DomainClassifierCalculator(AbstractCalculator):
 def preprocess_categorical_features(
     X: pd.DataFrame, continuous_column_names: List[str], categorical_column_names: List[str]
 ) -> pd.DataFrame:
+    """Preprodess categorical features."""
     X_cont = X[continuous_column_names]
 
     enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
