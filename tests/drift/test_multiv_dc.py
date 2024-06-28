@@ -62,7 +62,7 @@ def test_cdd_run_w_timestamp(binary_classification_data):
         chunk_size=5_000,
         timestamp_column_name='timestamp'
     )
-    calc.fit(reference)
+    calc.fit(reference.sample(frac=1).reset_index(drop=True))
     results = calc.calculate(analysis)
     assert list(results.to_df().loc[:, ("domain_classifier_auroc", "value")].round(4)) == [
         0.5020,
