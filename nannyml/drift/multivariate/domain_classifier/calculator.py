@@ -200,7 +200,7 @@ class DomainClassifierCalculator(AbstractCalculator):
         # # sampling error
         # self._sampling_error_components: Tuple = ()
         self.result: Optional[Result] = None
-        self._am_fitted: bool = False
+        self._is_fitted: bool = False
 
     @log_usage(UsageEvent.DC_CALC_FIT)
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
@@ -242,7 +242,7 @@ class DomainClassifierCalculator(AbstractCalculator):
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
 
-        self._am_fitted = True
+        self._is_fitted = True
 
         return self
 
@@ -276,7 +276,7 @@ class DomainClassifierCalculator(AbstractCalculator):
         res.columns = multilevel_index
         res = res.reset_index(drop=True)
 
-        if not self._am_fitted:
+        if not self._is_fitted:
             self._set_metric_thresholds(res)
             res = self._populate_alert_thresholds(res)
             self.result = Result(
@@ -294,7 +294,7 @@ class DomainClassifierCalculator(AbstractCalculator):
 
     def _calculate_chunk(self, chunk: Chunk):
 
-        if self._am_fitted:
+        if self._is_fitted:
             chunk_X = chunk.data[self.feature_column_names]
             reference_X = self._reference_X
             chunk_y = np.ones(len(chunk_X))
