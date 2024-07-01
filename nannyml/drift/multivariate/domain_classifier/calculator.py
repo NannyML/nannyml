@@ -226,8 +226,12 @@ class DomainClassifierCalculator(AbstractCalculator):
             if column_name not in self.categorical_column_names:
                 self.categorical_column_names.append(column_name)
 
-        # get timestamp column from chunker incase the calculator is initialized with a chunker without directly
-        # been provided the timestamp column name
+        # Get timestamp column from chunker incase the calculator is initialized with a chunker without directly
+        # been provided the timestamp column name.
+        #
+        # The reference data will be sorted according to the timestamp column (when available) to mimic
+        # Chunker behavior. This means the reference data will be "aligned" with chunked reference data. 
+        # This way we can use chunk indices on the internal reference data copy.
         if self.chunker.timestamp_column_name:
             if self.chunker.timestamp_column_name not in list(reference_data.columns):
                 raise InvalidArgumentsException(
@@ -293,7 +297,6 @@ class DomainClassifierCalculator(AbstractCalculator):
         return self.result
 
     def _calculate_chunk(self, chunk: Chunk):
-
         if self._is_fitted:
             chunk_X = chunk.data[self.feature_column_names]
             reference_X = self._reference_X
@@ -302,7 +305,10 @@ class DomainClassifierCalculator(AbstractCalculator):
             X = pd.concat([reference_X, chunk_X], ignore_index=True)
             y = np.concatenate([reference_y, chunk_y])
         else:
-            # Use information from chunk indices to identify reference chunk's location
+            # Use information from chunk indices to identify reference chunk's location. This is possible because
+            # both the internal reference data copy and the chunk data were sorted by timestamp, so these 
+            # indices align. This way we eliminate the need to combine these two data frames and drop duplicate rows,
+            # which is a costly operation.
             X = self._reference_X
             y = np.zeros(len(X))
             y[chunk.start_index : chunk.end_index + 1] = 1
