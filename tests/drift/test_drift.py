@@ -281,7 +281,7 @@ def test_univariate_drift_calculator_treat_as_categorical_for_categorical_column
     assert sorted(calc.categorical_column_names) == expected_categorical
 
 
-def test_univariate_drift_calculator_treat_as_categorical_for_non_existing_column(  # noqa: D103
+def test_univariate_drift_calculator_treat_as_for_non_existing_column(  # noqa: D103
     sample_drift_data, caplog
 ):
     caplog.set_level(logging.INFO)
@@ -289,6 +289,7 @@ def test_univariate_drift_calculator_treat_as_categorical_for_non_existing_colum
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
         treat_as_categorical='foo',
+        treat_as_numerical='bar',
         timestamp_column_name='timestamp',
         continuous_methods=['jensen_shannon'],
         categorical_methods=['jensen_shannon'],
@@ -299,8 +300,8 @@ def test_univariate_drift_calculator_treat_as_categorical_for_non_existing_colum
     assert sorted(calc.continuous_column_names) == expected_continuous
     assert sorted(calc.categorical_column_names) == expected_categorical
 
-    assert "ignoring 'treat_as_categorical' value 'foo' because it was not in listed column names" in caplog.messages
-
+    assert "ignoring 'treat_as_categorical' values ['foo'] because they were not in listed column names" in caplog.messages
+    assert "ignoring 'treat_as_numerical' values ['bar'] because they were not in listed column names" in caplog.messages
 
 def test_univariate_drift_calculator_without_custom_thresholds():  # noqa: D103
     sut = UnivariateDriftCalculator(
