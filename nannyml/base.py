@@ -520,10 +520,10 @@ class AbstractEstimator(ABC):
         raise NotImplementedError(f"'{self.__class__.__name__}' must implement the '_calculate' method")
 
 
-def _split_features_by_type(data: pd.DataFrame, feature_column_names: List[str]) -> Tuple[List[str], List[str]]:
-    continuous_column_names = [col for col in feature_column_names if _column_is_continuous(data[col])]
+def _split_features_by_type(data: pd.DataFrame, feature_column_names: Iterable[str]) -> Tuple[List[str], List[str]]:
+    continuous_column_names = [col for col in sorted(feature_column_names) if _column_is_continuous(data[col])]
 
-    categorical_column_names = [col for col in feature_column_names if _column_is_categorical(data[col])]
+    categorical_column_names = [col for col in sorted(feature_column_names) if _column_is_categorical(data[col])]
 
     return continuous_column_names, categorical_column_names
 
