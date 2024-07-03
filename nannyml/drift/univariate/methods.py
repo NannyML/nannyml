@@ -29,7 +29,7 @@ from scipy.spatial.distance import jensenshannon
 from scipy.stats import chi2_contingency, ks_2samp, wasserstein_distance
 
 from nannyml._typing import Self
-from nannyml.base import _column_is_categorical, _remove_nans
+from nannyml.base import _remove_nans
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException, NotFittedException
 from nannyml.thresholds import Threshold, calculate_threshold_values
@@ -290,7 +290,7 @@ class ContinuousJensenShannonDistance(Method):
         data = _remove_nans(data)
         if data.empty:
             return np.nan
-        
+
         len_data = len(data)
         data_proba_in_bins = np.histogram(data, bins=self._bins)[0] / len_data
 
@@ -346,7 +346,7 @@ class CategoricalJensenShannonDistance(Method):
         data = _remove_nans(data)
         if data.empty:
             return np.nan
-        
+
         data_unique, data_counts = np.unique(data, return_counts=True)
         data_counts_dic = dict(zip(data_unique, data_counts))
         data_count_on_ref_bins = [data_counts_dic[key] if key in data_counts_dic else 0 for key in self._bins]
@@ -360,6 +360,7 @@ class CategoricalJensenShannonDistance(Method):
         distance = jensenshannon(reference_proba_in_bins, data_proba_in_bins, base=2)
 
         return distance
+
 
 @MethodFactory.register(key='kolmogorov_smirnov', feature_type=FeatureType.CONTINUOUS)
 class KolmogorovSmirnovStatistic(Method):
@@ -734,7 +735,7 @@ class ContinuousHellingerDistance(Method):
         reference_proba_in_bins = np.histogram(reference_data, bins=bins)[0] / len_reference
         self._bins = bins
         self._reference_proba_in_bins = reference_proba_in_bins
-        
+
         return self
 
     def _calculate(self, data: pd.Series):
@@ -752,6 +753,7 @@ class ContinuousHellingerDistance(Method):
         distance = np.sqrt(np.sum((np.sqrt(reference_proba_in_bins) - np.sqrt(data_proba_in_bins)) ** 2)) / np.sqrt(2)
 
         return distance
+
 
 @MethodFactory.register(key='hellinger', feature_type=FeatureType.CATEGORICAL)
 class CategoricalHellingerDistance(Method):
@@ -794,7 +796,7 @@ class CategoricalHellingerDistance(Method):
         if data.empty:
             return np.nan
         reference_proba_in_bins = copy(self._reference_proba_in_bins)
-        
+
         data_unique, data_counts = np.unique(data, return_counts=True)
         data_counts_dic = dict(zip(data_unique, data_counts))
         data_count_on_ref_bins = [data_counts_dic[key] if key in data_counts_dic else 0 for key in self._bins]
@@ -808,4 +810,3 @@ class CategoricalHellingerDistance(Method):
         distance = np.sqrt(np.sum((np.sqrt(reference_proba_in_bins) - np.sqrt(data_proba_in_bins)) ** 2)) / np.sqrt(2)
 
         return distance
-    

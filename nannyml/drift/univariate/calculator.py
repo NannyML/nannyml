@@ -264,8 +264,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         _list_missing(self.column_names, reference_data)
 
-        
-        self.continuous_column_names, self.categorical_column_names = self._split_continuous_and_categorical(reference_data)
+        self.continuous_column_names, self.categorical_column_names = self._split_continuous_and_categorical(
+            reference_data
+        )
 
         timestamps = reference_data[self.timestamp_column_name] if self.timestamp_column_name else None
         for column_name in self.continuous_column_names:
@@ -394,7 +395,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
             self.result.analysis_data = data.copy()
 
         return self.result
-    
+
     def _split_continuous_and_categorical(self, data: pd.DataFrame) -> Tuple[List[str], List[str]]:
         """Splits the features in the data set into continuous and categorical features."""
         treat_as_numerical_set, treat_as_categorical_set = set(self.treat_as_numerical), set(self.treat_as_categorical)
@@ -404,22 +405,20 @@ class UnivariateDriftCalculator(AbstractCalculator):
         treat_as_numerical_set = treat_as_numerical_set - invalid_continuous_column_names
         if invalid_continuous_column_names:
             self._logger.info(
-                f"ignoring 'treat_as_numerical' values {list(invalid_continuous_column_names)} because they were not in "
-                f"listed column names"
+                f"ignoring 'treat_as_numerical' values {list(invalid_continuous_column_names)} because "
+                f"they were not in listed column names"
             )
 
         invalid_categorical_column_names = treat_as_categorical_set - column_names_set
         treat_as_categorical_set = treat_as_categorical_set - invalid_categorical_column_names
         if invalid_categorical_column_names:
             self._logger.info(
-                f"ignoring 'treat_as_categorical' values {list(invalid_categorical_column_names)} because they were not in "
-                f"listed column names"
+                f"ignoring 'treat_as_categorical' values {list(invalid_categorical_column_names)} because "
+                f"they were not in listed column names"
             )
-        
+
         unspecified_columns = column_names_set - treat_as_numerical_set - treat_as_categorical_set
-        continuous_column_names, categorical_column_names = _split_features_by_type(
-            data, unspecified_columns
-        )
+        continuous_column_names, categorical_column_names = _split_features_by_type(data, unspecified_columns)
 
         continuous_column_names = continuous_column_names + list(treat_as_numerical_set)
         categorical_column_names = categorical_column_names + list(treat_as_categorical_set)

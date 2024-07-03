@@ -14,13 +14,13 @@ import pytest
 from nannyml._typing import Key, Result, Self
 from nannyml.base import Abstract1DResult, AbstractCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
+from nannyml.datasets import load_synthetic_car_loan_dataset
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.multivariate.domain_classifier import DomainClassifierCalculator
 from nannyml.drift.univariate.calculator import DEFAULT_THRESHOLDS, UnivariateDriftCalculator
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
-from nannyml.datasets import load_synthetic_car_loan_dataset
 
 
 @pytest.fixture(scope="module")
@@ -183,9 +183,7 @@ def test_base_drift_calculator_uses_default_chunker_when_no_chunker_specified(sa
 
 
 @pytest.mark.parametrize('column_names, expected', [('f1', ['f1']), (['f1', 'f2'], ['f1', 'f2'])])
-def test_univariate_drift_calculator_create_with_single_or_list_of_column_names(  # noqa: D103
-    column_names, expected
-):
+def test_univariate_drift_calculator_create_with_single_or_list_of_column_names(column_names, expected):  # noqa: D103
     calc = UnivariateDriftCalculator(
         column_names=column_names,
         timestamp_column_name='timestamp',
@@ -264,9 +262,7 @@ def test_univariate_drift_calculator_treat_as_categorical_for_continuous_column(
     assert sorted(calc.categorical_column_names) == expected_categorical
 
 
-def test_univariate_drift_calculator_treat_as_categorical_for_categorical_column(  # noqa: D103
-    sample_drift_data
-):
+def test_univariate_drift_calculator_treat_as_categorical_for_categorical_column(sample_drift_data):  # noqa: D103
     calc = UnivariateDriftCalculator(
         column_names=['f1', 'f2', 'f3', 'f4'],
         treat_as_categorical='f3',
@@ -281,9 +277,7 @@ def test_univariate_drift_calculator_treat_as_categorical_for_categorical_column
     assert sorted(calc.categorical_column_names) == expected_categorical
 
 
-def test_univariate_drift_calculator_treat_as_for_non_existing_column(  # noqa: D103
-    sample_drift_data, caplog
-):
+def test_univariate_drift_calculator_treat_as_for_non_existing_column(sample_drift_data, caplog):  # noqa: D103
     caplog.set_level(logging.INFO)
 
     calc = UnivariateDriftCalculator(
@@ -300,8 +294,13 @@ def test_univariate_drift_calculator_treat_as_for_non_existing_column(  # noqa: 
     assert sorted(calc.continuous_column_names) == expected_continuous
     assert sorted(calc.categorical_column_names) == expected_categorical
 
-    assert "ignoring 'treat_as_categorical' values ['foo'] because they were not in listed column names" in caplog.messages
-    assert "ignoring 'treat_as_numerical' values ['bar'] because they were not in listed column names" in caplog.messages
+    assert (
+        "ignoring 'treat_as_categorical' values ['foo'] because they were not in listed column names" in caplog.messages
+    )
+    assert (
+        "ignoring 'treat_as_numerical' values ['bar'] because they were not in listed column names" in caplog.messages
+    )
+
 
 def test_univariate_drift_calculator_without_custom_thresholds():  # noqa: D103
     sut = UnivariateDriftCalculator(
@@ -602,7 +601,7 @@ def test_base_drift_calculator_given_non_empty_features_list_should_only_calcula
 
 # See https://github.com/NannyML/nannyml/issues/192
 def test_univariate_drift_calculator_returns_distinct_but_consistent_results_when_reused(  # noqa: D103
-    sample_drift_data
+    sample_drift_data,
 ):
     ref_data = sample_drift_data.loc[sample_drift_data['period'] == 'reference']
     sut = UnivariateDriftCalculator(
@@ -871,7 +870,7 @@ def test_input_dataframes_are_not_altered_by_univ_calculator():  # noqa: D103
         'loan_length',
         'repaid_loan_on_prev_car',
         'size_of_downpayment',
-        'driver_tenure'
+        'driver_tenure',
     ]
     calc = UnivariateDriftCalculator(
         column_names=feature_column_names,
@@ -897,7 +896,7 @@ def test_input_dataframes_are_not_altered_by_dre_calculator():  # noqa: D103
         'loan_length',
         'repaid_loan_on_prev_car',
         'size_of_downpayment',
-        'driver_tenure'
+        'driver_tenure',
     ]
     calc = DataReconstructionDriftCalculator(
         column_names=feature_column_names,
@@ -920,12 +919,10 @@ def test_input_dataframes_are_not_altered_by_dc_calculator():  # noqa: D103
         'loan_length',
         'repaid_loan_on_prev_car',
         'size_of_downpayment',
-        'driver_tenure'
+        'driver_tenure',
     ]
     calc = DomainClassifierCalculator(
-        feature_column_names=feature_column_names,
-        timestamp_column_name='timestamp',
-        chunk_number=1
+        feature_column_names=feature_column_names, timestamp_column_name='timestamp', chunk_number=1
     )
     calc.fit(reference2)
     results = calc.calculate(monitored2)  # noqa: F841
