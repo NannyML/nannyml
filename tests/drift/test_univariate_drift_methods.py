@@ -5,8 +5,10 @@ import pytest
 
 from nannyml.chunk import CountBasedChunker, DefaultChunker
 from nannyml.drift.univariate.methods import (
-    HellingerDistance,
-    JensenShannonDistance,
+    CategoricalHellingerDistance,
+    CategoricalJensenShannonDistance,
+    ContinuousHellingerDistance,
+    ContinuousJensenShannonDistance,
     KolmogorovSmirnovStatistic,
     LInfinityDistance,
     WassersteinDistance,
@@ -22,7 +24,7 @@ threshold = ConstantThreshold(lower=None, upper=0.1)
 def test_js_for_0_distance():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000), name='A')
-    js = JensenShannonDistance(chunker=chunker, threshold=threshold)
+    js = ContinuousJensenShannonDistance(chunker=chunker, threshold=threshold)
     js.fit(reference)
     distance = js.calculate(reference)
     assert distance == 0
@@ -32,7 +34,7 @@ def test_js_for_both_continuous():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = pd.Series(np.random.normal(0, 1, 1000), name='A')
-    js = JensenShannonDistance(chunker=chunker, threshold=threshold)
+    js = ContinuousJensenShannonDistance(chunker=chunker, threshold=threshold)
     js.fit(reference)
     distance = js.calculate(analysis)
     assert np.round(distance, 2) == 0.05
@@ -42,7 +44,7 @@ def test_js_for_quasi_continuous():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000), name='A')
     analysis = pd.Series(np.random.choice(np.linspace(0, 2, 3), 1000), name='A')
-    js = JensenShannonDistance(chunker=chunker, threshold=threshold)
+    js = ContinuousJensenShannonDistance(chunker=chunker, threshold=threshold)
     js.fit(reference)
     distance = js.calculate(analysis)
     assert np.round(distance, 2) == 0.73
@@ -52,7 +54,7 @@ def test_js_for_categorical():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(['a', 'b', 'c', 'd'], 10_000), name='A')
     analysis = pd.Series(np.random.choice(['a', 'b', 'c', 'e'], 1000), name='A')
-    js = JensenShannonDistance(chunker=chunker, threshold=threshold)
+    js = CategoricalJensenShannonDistance(chunker=chunker, threshold=threshold)
     js.fit(reference)
     distance = js.calculate(analysis)
     assert np.round(distance, 2) == 0.5
@@ -135,7 +137,7 @@ def test_hellinger_complete_overlap():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = reference
-    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
+    hell_dist = ContinuousHellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
     hell_dist = np.round(hell_dist, 2)
     assert hell_dist == 0
 
@@ -144,7 +146,7 @@ def test_hellinger_no_overlap():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = pd.Series(np.random.normal(7, 1, 10_000), name='A')
-    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
+    hell_dist = ContinuousHellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
     hell_dist = np.round(hell_dist, 2)
     assert hell_dist == 1
 
@@ -153,7 +155,7 @@ def test_hellinger_both_continuous_analysis_with_small_drift():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.normal(0, 1, 10_000), name='A')
     analysis = pd.Series(np.random.normal(-2, 1, 10_000), name='A')
-    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
+    hell_dist = ContinuousHellingerDistance(chunker=chunker, threshold=threshold).fit(reference).calculate(analysis)
     hell_dist = np.round(hell_dist, 2)
     assert hell_dist == 0.63
 
@@ -162,7 +164,7 @@ def test_hellinger_for_quasi_continuous():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(np.linspace(0, 2, 6), 10_000), name='A')
     analysis = pd.Series(np.random.choice(np.linspace(0, 2, 3), 1000), name='A')
-    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold)
+    hell_dist = ContinuousHellingerDistance(chunker=chunker, threshold=threshold)
     hell_dist.fit(reference)
     distance = hell_dist.calculate(analysis)
     assert np.round(distance, 2) == 0.72
@@ -172,7 +174,7 @@ def test_hellinger_for_categorical():  # noqa: D103
     np.random.seed(1)
     reference = pd.Series(np.random.choice(['a', 'b', 'c', 'd'], 10_000), name='A')
     analysis = pd.Series(np.random.choice(['a', 'b', 'c', 'e'], 1000), name='A')
-    hell_dist = HellingerDistance(chunker=chunker, threshold=threshold)
+    hell_dist = CategoricalHellingerDistance(chunker=chunker, threshold=threshold)
     hell_dist.fit(reference)
     distance = hell_dist.calculate(analysis)
     assert np.round(distance, 2) == 0.5
@@ -183,9 +185,9 @@ def test_hellinger_for_categorical():  # noqa: D103
     [
         KolmogorovSmirnovStatistic(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
         LInfinityDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
-        JensenShannonDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
+        ContinuousJensenShannonDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
         WassersteinDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
-        HellingerDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
+        ContinuousHellingerDistance(chunker=DefaultChunker(), threshold=ConstantThreshold(lower=-1, upper=None)),
     ],
 )
 def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits(caplog, method):  # noqa: D103

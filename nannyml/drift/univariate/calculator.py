@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import warnings
 from logging import Logger
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -61,6 +61,7 @@ class UnivariateDriftCalculator(AbstractCalculator):
     def __init__(
         self,
         column_names: Union[str, List[str]],
+        treat_as_numerical: Optional[Union[str, List[str]]] = None,
         treat_as_categorical: Optional[Union[str, List[str]]] = None,
         timestamp_column_name: Optional[str] = None,
         categorical_methods: Optional[Union[str, List[str]]] = None,
@@ -79,6 +80,8 @@ class UnivariateDriftCalculator(AbstractCalculator):
         column_names: Union[str, List[str]]
             A string or list containing the names of features in the provided data set.
             A drift score will be calculated for each entry in this list.
+        treat_as_numerical: Union[str, List[str]]
+            A single column name or list of column names to be treated as numerical by the calculator.
         treat_as_categorical: Union[str, List[str]]
             A single column name or list of column names to be treated as categorical by the calculator.
         timestamp_column_name: str
@@ -204,6 +207,12 @@ class UnivariateDriftCalculator(AbstractCalculator):
             column_names = [column_names]
         self.column_names = column_names
 
+        if not treat_as_numerical:
+            treat_as_numerical = []
+        if isinstance(treat_as_numerical, str):
+            treat_as_numerical = [treat_as_numerical]
+        self.treat_as_numerical = treat_as_numerical
+
         if not treat_as_categorical:
             treat_as_categorical = []
         if isinstance(treat_as_categorical, str):
@@ -255,21 +264,9 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
         _list_missing(self.column_names, reference_data)
 
-        self.continuous_column_names, self.categorical_column_names = _split_features_by_type(
-            reference_data, self.column_names
+        self.continuous_column_names, self.categorical_column_names = self._split_continuous_and_categorical(
+            reference_data
         )
-
-        for column_name in self.treat_as_categorical:
-            if column_name not in self.column_names:
-                self._logger.info(
-                    f"ignoring 'treat_as_categorical' value '{column_name}' because it was not in "
-                    f"listed column names"
-                )
-                break
-            if column_name in self.continuous_column_names:
-                self.continuous_column_names.remove(column_name)
-            if column_name not in self.categorical_column_names:
-                self.categorical_column_names.append(column_name)
 
         timestamps = reference_data[self.timestamp_column_name] if self.timestamp_column_name else None
         for column_name in self.continuous_column_names:
@@ -398,6 +395,35 @@ class UnivariateDriftCalculator(AbstractCalculator):
             self.result.analysis_data = data.copy()
 
         return self.result
+
+    def _split_continuous_and_categorical(self, data: pd.DataFrame) -> Tuple[List[str], List[str]]:
+        """Splits the features in the data set into continuous and categorical features."""
+        treat_as_numerical_set, treat_as_categorical_set = set(self.treat_as_numerical), set(self.treat_as_categorical)
+        column_names_set = set(self.column_names)
+
+        invalid_continuous_column_names = treat_as_numerical_set - column_names_set
+        treat_as_numerical_set = treat_as_numerical_set - invalid_continuous_column_names
+        if invalid_continuous_column_names:
+            self._logger.info(
+                f"ignoring 'treat_as_numerical' values {list(invalid_continuous_column_names)} because "
+                f"they were not in listed column names"
+            )
+
+        invalid_categorical_column_names = treat_as_categorical_set - column_names_set
+        treat_as_categorical_set = treat_as_categorical_set - invalid_categorical_column_names
+        if invalid_categorical_column_names:
+            self._logger.info(
+                f"ignoring 'treat_as_categorical' values {list(invalid_categorical_column_names)} because "
+                f"they were not in listed column names"
+            )
+
+        unspecified_columns = column_names_set - treat_as_numerical_set - treat_as_categorical_set
+        continuous_column_names, categorical_column_names = _split_features_by_type(data, unspecified_columns)
+
+        continuous_column_names = continuous_column_names + list(treat_as_numerical_set)
+        categorical_column_names = categorical_column_names + list(treat_as_categorical_set)
+
+        return continuous_column_names, categorical_column_names
 
 
 def _calculate_for_column(
