@@ -46,7 +46,16 @@ def performance_calculator() -> PerformanceCalculator:  # noqa: D103
         },
         y_pred='y_pred',
         y_true='y_true',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix'],
+        metrics=[
+            'roc_auc',
+            'f1',
+            'precision',
+            'recall',
+            'specificity',
+            'accuracy',
+            'confusion_matrix',
+            'average_precision'
+        ],
         problem_type='classification_multiclass',
     )
 
@@ -61,7 +70,16 @@ def realized_performance_metrics(multiclass_data) -> pd.DataFrame:  # noqa: D103
         },
         y_pred='y_pred',
         y_true='y_true',
-        metrics=['roc_auc', 'f1', 'precision', 'recall', 'specificity', 'accuracy', 'confusion_matrix'],
+        metrics=[
+            'roc_auc',
+            'f1',
+            'precision',
+            'recall',
+            'specificity',
+            'accuracy',
+            'confusion_matrix',
+            'average_precision'
+        ],
         problem_type='classification_multiclass',
     ).fit(multiclass_data[0])
     results = performance_calculator.calculate(
@@ -131,6 +149,7 @@ def test_metric_factory_returns_correct_metric_given_key_and_problem_type(key, p
         ('true_highstreet_card_pred_upmarket_card', [250, 237, 259, 251, 277, 330, 318, 302, 312, 326]),
         ('true_highstreet_card_pred_prepaid_card', [275, 261, 250, 248, 240, 421, 404, 396, 412, 390]),
         ('true_highstreet_card_pred_highstreet_card', [1457, 1536, 1451, 1450, 1488, 1322, 1346, 1397, 1353, 1354]),
+        ('average_precision', [0.83891, 0.8424, 0.84207, 0.844, 0.8364, 0.59673, 0.60133, 0.60421, 0.60751, 0.6052]),
     ],
 )
 def test_metric_values_are_calculated_correctly(realized_performance_metrics, metric, expected):  # noqa: D103
@@ -156,6 +175,7 @@ def test_metric_values_are_calculated_correctly(realized_performance_metrics, me
         ('true_highstreet_card_pred_upmarket_card', [250, 237, 259, 251, 277, 330, 318, 302, 312, 326]),
         ('true_highstreet_card_pred_prepaid_card', [275, 261, 250, 248, 240, 421, 404, 396, 412, 390]),
         ('true_highstreet_card_pred_highstreet_card', [1457, 1536, 1451, 1450, 1488, 1322, 1346, 1397, 1353, 1354]),
+        ('average_precision', [0.83891, 0.8424, 0.84207, 0.844, 0.8364, 0.59673, 0.60133, 0.60421, 0.60751, 0.6052]),
     ],
 )
 def test_metric_values_without_timestamps_are_calculated_correctly(  # noqa: D103

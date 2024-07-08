@@ -16,6 +16,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
+    average_precision_score
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
@@ -39,6 +40,8 @@ from nannyml.sampling_error.multiclass_classification import (
     recall_sampling_error_components,
     specificity_sampling_error,
     specificity_sampling_error_components,
+    ap_sampling_error_components,
+    ap_sampling_error
 )
 from nannyml.thresholds import Threshold, calculate_threshold_values
 
@@ -899,3 +902,123 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 ) or (self.alert_thresholds is not None and (chunk_record[f"{column_name}"] > upper_threshold))
 
         return chunk_record
+
+
+@MetricFactory.register(metric='average_precision', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationAP(Metric):
+    """Average Precision metric."""
+
+    y_pred_proba: Dict[str, str]
+
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        y_pred_proba: Dict[str, str],
+        **kwargs,
+    ):
+        """Creates a new AP instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        y_pred_proba: Union[str, Dict[str, str]]
+            Name(s) of the column(s) containing your model output.
+
+                - For binary classification, pass a single string refering to the model output column.
+                - For multiclass classification, pass a dictionary that maps a class string to the column name \
+                containing model outputs for that class.
+        """
+        super().__init__(
+            name='average_precision',
+            y_true=y_true,
+            y_pred=y_pred,
+            threshold=threshold,
+            y_pred_proba=y_pred_proba,
+            lower_threshold_limit=0,
+            upper_threshold_limit=1,
+            components=[("Average Precision", "average_precision")],
+        )
+        # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
+        self.y_pred_proba: Dict[str, str]
+
+        # sampling error
+        self._sampling_error_components: List[Tuple] = []
+
+        # classes and class probability columns
+        self.classes: List[str] = [""]
+        self.class_probability_columns: List[str]
+
+    def __str__(self):
+        """Get string representation of metric."""
+        return "average_precision"
+
+    def _fit(self, reference_data: pd.DataFrame):
+        # set up sorted classes and prob_column_names to use across metric class
+        self.classes = class_labels(self.y_pred_proba)
+        self.class_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
+        _list_missing([self.y_true] + self.class_probability_columns, list(reference_data.columns))
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true] + self.class_probability_columns],
+            [self.y_true] + self.class_probability_columns
+        )
+        if empty:
+            self._sampling_error_components = [(np.NaN, 0) for class_col in self.class_probability_columns]
+        else:
+            # sampling error
+            binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
+            y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in self.classes]
+            self._sampling_error_components = ap_sampling_error_components(
+                y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
+            )
+
+    def _calculate(self, data: pd.DataFrame):
+        if not isinstance(self.y_pred_proba, Dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
+                f"multiclass use cases require 'y_pred_proba' to "
+                "be a dictionary mapping classes to columns."
+            )
+
+        # class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        _list_missing([self.y_true] + self.class_probability_columns, data)
+        data, empty = common_nan_removal(
+            data[[self.y_true] + self.class_probability_columns], [self.y_true] + self.class_probability_columns
+        )
+        if empty:
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
+            return np.NaN
+
+        y_true = data[self.y_true]
+        y_pred_proba = data[self.class_probability_columns]
+
+        if y_true.nunique() <= 1:
+            warnings.warn(
+                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+                "Returning NaN."
+            )
+            return np.NaN
+        else:
+            # https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-f-measure-metrics
+            # average_precision_score always performs OVR averaging
+            return average_precision_score(y_true, y_pred_proba, average='macro')
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
+        _list_missing([self.y_true] + class_y_pred_proba_columns, data)
+        data, empty = common_nan_removal(
+            data[[self.y_true] + class_y_pred_proba_columns], [self.y_true] + class_y_pred_proba_columns
+        )
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return ap_sampling_error(self._sampling_error_components, data)

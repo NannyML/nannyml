@@ -6,7 +6,13 @@ from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, average_precision_score
+
+
+# How many experiments to perform when doing resampling to approximate sampling error.
+N_EXPERIMENTS = 50
+# Max resample size - we don't need full reference if it is too big.
+MAX_RESAMPLE_SIZE = 50_000
 
 
 def _standard_deviation_of_variances(components: List[Tuple], data) -> float:
@@ -82,6 +88,7 @@ def auroc_sampling_error(sampling_error_components, data) -> float:
 
     """
     class_variances = [c[0] / (len(data) * c[1]) for c in sampling_error_components]
+    # Experiments showed that std of class variances underestimated sampling error by 20% so we manually adjust result
     multiclass_std = np.sqrt(np.sum(class_variances)) / len(class_variances) * 1.2
     return multiclass_std
 
@@ -399,3 +406,62 @@ def multiclass_confusion_matrix_sampling_error(sampling_error_components: Tuple,
         standard_errors = reference_stds / np.sqrt(len(data) * relevant_proportions)
 
     return standard_errors
+
+
+def ap_sampling_error_components(y_true_reference: List[np.ndarray], y_pred_proba_reference: List[pd.Series]):
+    """
+    Calculate sampling error components for AP using reference data.
+
+    The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
+    probabilities. The order of the Series in both lists should both match the list of class labels present.
+
+    Parameters
+    ----------
+    y_true_reference: List[np.ndarray]
+        Target values for the reference dataset.
+    y_pred_proba_reference: List[pd.Series]
+        Prediction probability values for the reference dataset.
+
+    Returns
+    -------
+    sampling_error_components: List[Tuple]
+    """
+
+    def _get_class_components(y_true_reference: np.ndarray, y_pred_proba_reference: pd.Series):
+        sample_size = np.minimum(y_true_reference.shape[0] // 2, MAX_RESAMPLE_SIZE)
+
+        y_pred_proba_reference = y_pred_proba_reference.to_numpy()
+
+        ap_results = []
+        for _ in range(N_EXPERIMENTS):
+            _indexes_for_sample = np.random.choice(y_true_reference.shape[0], sample_size, replace=True)
+            sample_y_true_reference = y_true_reference[_indexes_for_sample]
+            sample_y_pred_proba_reference = y_pred_proba_reference[_indexes_for_sample]
+            ap_results.append(average_precision_score(sample_y_true_reference, sample_y_pred_proba_reference))
+        return np.var(ap_results), sample_size
+
+    class_components = []
+    for y_true_class, y_pred_proba_class in zip(y_true_reference, y_pred_proba_reference):
+        class_components.append(_get_class_components(y_true_class, y_pred_proba_class))
+
+    return class_components
+
+
+def ap_sampling_error(sampling_error_components, data) -> float:
+    """
+    Calculate the AUROC sampling error for a chunk of data.
+
+    Parameters
+    ----------
+    sampling_error_components : a set of parameters that were derived from reference data.
+    data : the (analysis) data you want to calculate or estimate a metric for.
+
+    Returns
+    -------
+    sampling_error: float
+
+    """
+
+    class_variances = [c[0] * c[1] / len(data) for c in sampling_error_components]
+    multiclass_std = np.sqrt(np.mean(class_variances))
+    return multiclass_std
