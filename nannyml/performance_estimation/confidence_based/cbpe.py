@@ -541,11 +541,12 @@ def _fit_calibrators(
     noop_calibrator = NoopCalibrator()
 
     for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, y_true_col, y_pred_proba_col):
+        _calibrator = copy.deepcopy(calibrator)
         if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator):
-            calibrator = noop_calibrator
+            _calibrator = noop_calibrator
 
-        calibrator.fit(y_pred_proba, y_true)
-        fitted_calibrators[clazz] = copy.deepcopy(calibrator)
+        _calibrator.fit(y_pred_proba, y_true)
+        fitted_calibrators[clazz] = copy.deepcopy(_calibrator)
 
     return fitted_calibrators
 
