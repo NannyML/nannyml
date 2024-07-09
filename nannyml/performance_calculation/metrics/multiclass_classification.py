@@ -85,17 +85,8 @@ class MulticlassClassificationAUROC(Metric):
             components=[("ROC AUC", "roc_auc")],
         )
         self.y_pred_proba: Dict[str, str]
-        # Move check here, since we have all the info we need for checking.
-        if not isinstance(self.y_pred_proba, Dict):
-            raise InvalidArgumentsException(
-                f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
-                "multiclass use cases require 'y_pred_proba' to be a dictionary mapping classes to columns."
-            )
-        # classes and class probability columns
         self.classes: List[str] = [""]
         self.class_probability_columns: List[str]
-
-        # sampling error
         self._sampling_error_components: List[Tuple] = []
 
     def __str__(self):
@@ -134,6 +125,13 @@ class MulticlassClassificationAUROC(Metric):
             )
 
     def _calculate(self, data: pd.DataFrame):
+        if not isinstance(self.y_pred_proba, Dict):
+            raise InvalidArgumentsException(
+                f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
+                f"multiclass use cases require 'y_pred_proba' to "
+                "be a dictionary mapping classes to columns."
+            )
+
         _list_missing([self.y_true] + self.class_probability_columns, data)
         data, empty = common_nan_removal(
             data[[self.y_true] + self.class_probability_columns], [self.y_true] + self.class_probability_columns
