@@ -41,7 +41,9 @@ from nannyml.sampling_error.multiclass_classification import (
     specificity_sampling_error,
     specificity_sampling_error_components,
     ap_sampling_error_components,
-    ap_sampling_error
+    ap_sampling_error,
+    bv_sampling_error_components,
+    bv_sampling_error
 )
 from nannyml.thresholds import Threshold, calculate_threshold_values
 
@@ -1022,3 +1024,149 @@ class MulticlassClassificationAP(Metric):
             return np.NaN
         else:
             return ap_sampling_error(self._sampling_error_components, data)
+
+
+@MetricFactory.register(metric='business_value', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationBusinessValue(Metric):
+    """Business Value metric."""
+
+    y_pred: str
+    y_pred_proba: Dict[str, str]
+
+    def __init__(
+        self,
+        y_true: str,
+        y_pred: str,
+        threshold: Threshold,
+        business_value_matrix: Union[List, np.ndarray],
+        normalize_business_value: Optional[str] = None,
+        y_pred_proba: Optional[Dict[str, str]] = None,
+        **kwargs,
+    ):
+        """Creates a new Business Value instance.
+
+        Parameters
+        ----------
+        y_true: str
+            The name of the column containing target values.
+        y_pred: str
+            The name of the column containing your model predictions.
+        threshold: Threshold
+            The Threshold instance that determines how the lower and upper threshold values will be calculated.
+        business_value_matrix: Union[List, np.ndarray]
+            A nxn matrix that specifies the value of each cell in the confusion matrix.
+            The format of the business value matrix must be specified as with each element representing the business
+            value of it's respecitve confusion matrix element. Hence the element on the i-th row and j-column of the
+            business value when we get the i-th target value while we predicted the j-th value.
+        normalize_business_value: Optional[str], default=None
+            Determines how the business value will be normalized. Allowed values are None and 'per_prediction'.
+        y_pred_proba: Optional[str], default=None
+            Name(s) of the column(s) containing your model output. For binary classification, pass a single string
+            refering to the model output column.
+        """
+        if normalize_business_value not in [None, "per_prediction"]:
+            raise InvalidArgumentsException(
+                f"normalize_business_value must be None or 'per_prediction', but got {normalize_business_value}"
+            )
+
+        super().__init__(
+            name='business_value',
+            y_true=y_true,
+            y_pred=y_pred,
+            y_pred_proba=y_pred_proba,
+            threshold=threshold,
+            components=[('Business Value', 'business_value')],
+        )
+
+        if business_value_matrix is None:
+            raise ValueError("business_value_matrix must be provided for 'business_value' metric")
+
+        if not (isinstance(business_value_matrix, np.ndarray) or isinstance(business_value_matrix, list)):
+            raise ValueError(
+                f"business_value_matrix must be a numpy array or a list, but got {type(business_value_matrix)}"
+            )
+
+        if isinstance(business_value_matrix, list):
+            business_value_matrix = np.array(business_value_matrix)
+        _rows, _columns = business_value_matrix.shape
+        if _rows != _columns:
+            raise InvalidArgumentsException(
+                f"business_value_matrix is not a square matrix but has shape: {(_rows, _columns)}"
+            )
+
+        self.business_value_matrix = business_value_matrix
+        self.normalize_business_value: Optional[str] = normalize_business_value
+
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
+        # if y_pred_proba is provided uses this to get information about number of classes in the problem.
+        if y_pred_proba:
+            if not isinstance(self.y_pred_proba, Dict):
+                raise InvalidArgumentsException(
+                    f"'y_pred_proba' is of type {type(self.y_pred_proba)}\n"
+                    f"multiclass use cases require 'y_pred_proba' to "
+                    "be a dictionary mapping classes to columns."
+                )
+            self.y_pred_proba: Dict[str, str] = y_pred_proba
+            self.classes: List[str] = class_labels(self.y_pred_proba)
+
+    def __str__(self):
+        """Get string representation of metric."""
+        return "business_value"
+
+    def _fit(self, reference_data: pd.DataFrame):
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        data, empty = common_nan_removal(reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            self._sampling_error_components = np.NaN, self.normalize_business_value
+        else:
+            # get class number from y_pred_proba if provided otherwise from reference y_true
+            # this way the code will work even if some classes are missing from reference
+            # provided the business value matrix is constructed correctly.
+            if self.classes:
+                num_classes = len(self.classes)
+                _classes = self.classes
+            else:
+                num_classes = reference_data[self.y_true].nunique()
+                _classes = sorted(list(reference_data[self.y_true].unique))
+            if num_classes != self.business_value_matrix.shape[0]:
+                raise InvalidArgumentsException(
+                    f"business_value_matrix has shape {self.business_value_matrix.shape} "
+                    "but we have {num_classes} classes!"
+                )
+            self._sampling_error_components = bv_sampling_error_components(
+                y_true_reference=data[self.y_true],
+                y_pred_reference=data[self.y_pred],
+                business_value_matrix=self.business_value_matrix,
+                classes=_classes,
+                normalize_business_value=self.normalize_business_value,
+            )
+
+    def _calculate(self, data: pd.DataFrame):
+        _list_missing([self.y_true, self.y_pred], list(data.columns))
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(f"'{self.y_true}' contains no data, cannot calculate business value. Returning NaN.")
+            return np.NaN
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        cm = confusion_matrix(y_true, y_pred)
+        if self.normalize_business_value == 'per_prediction':
+            with np.errstate(all="ignore"):
+                cm = cm / cm.sum(axis=0, keepdims=True)
+            cm = np.nan_to_num(cm)
+
+        return (self.business_value_matrix * cm).sum()
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
+            )
+            return np.NaN
+        else:
+            return bv_sampling_error(self._sampling_error_components, data)

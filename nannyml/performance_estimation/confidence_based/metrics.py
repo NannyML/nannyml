@@ -2397,7 +2397,7 @@ class MulticlassClassificationAUROC(Metric):
         data, empty = common_nan_removal(data[needed_columns], needed_columns)
         if empty:
             warnings.warn(
-                f"Too many missing values, cannot calculate {self.display_name} sampling error. " f"Returning NaN."
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. Returning NaN."
             )
             return np.NaN
         else:
