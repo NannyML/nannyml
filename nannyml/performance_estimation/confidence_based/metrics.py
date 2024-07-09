@@ -3158,7 +3158,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
             warnings.warn(
                 f"Too few unique values present in 'y_pred', returning NaN as realized {self.display_name} score."
             )
-            return nan_array    
+            return nan_array
 
         cm = confusion_matrix(
             data[self.y_true], data[self.y_pred], labels=self.classes, normalize=self.normalize_confusion_matrix
@@ -3321,3 +3321,130 @@ class MulticlassClassificationConfusionMatrix(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         return 0.0
+
+
+@MetricFactory.register('average_precision', ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationAP(Metric):
+    """CBPE multiclass classification AP Metric Class."""
+
+    def __init__(
+        self,
+        y_pred_proba: ModelOutputsType,
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        """Initialize CBPE multiclass classification AP Metric Class."""
+        super().__init__(
+            name='average_precision',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('Average Precision', 'average_precision')],
+        )
+        # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
+        self.y_pred_proba: Dict[str, str]
+
+        # sampling error
+        self._sampling_error_components: List[Tuple] = []
+
+        # classes and class probability columns
+        self.classes: List[str]
+        self.class_probability_columns: List[str]
+        self.class_uncalibrated_y_pred_proba_columns: List[str]
+
+    def _fit(self, reference_data: pd.DataFrame):
+        # set up sorted classes and prob_column_names to use across metric class
+        self.classes = class_labels(self.y_pred_proba)
+        self.class_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
+        self.class_uncalibrated_y_pred_proba_columns = ['uncalibrated_' + el for el in self.class_probability_columns]
+
+        _list_missing([self.y_true] + self.class_uncalibrated_y_pred_proba_columns, list(reference_data.columns))
+        # filter nans here
+        reference_data, empty = common_nan_removal(
+            reference_data[[self.y_true] + self.class_uncalibrated_y_pred_proba_columns],
+            [self.y_true] + self.class_uncalibrated_y_pred_proba_columns,
+        )
+        if empty:
+            self._sampling_error_components = [(np.NaN, 0) for clazz in self.classes]
+        else:
+            # sampling error
+            binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
+            y_pred_proba = [reference_data['uncalibrated_' + self.y_pred_proba[clazz]].T for clazz in self.classes]
+            self._sampling_error_components = mse.ap_sampling_error_components(
+                y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
+            )
+
+    def _estimate(self, data: pd.DataFrame):
+        needed_columns = self.class_probability_columns + self.class_uncalibrated_y_pred_proba_columns
+        try:
+            data, empty = common_nan_removal(data, needed_columns)
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+        if empty:
+            self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+
+        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
+        _, y_pred_probas_uncalibrated, _ = _get_multiclass_uncalibrated_predictions(
+            data, self.y_pred, self.y_pred_proba
+        )
+        ovr_estimates = []
+        for el in range(len(y_pred_probas)):
+            ovr_estimates.append(
+                estimate_ap(
+                    # sorting according to classes is/should_be the same across
+                    # _get_binarized_multiclass_predictions and _get_multiclass_uncalibrated_predictions
+                    y_pred_probas[el],
+                    y_pred_probas_uncalibrated.iloc[:, el],
+                )
+            )
+        multiclass_ap = np.mean(ovr_estimates)
+        return multiclass_ap
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        needed_columns = self.class_probability_columns + self.class_uncalibrated_y_pred_proba_columns
+        _list_missing(needed_columns, data)
+        data, empty = common_nan_removal(data[needed_columns], needed_columns)
+        if empty:
+            warnings.warn(
+                f"Too many missing values, cannot calculate {self.display_name} sampling error. " f"Returning NaN."
+            )
+            return np.NaN
+        else:
+            return mse.ap_sampling_error(self._sampling_error_components, data)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        try:
+            data, empty = common_nan_removal(data, [self.y_true] + self.class_uncalibrated_y_pred_proba_columns)
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.debug(str(ex))
+                return np.NaN
+            else:
+                raise ex
+        if empty:
+            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
+            return np.NaN
+
+        y_true = data[self.y_true]
+        if y_true.nunique() <= 1:
+            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized AP.")
+            return np.NaN
+
+        _, y_pred_probas, _ = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
+
+        # https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-f-measure-metrics
+        # average_precision_score always performs OVR averaging
+        return average_precision_score(y_true, y_pred_probas, average='macro')

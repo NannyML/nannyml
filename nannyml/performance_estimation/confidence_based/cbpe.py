@@ -357,6 +357,7 @@ class CBPE(AbstractEstimator):
         data = data.copy(deep=True)
 
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
+            assert isinstance(self.y_pred_proba, str)
             required_cols = [self.y_pred_proba]
             if self.y_pred is not None:
                 required_cols.append(self.y_pred)
@@ -366,10 +367,10 @@ class CBPE(AbstractEstimator):
             # https://github.com/NannyML/nannyml/issues/98
             data[f'uncalibrated_{self.y_pred_proba}'] = data[self.y_pred_proba]
 
-            assert isinstance(self.y_pred_proba, str)
             if self.needs_calibration:
                 data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])
         else:
+            assert isinstance(self.y_pred_proba, Dict)
             _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
 
             # We need uncalibrated data to calculate the realized performance on.
@@ -377,7 +378,6 @@ class CBPE(AbstractEstimator):
             for class_proba in model_output_column_names(self.y_pred_proba):
                 data[f'uncalibrated_{class_proba}'] = data[class_proba]
 
-            assert isinstance(self.y_pred_proba, Dict)
             data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
 
         chunks = self.chunker.split(data)
