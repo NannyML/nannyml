@@ -88,11 +88,11 @@ class CalculatorConfig(BaseModel):
 
 
 class Config(BaseModel):
-    input: Optional[InputConfig]
+    input: Optional[InputConfig] = None
     calculators: List[CalculatorConfig]
-    scheduling: Optional[SchedulingConfig]
+    scheduling: Optional[SchedulingConfig] = None
 
-    ignore_errors: Optional[bool]
+    ignore_errors: Optional[bool] = None
 
     @classmethod
     @lru_cache(maxsize=1)
