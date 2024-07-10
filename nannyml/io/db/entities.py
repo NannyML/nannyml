@@ -49,7 +49,7 @@ class Run(SQLModel, table=True):  # type: ignore[call-arg]
     # See: https://github.com/pydantic/pydantic/discussions/7121
     # Better solution using `alias` is not possible due to SQLModel issue
     if sys.version_info >= (3, 8):
-        model_config = ConfigDict(protected_namespaces=())
+        model_config = ConfigDict(protected_namespaces=())  # type: ignore
 
     #: Foreign key in all ``metric`` tables
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -74,7 +74,7 @@ class Metric(SQLModel):
     # See: https://github.com/pydantic/pydantic/discussions/7121
     # Better solution using `alias` is not possible due to SQLModel issue
     if sys.version_info >= (3, 8):
-        model_config = ConfigDict(protected_namespaces=())
+        model_config = ConfigDict(protected_namespaces=())  # type: ignore
 
     #: The technical identifier for this database row
     id: Optional[int] = Field(default=None, primary_key=True)
