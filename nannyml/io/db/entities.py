@@ -8,6 +8,8 @@
     its results into a specific table.
 """
 
+import sys
+
 from datetime import datetime
 from typing import List, Optional
 
@@ -46,7 +48,8 @@ class Run(SQLModel, table=True):  # type: ignore[call-arg]
     # Ignore clash of `model_id` field name with default protected namespace `model_`
     # See: https://github.com/pydantic/pydantic/discussions/7121
     # Better solution using `alias` is not possible due to SQLModel issue
-    model_config = ConfigDict(protected_namespaces=())
+    if sys.version_info >= (3, 8):
+        model_config = ConfigDict(protected_namespaces=())  # type: ignore
 
     #: Foreign key in all ``metric`` tables
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -70,7 +73,8 @@ class Metric(SQLModel):
     # Ignore clash of `model_id` field name with default protected namespace `model_`
     # See: https://github.com/pydantic/pydantic/discussions/7121
     # Better solution using `alias` is not possible due to SQLModel issue
-    model_config = ConfigDict(protected_namespaces=())
+    if sys.version_info >= (3, 8):
+        model_config = ConfigDict(protected_namespaces=())  # type: ignore
 
     #: The technical identifier for this database row
     id: Optional[int] = Field(default=None, primary_key=True)
