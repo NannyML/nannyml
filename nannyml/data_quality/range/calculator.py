@@ -20,7 +20,7 @@ from nannyml.usage_logging import UsageEvent, log_usage
 from .result import Result
 
 """
-Missing Values Data Quality Module.
+Values Out Of Range Data Quality Module.
 """
 
 
@@ -70,7 +70,7 @@ class NumericalRangeCalculator(AbstractCalculator):
         >>> import nannyml as nml
         >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
         >>> feature_column_names = [col for col in reference_df.columns if col not in ['timestamp', 'y_pred', 'y_true']]
-        >>> calc = nml.MissingValuesCalculator(
+        >>> calc = nml.NumericalRangeCalculator(
         ...     column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference_df)
