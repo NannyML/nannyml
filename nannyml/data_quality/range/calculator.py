@@ -198,24 +198,9 @@ class NumericalRangeCalculator(AbstractCalculator):
 
     def _calculate_for_column(self, data: pd.DataFrame, column_name: str) -> Dict[str, Any]:
         result = {}
-        value, tot = self._calculate_out_of_range_stats(data[column_name])
+        value_range = self._continuous_val_ranges[column_name]
+        value = self._calculate_out_of_range_stats(data[column_name], value_range[0],value_range[1])
         result['value'] = value
-        serr = np.sqrt(
-            self._sampling_error_components[column_name] * (1 - self._sampling_error_components[column_name])
-        )
-        if self.normalize:
-            result['sampling_error'] = serr / np.sqrt(tot)
-        else:
-            result['sampling_error'] = serr * np.sqrt(tot)
-
-        result['upper_confidence_boundary'] = np.minimum(
-            result['value'] + SAMPLING_ERROR_RANGE * result['sampling_error'],
-            np.inf if self.upper_threshold_value_limit is None else self.upper_threshold_value_limit,
-        )
-        result['lower_confidence_boundary'] = np.maximum(
-            result['value'] - SAMPLING_ERROR_RANGE * result['sampling_error'],
-            -np.inf if self.lower_threshold_value_limit is None else self.lower_threshold_value_limit,
-        )
         return result
 
     def _set_metric_thresholds(self, result_data: pd.DataFrame):
