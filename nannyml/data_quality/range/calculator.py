@@ -96,6 +96,7 @@ class NumericalRangeCalculator(AbstractCalculator):
                 "found\n{column_names}"
             )
         self.result: Optional[Result] = None
+        self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
         
         # threshold strategy is the same across all columns
         self.threshold = threshold
