@@ -69,7 +69,7 @@ class NumericalRangeCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
-        >>> feature_column_names = [col for col in reference_df.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        >>> feature_column_names = [col for col in reference_df.columns if col not in ['fuel','transmission','timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.NumericalRangeCalculator(
         ...     column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
