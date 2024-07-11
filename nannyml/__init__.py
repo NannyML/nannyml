@@ -39,7 +39,7 @@ from dotenv import load_dotenv
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from .data_quality import MissingValuesCalculator, UnseenValuesCalculator
+from .data_quality import MissingValuesCalculator, UnseenValuesCalculator, NumericalRangeCalculator
 from .datasets import (
     load_modified_california_housing_dataset,
     load_synthetic_binary_classification_dataset,
