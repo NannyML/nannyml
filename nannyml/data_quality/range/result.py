@@ -84,7 +84,6 @@ class Result(PerColumnResult, ResultCompareMixin):
         >>> res.filter(period='analysis').plot().show()
 
         """
-
         return plot_metrics(
             self,
             title='Data Quality ',
