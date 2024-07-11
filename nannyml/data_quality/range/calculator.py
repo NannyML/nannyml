@@ -96,9 +96,16 @@ class NumericalRangeCalculator(AbstractCalculator):
                 "found\n{column_names}"
             )
         self.result: Optional[Result] = None
+        
+        # threshold strategy is the same across all columns
+        self.threshold = threshold
+        self._upper_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
+        self._lower_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
+
         self.lower_threshold_value_limit: float = 0
-        self.upper_threshold_value_limit: float
+        self.upper_threshold_value_limit: Optional[float] = None
         self.normalize = normalize
+
         if self.normalize:
             self.data_quality_metric = 'out_of_range_values_rate'
             self.upper_threshold_value_limit = 1
