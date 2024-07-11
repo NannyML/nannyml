@@ -81,8 +81,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
-        >>> for column_name in res.column_names:
-        ...     _ = res.filter(period='analysis', column_name=column_name).plot().show()
+        >>> res.filter(period='analysis').plot().show()
 
         """
 

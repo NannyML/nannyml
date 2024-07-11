@@ -75,8 +75,7 @@ class UnseenValuesCalculator(AbstractCalculator):
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
-        >>> for column_name in res.column_names:
-        ...     _ = res.filter(period='analysis', column_name=column_name).plot().show()
+        >>> res.filter(period='analysis').plot().show()
         """
         super(UnseenValuesCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
