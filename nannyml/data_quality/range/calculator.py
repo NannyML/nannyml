@@ -13,7 +13,6 @@ from pandas import MultiIndex
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
 
@@ -96,7 +95,6 @@ class NumericalRangeCalculator(AbstractCalculator):
                 "found\n{column_names}"
             )
         self.result: Optional[Result] = None
-        self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
 
         # threshold strategy is the same across all columns
         self.threshold = threshold
