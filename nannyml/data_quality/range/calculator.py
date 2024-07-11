@@ -76,7 +76,7 @@ class NumericalRangeCalculator(AbstractCalculator):
         ... ).fit(reference_df)
         >>> res = calc.calculate(analysis_df)
         >>> for column_name in res.column_names:
-        ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
+        ...     _ = res.filter(period='analysis', column_name=column_name).plot().show()
         """
         super(NumericalRangeCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name

@@ -80,12 +80,18 @@ class Result(PerColumnResult, ResultCompareMixin):
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> for column_name in res.column_names:
-        ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
+        ...     _ = res.filter(period='analysis', column_name=column_name).plot().show()
 
         """
         return plot_metrics(
             self,
             title='Data Quality ',
+            hover=Hover(
+                template='%{period} &nbsp; &nbsp; %{alert} <br />'
+                'Chunk: <b>%{chunk_key}</b> &nbsp; &nbsp; %{x_coordinate} <br />'
+                '%{metric_name}: <b>%{metric_value}</b><b r />',
+                show_extra=True,
+            ),
             subplot_title_format='{display_names[1]} for <b>{display_names[0]}</b>',
             subplot_y_axis_title_format='{display_names[1]}',
         )

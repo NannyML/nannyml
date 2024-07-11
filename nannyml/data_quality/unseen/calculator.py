@@ -69,14 +69,14 @@ class UnseenValuesCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
-        >>> column_names = [col for col in reference.columns if col not in ['timestamp', 'y_pred', 'y_true']]
+        >>> column_names = [col for col in reference.columns if col not in ['car_age', 'km_driven', 'price_new', 'accident_count', 'door_count','timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.UnseenValuesCalculator(
         ...     column_names=column_names,
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> for column_name in res.column_names:
-        ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
+        ...     _ = res.filter(period='analysis', column_name=column_name).plot().show()
         """
         super(UnseenValuesCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name

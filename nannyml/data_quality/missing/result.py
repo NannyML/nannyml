@@ -80,7 +80,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         ... ).fit(reference)
         >>> res = calc.calculate(analysis)
         >>> for column_name in res.column_names:
-        ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
+        ...     _ = res.filter(period='analysis', column_name=column_name).plot().show()
 
         """
         return plot_metrics(
