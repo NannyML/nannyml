@@ -118,7 +118,7 @@ class NumericalRangeCalculator(AbstractCalculator):
             count_out_of_range = count_out_of_range / count_tot
         return count_out_of_range
 
-    @log_usage(UsageEvent.DQ_CALC_MISSING_VALUES_FIT, metadata_from_self=['normalize'])
+    @log_usage(UsageEvent.DQ_CALC_VALUES_OUT_OF_RANGE_FIT, metadata_from_self=['normalize'])
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
@@ -140,7 +140,7 @@ class NumericalRangeCalculator(AbstractCalculator):
 
         return self
 
-    @log_usage(UsageEvent.DQ_CALC_VALUE_RANGES, metadata_from_self=['normalize'])
+    @log_usage(UsageEvent.DQ_CALC_VALUES_OUT_OF_RANGE_RUN, metadata_from_self=['normalize'])
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates methods for both categorical and continuous columns."""
         if data.empty:

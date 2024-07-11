@@ -70,6 +70,10 @@ class UsageEvent(str, Enum):
     DQ_CALC_UNSEEN_VALUES_RUN = "Data Quality Calculator Unseen Values run"
     DQ_CALC_UNSEEN_VALUES_PLOT = "Data Quality Calculator Unseen Values plot"
 
+    DQ_CALC_VALUES_OUT_OF_RANGE_FIT = "Data Quality Calculator Values Out Of Range fit"
+    DQ_CALC_VALUES_OUT_OF_RANGE_RUN = "Data Quality Calculator Values Out Of Range run"
+    DQ_CALC_VALUES_OUT_OF_RANGE_PLOT = "Data Quality Calculator Values Out Of Range Plot"    
+
     UNIVAR_DRIFT_CALC_FIT = "Univariate drift calculator fit"
     UNIVAR_DRIFT_CALC_RUN = "Univariate drift calculator run"
     UNIVAR_DRIFT_PLOT = "Univariate drift results plot"
