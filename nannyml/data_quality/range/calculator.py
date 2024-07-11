@@ -239,14 +239,9 @@ def _create_multilevel_index(
     chunk_column_names = ['key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period']
     chunk_tuples = [('chunk', chunk_column_name) for chunk_column_name in chunk_column_names]
     column_tuples = [
-        (column_name, el)
+        (column_name, 'value')
         for column_name in column_names
-        for el in [
-            'value',
-            'sampling_error',
-            'upper_confidence_boundary',
-            'lower_confidence_boundary',
-        ]
+        # for el in ['value', 'upper_threshold', 'lower_threshold', 'alert']
     ]
     tuples = chunk_tuples + column_tuples
     return MultiIndex.from_tuples(tuples)
