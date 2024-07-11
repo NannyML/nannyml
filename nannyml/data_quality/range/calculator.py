@@ -75,7 +75,7 @@ class NumericalRangeCalculator(AbstractCalculator):
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference_df)
         >>> res = calc.calculate(analysis_df)
-        >>> for column_name in res.feature_column_names:
+        >>> for column_name in res.column_names:
         ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
         """
         super(NumericalRangeCalculator, self).__init__(
@@ -97,7 +97,7 @@ class NumericalRangeCalculator(AbstractCalculator):
             )
         self.result: Optional[Result] = None
         self._sampling_error_components: Dict[str, float] = {column_name: 0 for column_name in self.column_names}
-        
+
         # threshold strategy is the same across all columns
         self.threshold = threshold
         self._upper_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}

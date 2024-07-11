@@ -76,7 +76,7 @@ class MissingValuesCalculator(AbstractCalculator):
         ...     timestamp_column_name='timestamp',
         ... ).fit(reference_df)
         >>> res = calc.calculate(analysis_df)
-        >>> for column_name in res.feature_column_names:
+        >>> for column_name in res.column_names:
         ...     res = res.filter(period='analysis', column_name=column_name).plot().show()
         """
         super(MissingValuesCalculator, self).__init__(
