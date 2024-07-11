@@ -21,6 +21,7 @@ from nannyml.performance_estimation.confidence_based.metrics import (
     BinaryClassificationSpecificity,
 )
 from nannyml.thresholds import ConstantThreshold
+from nannyml.exceptions import InvalidArgumentsException
 
 
 @pytest.mark.parametrize(
@@ -2654,6 +2655,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                     'estimated_specificity': [0.8782068281303994, 0.8469556750949159, 0.8172644220189141],
                     'estimated_accuracy': [0.7564451493123628, 0.6946947603445697, 0.6378557309960986],
                     'estimated_average_precision': [0.8418535417603635, 0.7785618577588246, 0.6985785036188713],
+                    'estimated_business_value': [2.0193901626043056, 1.7875283323693987, 1.570045452479401],
                     'estimated_true_highstreet_card_pred_highstreet_card': [
                         4976.829215997277,
                         5148.649186425118,
@@ -2714,6 +2716,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                     'estimated_specificity': [0.8782068281303994, 0.8469556750949159, 0.8172644220189141],
                     'estimated_accuracy': [0.7564451493123628, 0.6946947603445697, 0.6378557309960986],
                     'estimated_average_precision': [0.8418535417603635, 0.7785618577588246, 0.6985785036188713],
+                    'estimated_business_value': [2.0193901626043056, 1.7875283323693987, 1.570045452479401],
                     'estimated_true_highstreet_card_pred_highstreet_card': [
                         0.7442780881812128,
                         0.7170050012869645,
@@ -2803,6 +2806,12 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.8410572134298334,
                         0.697327636452664,
                         0.6984330753389926
+                    ],
+                    'estimated_business_value': [
+                        2.0134445826512186,
+                        2.0170794978486395,
+                        1.5673705142973104,
+                        1.5671595942359196
                     ],
                     'estimated_true_highstreet_card_pred_highstreet_card': [
                         0.7546260682147157,
@@ -2903,6 +2912,12 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.697327636452664,
                         0.6984330753389926
                     ],
+                    'estimated_business_value': [
+                        2.0134445826512186,
+                        2.0170794978486395,
+                        1.5673705142973104,
+                        1.5671595942359196
+                    ],
                     'estimated_true_highstreet_card_pred_highstreet_card': [
                         0.24922783612904678,
                         0.24847524905663304,
@@ -2972,6 +2987,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                     'estimated_specificity': [0.8480220572478717, 0.8145095377877009],
                     'estimated_accuracy': [0.6967957612985849, 0.6305270354546132],
                     'estimated_average_precision': [0.7812291182204878, 0.6907845497417768],
+                    'estimated_business_value': [1.7964098918968543, 1.5447162372665988],
                     'estimated_true_highstreet_card_pred_highstreet_card': [15431.207920621628, 106.61852759787631],
                     'estimated_true_highstreet_card_pred_prepaid_card': [3140.1950482057946, 27.27202363566655],
                     'estimated_true_highstreet_card_pred_upmarket_card': [2911.0243109194275, 24.485771034437157],
@@ -3083,6 +3099,18 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.695691,
                         0.696305,
                         0.701142,
+                    ],
+                    'estimated_business_value': [
+                        2.0086174744097525,
+                        2.0167085528014574,
+                        2.025151984316981,
+                        2.018928025883902,
+                        2.006521418618063,
+                        1.5644425523502847,
+                        1.5684601001268144,
+                        1.5620405529135275,
+                        1.5668663365944273,
+                        1.574249644290713
                     ],
                     'estimated_true_highstreet_card_pred_highstreet_card': [
                         1483.745037516118,
@@ -3295,6 +3323,18 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.696305,
                         0.701142,
                     ],
+                    'estimated_business_value': [
+                        2.0086174744097525,
+                        2.0167085528014574,
+                        2.025151984316981,
+                        2.018928025883902,
+                        2.006521418618063,
+                        1.5644425523502847,
+                        1.5684601001268144,
+                        1.5620405529135275,
+                        1.5668663365944273,
+                        1.574249644290713
+                    ],
                     'estimated_true_highstreet_card_pred_highstreet_card': [
                         1483.745037516118,
                         1536.2546154566053,
@@ -3419,6 +3459,11 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
 )
 def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, expected):  # noqa: D103
     ref_df, ana_df, _ = load_synthetic_multiclass_classification_dataset()
+    business_value_matrix = np.array([
+        [1, 0, -1],
+        [0, 1, 0],
+        [-1, 0, 1]
+    ])
     cbpe = CBPE(
         y_pred_proba={
             'upmarket_card': 'y_pred_proba_upmarket_card',
@@ -3436,8 +3481,11 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
             'specificity',
             'accuracy',
             'average_precision',
-            'confusion_matrix'
+            'confusion_matrix',
+            'business_value'
         ],
+        business_value_matrix=business_value_matrix,
+        normalize_business_value='per_prediction',
         **calculator_opts,
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
@@ -3464,6 +3512,7 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
         'estimated_specificity',
         'estimated_accuracy',
         'estimated_average_precision',
+        'estimated_business_value',
         'estimated_true_highstreet_card_pred_highstreet_card',
         'estimated_true_highstreet_card_pred_prepaid_card',
         'estimated_true_highstreet_card_pred_upmarket_card',
@@ -3529,6 +3578,7 @@ def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
                     'realized_specificity': [0.879632, 0.829581, np.nan],
                     'realized_accuracy': [0.75925, 0.65950, np.nan],
                     'realized_average_precision': [0.841830, 0.738332, np.nan],
+                    'realized_business_value': [2.029064521843538, 1.6533562273847497, np.nan],
                     'realized_true_highstreet_card_pred_highstreet_card': [
                         4912.0,
                         4702.0,
@@ -3584,6 +3634,11 @@ def test_cbpe_for_multiclass_classification_cm_with_nans(calculator_opts, realiz
     reference, analysis, targets = load_synthetic_multiclass_classification_dataset()
     analysis = analysis.merge(targets, left_index=True, right_index=True)
     analysis.y_true[-20_000:] = np.nan
+    business_value_matrix = np.array([
+        [1, 0, -1],
+        [0, 1, 0],
+        [-1, 0, 1]
+    ])
     cbpe = CBPE(
         y_pred_proba={
             'upmarket_card': 'y_pred_proba_upmarket_card',
@@ -3602,7 +3657,10 @@ def test_cbpe_for_multiclass_classification_cm_with_nans(calculator_opts, realiz
             'accuracy',
             'average_precision',
             'confusion_matrix',
+            'business_value'
         ],
+        business_value_matrix=business_value_matrix,
+        normalize_business_value='per_prediction',
         **calculator_opts,
     ).fit(reference)
     result = cbpe.estimate(analysis)
@@ -3629,6 +3687,7 @@ def test_cbpe_for_multiclass_classification_cm_with_nans(calculator_opts, realiz
         'realized_specificity',
         'realized_accuracy',
         'realized_average_precision',
+        'realized_business_value',
         'realized_true_highstreet_card_pred_highstreet_card',
         'realized_true_highstreet_card_pred_prepaid_card',
         'realized_true_highstreet_card_pred_upmarket_card',
@@ -3640,3 +3699,62 @@ def test_cbpe_for_multiclass_classification_cm_with_nans(calculator_opts, realiz
         'realized_true_upmarket_card_pred_upmarket_card',
     ]
     pd.testing.assert_frame_equal(realized, sut)
+
+
+def test_cbpe_multiclass_business_value_matrix_square_requirement():  # noqa: D103
+    """Test business value matrix."""
+    reference, analysis, targets = load_synthetic_multiclass_classification_dataset()
+    analysis = analysis.merge(targets, left_index=True, right_index=True)
+    business_value_matrix = np.array([
+        [1, 0, -1],
+        [0, 1, 0],
+    ])
+    with pytest.raises(
+            InvalidArgumentsException,
+            match="business_value_matrix is not a square matrix but has shape:"):
+        _ = CBPE(
+            y_pred_proba={
+                'upmarket_card': 'y_pred_proba_upmarket_card',
+                'highstreet_card': 'y_pred_proba_highstreet_card',
+                'prepaid_card': 'y_pred_proba_prepaid_card',
+            },
+            y_pred='y_pred',
+            y_true='y_true',
+            problem_type='classification_multiclass',
+            metrics=[
+                'business_value'
+            ],
+            business_value_matrix=business_value_matrix,
+            normalize_business_value='per_prediction',
+            chunk_number=1
+        )
+
+
+def test_cbpe_multiclass_business_value_matrix_classes_and_bvm_shape():  # noqa: D103
+    """Test business value matrix."""
+    reference, _, _ = load_synthetic_multiclass_classification_dataset()
+    business_value_matrix = np.array([
+        [1, 0, -1, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+        [0, 1, 0, 0],
+    ])
+    with pytest.raises(
+            InvalidArgumentsException,
+            match="business_value_matrix has shape \(4, 4\) but we have 3 classes!"):  # noqa: W605
+        _ = CBPE(
+            y_pred_proba={
+                'upmarket_card': 'y_pred_proba_upmarket_card',
+                'highstreet_card': 'y_pred_proba_highstreet_card',
+                'prepaid_card': 'y_pred_proba_prepaid_card',
+            },
+            y_pred='y_pred',
+            y_true='y_true',
+            problem_type='classification_multiclass',
+            metrics=[
+                'business_value'
+            ],
+            business_value_matrix=business_value_matrix,
+            normalize_business_value='per_prediction',
+            chunk_number=1
+        ).fit(reference)

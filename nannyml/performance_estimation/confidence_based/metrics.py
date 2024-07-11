@@ -3448,3 +3448,159 @@ class MulticlassClassificationAP(Metric):
         # https://scikit-learn.org/stable/modules/model_evaluation.html#precision-recall-f-measure-metrics
         # average_precision_score always performs OVR averaging
         return average_precision_score(y_true, y_pred_probas, average='macro')
+
+
+@MetricFactory.register('business_value', ProblemType.CLASSIFICATION_MULTICLASS)
+class MulticlassClassificationBusinessValue(Metric):
+    """CBPE multiclass classification Business Value Metric Class."""
+
+    y_pred_proba: Dict[str, str]
+
+    def __init__(
+        self,
+        y_pred_proba: Dict[str, str],
+        y_pred: str,
+        y_true: str,
+        chunker: Chunker,
+        threshold: Threshold,
+        business_value_matrix: Union[List, np.ndarray],
+        normalize_business_value: Optional[str] = None,
+        timestamp_column_name: Optional[str] = None,
+        **kwargs,
+    ):
+        """Initialize CBPE multiclass classification Business Value Metric Class."""
+        super().__init__(
+            name='business_value',
+            y_pred_proba=y_pred_proba,
+            y_pred=y_pred,
+            y_true=y_true,
+            timestamp_column_name=timestamp_column_name,
+            chunker=chunker,
+            threshold=threshold,
+            components=[('Business Value', 'business_value')],
+        )
+
+        if business_value_matrix is None:
+            raise ValueError("business_value_matrix must be provided for 'business_value' metric")
+
+        if not (isinstance(business_value_matrix, np.ndarray) or isinstance(business_value_matrix, list)):
+            raise ValueError(
+                f"business_value_matrix must be a numpy array or a list, but got {type(business_value_matrix)}"
+            )
+
+        if isinstance(business_value_matrix, list):
+            business_value_matrix = np.array(business_value_matrix)
+        _rows, _columns = business_value_matrix.shape
+        if _rows != _columns:
+            raise InvalidArgumentsException(
+                f"business_value_matrix is not a square matrix but has shape: {(_rows, _columns)}"
+            )
+
+        self.business_value_matrix = business_value_matrix
+        self.normalize_business_value: Optional[str] = normalize_business_value
+
+        self.classes: List[str] = class_labels(self.y_pred_proba)
+        self.class_probability_columns: List[str]
+
+        # sampling error
+        self._sampling_error_components: Tuple = ()
+
+    def _fit(self, reference_data: pd.DataFrame):
+        _list_missing([self.y_true, self.y_pred], list(reference_data.columns))
+        data, empty = common_nan_removal(reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            self._sampling_error_components = np.NaN, self.normalize_business_value
+        else:
+            num_classes = len(self.classes)
+            if num_classes != self.business_value_matrix.shape[0]:
+                raise InvalidArgumentsException(
+                    f"business_value_matrix has shape {self.business_value_matrix.shape} "
+                    f"but we have {num_classes} classes!"
+                )
+            self._sampling_error_components = mse.bv_sampling_error_components(
+                y_true_reference=data[self.y_true],
+                y_pred_reference=data[self.y_pred],
+                business_value_matrix=self.business_value_matrix,
+                classes=self.classes,
+                normalize_business_value=self.normalize_business_value,
+            )
+
+        self.class_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
+
+    def _estimate(self, data: pd.DataFrame):
+        needed_columns = self.class_probability_columns + [self.y_pred]
+        try:
+            data, empty = common_nan_removal(data, needed_columns)
+        except InvalidArgumentsException as ex:
+            if "not all present in provided data columns" in str(ex):
+                self._logger.warning(str(ex))
+                return np.NaN
+            else:
+                raise ex
+
+        if empty:
+            self._logger.warning(f"Not enough data to compute estimated {self.display_name}.")
+            warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
+            return np.NaN
+
+        # TODO: put in a function? Also for MC CM.
+        y_pred_proba = {key: data[value] for key, value in self.y_pred_proba.items()}
+        y_pred = data[self.y_pred]
+        num_classes = len(self.classes)
+        est_confusion_matrix = np.zeros((num_classes, num_classes))
+        # CM elements are properly ordered because y_pred_proba items are selected from self.classes[index]
+        for i in range(num_classes):
+            for j in range(num_classes):
+                est_confusion_matrix[i, j] = np.sum(
+                    np.where(
+                        (y_pred == self.classes[j]),
+                        y_pred_proba[self.classes[i]],
+                        0,
+                    )
+                )
+
+        if self.normalize_business_value == 'per_prediction':
+            with np.errstate(all="ignore"):
+                est_confusion_matrix = est_confusion_matrix / est_confusion_matrix.sum(axis=0, keepdims=True)
+            est_confusion_matrix = np.nan_to_num(est_confusion_matrix)
+
+        return (self.business_value_matrix * est_confusion_matrix).sum()
+
+    def _sampling_error(self, data: pd.DataFrame) -> float:
+        needed_columns = self.class_probability_columns + [self.y_pred]
+        _list_missing(needed_columns, data)
+        data, empty = common_nan_removal(data[needed_columns], needed_columns)
+        if empty:
+            _message = f"Too many missing values, cannot calculate {self.display_name} sampling error. Returning NaN."
+            self._logger.warning(_message)
+            warnings.warn(_message)
+            return np.NaN
+        else:
+            return mse.bv_sampling_error(self._sampling_error_components, data)
+
+    def _realized_performance(self, data: pd.DataFrame) -> float:
+        try:
+            _list_missing([self.y_true, self.y_pred], data)
+        except InvalidArgumentsException as ex:
+            if "missing required columns" in str(ex):
+                self._logger.info(str(ex))
+                return np.NaN
+            else:
+                raise ex
+        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+        if empty:
+            _message = f"'{self.y_true}' contains no data, cannot calculate business value. Returning NaN."
+            self._logger.info(_message)
+            warnings.warn(_message)
+            return np.NaN
+
+        y_true = data[self.y_true]
+        y_pred = data[self.y_pred]
+
+        cm = confusion_matrix(y_true, y_pred, labels=self.classes)
+        if self.normalize_business_value == 'per_prediction':
+            with np.errstate(all="ignore"):
+                cm = cm / cm.sum(axis=0, keepdims=True)
+            cm = np.nan_to_num(cm)
+
+        return (self.business_value_matrix * cm).sum()

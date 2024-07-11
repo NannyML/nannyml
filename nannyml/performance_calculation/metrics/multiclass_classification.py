@@ -1153,7 +1153,7 @@ class MulticlassClassificationBusinessValue(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        cm = confusion_matrix(y_true, y_pred)
+        cm = confusion_matrix(y_true, y_pred, labels=self.classes)
         if self.normalize_business_value == 'per_prediction':
             with np.errstate(all="ignore"):
                 cm = cm / cm.sum(axis=0, keepdims=True)

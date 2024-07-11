@@ -148,8 +148,8 @@ class CBPE(AbstractEstimator):
                     'recall': StandardDeviationThreshold(),
                     'specificity': StandardDeviationThreshold(),
                     'accuracy': StandardDeviationThreshold(),
-                    'confusion_matrix': StandardDeviationThreshold(),  # only for binary classification
-                    'business_value': StandardDeviationThreshold(),  # only for binary classification
+                    'confusion_matrix': StandardDeviationThreshold(),
+                    'business_value': StandardDeviationThreshold(),
                 }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
