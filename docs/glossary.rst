@@ -16,11 +16,16 @@ Glossary
         Note that alerts are not raised during the reference :term:`Data Period`.
 
     Business Value Matrix
-        A matrix that is used to calculate the business value of a model. For binary classification,
-        the matrix is a 2x2 matrix with the following cells: true positive cost, true negative cost,
-        false positive cost, false negative cost. The business value of a model is calculated as the
+        A matrix that is used to calculate the business value of a model. The format of the
+        business value matrix must be specified so that each element represents the business
+        value of it's respective confusion matrix element. Hence the element on the i-th row and j-column of the
+        business value matrix tells us the value of the i-th target when we have predicted the j-th value.
+        It can be provided as a list of lists or a numpy array. The business value of a model is calculated as the
         sum of the products of the values in the matrix and the corresponding cells in the confusion
         matrix.
+
+        For more information about the business value matrix,
+        check out the :ref:`Business Value "How it Works" page<business-value-deep-dive>`.
 
     Butterfly dataset
         A dataset used in :ref:`how-multiv-drift` to give an example where univariate
@@ -96,7 +101,7 @@ Glossary
         periods - they contain all the observations and predictions from a single hour, day, month etc. depending on
         the selected interval. They can also be size-based so that each chunk contains *n* observations or
         number-based so the whole data is split into *k* chunks. In each case chronology of data between chunks is
-        maintained.
+        maintained. To better understand how to create chunks with NannyML check out the :ref:`chunking tutorial<chunking>`.
 
     Data Period
         A data period is a subset of the data used to monitor a model. NannyML expects the provided data to be in one of two data periods.

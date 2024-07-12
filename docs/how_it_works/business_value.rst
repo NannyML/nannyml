@@ -9,15 +9,14 @@ monetary or business oriented outcomes.
 In this page, we will discuss how the **business_value** metric works under the hood.
 
 Introduction to Business Value
---------------------------------------
+------------------------------
 
-The **business_value** metric offers a way to quantify
-the value of a model in terms of the
+The **business_value** metric offers a way to quantify the value of a model in terms of the
 business's own metrics. At the core, if the business value (or cost) of each
 outcome in the :term:`confusion matrix<Confusion Matrix>` is known, then the business value of a
-model can either be *calculated* using the realized :term:`confusion matrix<Confusion Matrix>` if
-the ground truth labels are available or *estimated* using the
-estimated :term:`confusion matrix<Confusion Matrix>` if the ground truth labels are not available.
+model can either be *calculated* using the :ref:`realized Performance Calculator<performance-calculation>` if
+the ground truth labels are available or *estimated* using :ref:`Performance Estimation<performance-estimation>`
+if the ground truth labels are not available.
 
 More specifically, we know that each prediction made by a binary classification models
 can be one of four outcomes:
@@ -50,10 +49,16 @@ We can formalize the intuition above as follows:
 
     \text{business value} = \sum_{i=1}^{n} \sum_{j=1}^{n} \text{business_value}_{i,j} \times \text{confusion_matrix}_{i,j}
 
-where :math:`\text{business_value}_{i,j}` is the business value of a cell in the :term:`confusion matrix<Confusion Matrix>`, and :math:`\text{confusion_matrix}_{i,j}` is the count of observations
-in that cell of the :term:`confusion matrix<Confusion Matrix>`. We use the `sklearn confusion matrix representation`_ that assuming label 0 is negative and label 1 is positive.
+where :math:`\text{business_value}_{i,j}` is the business value of a cell in the
+:term:`confusion matrix<Confusion Matrix>`, and :math:`\text{confusion_matrix}_{i,j}` is the count of
+observations in that cell of the :term:`confusion matrix<Confusion Matrix>`. Using the confusion 
+matrix notation the element on the i-th row and j-column of the business value matrix tells us the value
+of the i-th target when we have predicted the j-th value.
 
-Since we are in the binary classification case, :math:`n=2`, and the :term:`confusion matrix<Confusion Matrix>` is:
+For binary classification this formula is easier to manage hence we will use it as an example. Classificatio problems
+with more classes follow the same pattern.
+Using the `sklearn confusion matrix convention`_ we designate label 0 as negative and label 1 as positive.
+Hence we can write the :term:`confusion matrix<Confusion Matrix>` as:
 
 .. math::
 
@@ -62,7 +67,10 @@ Since we are in the binary classification case, :math:`n=2`, and the :term:`conf
     \text{# of false negatives} & \text{# of true positives}
     \end{bmatrix}
 
-And the :term:`business value matrix` is:
+Note that target values are represented by rows and predicted values are represented by columns.
+This means that the first row contains values that have resulted in the negative outcome
+while the first column contains values that were predicted with negative label.
+The correspondings :term:`business value matrix` is:
 
 .. math::
 
@@ -80,22 +88,27 @@ The business value of a binary classification model can thus be generally expres
     + (\text{value of a false negative}) \cdot (\text{# of false negatives}) \\
     + (\text{value of a true positive}) \cdot (\text{# of true positives})
 
-Calculation of Business Value For Binary Classification
--------------------------------------------------------
+Calculation of Business Value For Classification
+------------------------------------------------
 
 When the ground truth labels are available, the business value of a model can be calculated by using the
-values from the realized :term:`confusion matrix<Confusion Matrix>`, and then using the business value formula above to calculate
-the business value.
+values from the realized :term:`confusion matrix<Confusion Matrix>`,
+and then using the business value formula above to calculate the business value.
 
-For a tutorial on how to calculate the business value of a model, see our :ref:`business-value-calculation` tutorial.
+For a tutorial on how to calculate the business value of a model,
+see our :ref:`business-value-calculation` and :ref:`multiclass-business-value-calculation` tutorials.
 
-Estimation of Business Value For Binary Classification
-------------------------------------------------------
-In cases where ground truth labels of the data are unavailable, we can still estimate the business value of a model. This is done by using the
-:term:`CBPE (Confidence-Based Performance Estimation)` algorithm to estimate the :term:`confusion matrix<Confusion Matrix>`, and then using the business value formula above to obtain a business value estimate.
-To read more about the :term:`CBPE (Confidence-Based Performance Estimation)` algorithm, see our :ref:`performance estimation deep dive<how-it-works-cbpe>`.
+Estimation of Business Value For Classification
+-----------------------------------------------
 
-For a tutorial on how to estimate the business value of a model, see our :ref:`business-value-estimation` tutorial.
+In cases where ground truth labels of the data are unavailable, we can still estimate the business value of a model.
+This is done by using the :term:`CBPE (Confidence-Based Performance Estimation)` algorithm to estimate the
+:term:`confusion matrix<Confusion Matrix>`, and then using the business value formula above to obtain a business value estimate.
+To read more about the :term:`CBPE (Confidence-Based Performance Estimation)` algorithm,
+see our :ref:`performance estimation deep dive<how-it-works-cbpe>`.
+
+For a tutorial on how to estimate the business value of a model, see our :ref:`business-value-estimation`
+and :ref:`multiclasss-business-value-estimation` tutorials.
 
 Normalization
 -------------
@@ -113,4 +126,4 @@ Check out the :ref:`business-value-calculation` tutorial and the :ref:`business-
 for examples of how to normalize the business value metric.
 
 
-.. _`sklearn confusion matrix representation`: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html
+.. _`sklearn confusion matrix convention`: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.confusion_matrix.html

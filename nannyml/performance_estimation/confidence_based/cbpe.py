@@ -171,9 +171,11 @@ class CBPE(AbstractEstimator):
                 - 'predicted' - the confusion matrix will be normalized by the total number of observations for each \
                 predicted class.
         business_value_matrix: Optional[Union[List, np.ndarray]], default=None
-            A 2x2 matrix that specifies the value of each cell in the confusion matrix.
-            The format of the business value matrix must be specified as [[value_of_TN, value_of_FP], \
-            [value_of_FN, value_of_TP]]. Required when estimating the 'business_value' metric.
+            A nxn matrix that specifies the value of each cell in the confusion matrix.
+            The format of the business value matrix must be specified so that each element represents the business
+            value of it's respective confusion matrix element. Hence the element on the i-th row and j-column of the
+            business value matrix tells us the value of the i-th target while we predicted the j-th value.
+            It can be provided as a list of lists or a numpy array.
         normalize_business_value: str, default=None
             Determines how the business value will be normalized. Allowed values are None and
             'per_prediction'.

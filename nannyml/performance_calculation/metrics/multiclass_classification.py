@@ -1055,9 +1055,10 @@ class MulticlassClassificationBusinessValue(Metric):
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         business_value_matrix: Union[List, np.ndarray]
             A nxn matrix that specifies the value of each cell in the confusion matrix.
-            The format of the business value matrix must be specified as with each element representing the business
-            value of it's respecitve confusion matrix element. Hence the element on the i-th row and j-column of the
-            business value when we get the i-th target value while we predicted the j-th value.
+            The format of the business value matrix must be specified so that each element represents the business
+            value of it's respective confusion matrix element. Hence the element on the i-th row and j-column of the
+            business value matrix tells us the value of the i-th target while we predicted the j-th value.
+            It can be provided as a list of lists or a numpy array.
         normalize_business_value: Optional[str], default=None
             Determines how the business value will be normalized. Allowed values are None and 'per_prediction'.
         y_pred_proba: Optional[str], default=None

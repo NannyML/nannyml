@@ -131,17 +131,20 @@ that was estimated:
 
 These results can be also plotted. Our plot contains several key elements.
 
-* *The purple step plot* shows the estimated performance in each chunk of the analysis period. Thick squared point
+* The purple dashed step plot shows the estimated performance in each chunk of the provided data. Thick squared point
   markers indicate the middle of these chunks.
 
-* *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the :term:`confidence band<Confidence Band>` which is
-  calculated as the estimated performance +/- 3 times the estimated :term:`Sampling Error`.
+* The black vertical line splits the reference and analysis periods.
 
-* *The gray vertical line* splits the reference and analysis periods.
+* *The low-saturated purple area* around the estimated performance in the analysis period corresponds to the
+  :term:`confidence band<Confidence Band>` which is calculated as the estimated performance +/- 3 times the
+  estimated :term:`Sampling Error`.
 
-* *The red horizontal dashed lines* show upper and lower thresholds for alerting purposes.
+* *The red horizontal dashed lines* show upper and lower thresholds that indicate the range of
+  expected performance values.
 
-* *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised. Alerts are caused by the estimated performance crossing the upper or lower threshold.
+* *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised.
+  Alerts are caused by the estimated performance crossing the upper or lower threshold.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Estimating Confusion Matrix - Multiclass Classification.ipynb

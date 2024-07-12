@@ -61,6 +61,7 @@ The following metrics are currently supported:
 - ``recall`` - macro-averaged
 - ``specificity`` - macro-averaged
 - ``accuracy``
+- ``average_precision`` - macro-averaged
 
 For more information on metrics, check the :mod:`~nannyml.performance_calculation.metrics` module.
 
@@ -109,7 +110,18 @@ Apart from chunk-related data, the results data have a set of columns for each c
  - **alert** - flag indicating potentially significant performance change. ``True`` if estimated performance crosses
    upper or lower threshold.
 
-The results can be plotted for visual inspection:
+The results can be plotted for visual inspection. Our plot contains several key elements.
+
+* *The blue step plot* shows the performance in each chunk of the provided data. Thick squared point markers indicate
+  the middle of these chunks.
+
+* *The gray vertical line* splits the reference and analysis data periods.
+
+* *The red horizontal dashed lines* show upper and lower thresholds that indicate the range of
+  expected performance values.
+
+* *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised.
+  Alerts are caused by the performance crossing the upper or lower threshold.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Realized Performance - Multiclass Classification.ipynb
