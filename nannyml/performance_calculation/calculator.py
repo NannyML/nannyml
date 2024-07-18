@@ -258,9 +258,6 @@ class PerformanceCalculator(AbstractCalculator):
             for m in metrics
         ]
 
-        self.previous_reference_data: Optional[pd.DataFrame] = None
-        self.previous_reference_results: Optional[pd.DataFrame] = None
-
         self.result: Optional[Result] = None
 
     def __str__(self):  # noqa: D105
@@ -289,11 +286,9 @@ class PerformanceCalculator(AbstractCalculator):
                     f"an unexpected error occurred when calculating metric '{metric.display_name}': {exc}"
                 )
                 continue
-        self.previous_reference_data = reference_data
 
         self.result = self._calculate(reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
-        self.result.reference_data = reference_data.copy()
 
         return self
 

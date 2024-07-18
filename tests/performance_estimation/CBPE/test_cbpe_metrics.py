@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 import pytest
+from logging import getLogger
 
 from nannyml.chunk import DefaultChunker, SizeBasedChunker
 from nannyml.datasets import (
@@ -22,6 +23,8 @@ from nannyml.performance_estimation.confidence_based.metrics import (
 )
 from nannyml.thresholds import ConstantThreshold
 from nannyml.exceptions import InvalidArgumentsException
+
+LOGGER = getLogger(__name__)
 
 
 @pytest.mark.parametrize(
@@ -3699,6 +3702,58 @@ def test_cbpe_for_multiclass_classification_cm_with_nans(calculator_opts, realiz
         'realized_true_upmarket_card_pred_upmarket_card',
     ]
     pd.testing.assert_frame_equal(realized, sut)
+
+
+def test_auroc_errors_out_when_not_all_classes_are_represented_reference():
+    reference, _, _ = load_synthetic_multiclass_classification_dataset()
+    reference['y_pred_proba_clazz'] = reference['y_pred_proba_upmarket_card']
+    calc = CBPE(
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+            'clazz': 'y_pred_proba_clazz'
+        },
+        y_pred='y_pred',
+        y_true='y_true',
+        metrics=['roc_auc'],
+        problem_type='classification_multiclass',
+    )
+    expected_exc_test = "y_pred_proba class and class probabilities dictionary does not match reference data."
+    with pytest.raises(InvalidArgumentsException, match=expected_exc_test):
+        calc.fit(reference)
+
+
+def test_auroc_errors_out_when_not_all_classes_are_represented_chunk(caplog):
+    LOGGER.info("testing test_auroc_errors_out_when_not_all_classes_are_represented_chunk")
+    reference, monitored, targets = load_synthetic_multiclass_classification_dataset()
+    monitored = monitored.merge(targets)
+    # Uncalibrated probabilities need to sum up to 1 per row.
+    reference['y_pred_proba_clazz'] = 0.1
+    reference['y_pred_proba_prepaid_card'] = 0.9 * reference['y_pred_proba_prepaid_card']
+    reference['y_pred_proba_highstreet_card'] = 0.9 * reference['y_pred_proba_highstreet_card']
+    reference['y_pred_proba_upmarket_card'] = 0.9 * reference['y_pred_proba_upmarket_card']
+    monitored['y_pred_proba_clazz'] = 0.1
+    monitored['y_pred_proba_prepaid_card'] = 0.9 * monitored['y_pred_proba_prepaid_card']
+    monitored['y_pred_proba_highstreet_card'] = 0.9 * monitored['y_pred_proba_highstreet_card']
+    monitored['y_pred_proba_upmarket_card'] = 0.9 * monitored['y_pred_proba_upmarket_card']
+    reference['y_true'].iloc[-1000:] = 'clazz'
+    calc = CBPE(
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+            'clazz': 'y_pred_proba_clazz'
+        },
+        y_pred='y_pred',
+        y_true='y_true',
+        metrics=['roc_auc'],
+        problem_type='classification_multiclass',
+    )
+    calc.fit(reference)
+    _ = calc.estimate(monitored)
+    expected_exc_test = "does not contain all reported classes, cannot calculate"
+    assert expected_exc_test in caplog.text
 
 
 def test_cbpe_multiclass_business_value_matrix_square_requirement():  # noqa: D103

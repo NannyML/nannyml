@@ -1,9 +1,6 @@
-#  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  #
 #  License: Apache Software License 2.0
 #  Author:   Niels Nuyttens  <niels@nannyml.com>
-#
-#  License: Apache Software License 2.0
+
 
 """Unit tests for performance metrics."""
 from typing import Tuple
@@ -11,6 +8,7 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 import pytest
+from logging import getLogger
 
 from nannyml import PerformanceCalculator
 from nannyml._typing import ProblemType
@@ -29,6 +27,8 @@ from nannyml.performance_calculation.metrics.multiclass_classification import (
     MulticlassClassificationBusinessValue
 )
 from nannyml.thresholds import ConstantThreshold, StandardDeviationThreshold
+
+LOGGER = getLogger(__name__)
 
 
 @pytest.fixture(scope='module')
@@ -279,6 +279,52 @@ def test_metric_logs_warning_when_upper_threshold_is_overridden_by_metric_limits
         f'{metric.display_name} upper threshold value 2 overridden by '
         f'upper threshold value limit {metric.upper_threshold_value_limit}' in caplog.messages
     )
+
+
+def test_auroc_errors_out_when_not_all_classes_are_represented_reference(multiclass_data, caplog):
+    LOGGER.info("testing test_auroc_errors_out_when_not_all_classes_are_represented_reference")
+    reference, _, _ = multiclass_data
+    reference['y_pred_proba_clazz'] = reference['y_pred_proba_upmarket_card']
+    performance_calculator = PerformanceCalculator(
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+            'clazz': 'y_pred_proba_clazz'
+        },
+        y_pred='y_pred',
+        y_true='y_true',
+        metrics=['roc_auc'],
+        problem_type='classification_multiclass',
+    )
+    performance_calculator.fit(reference)
+    expected_exc_test = "y_pred_proba class and class probabilities dictionary does not match reference data."
+    assert expected_exc_test in caplog.text
+
+
+def test_auroc_errors_out_when_not_all_classes_are_represented_chunk(multiclass_data, caplog):
+    LOGGER.info("testing test_auroc_errors_out_when_not_all_classes_are_represented_chunk")
+    reference, monitored, targets = multiclass_data
+    monitored = monitored.merge(targets)
+    reference['y_pred_proba_clazz'] = reference['y_pred_proba_upmarket_card']
+    monitored['y_pred_proba_clazz'] = monitored['y_pred_proba_upmarket_card']
+    reference['y_true'].iloc[-1000:] = 'clazz'
+    performance_calculator = PerformanceCalculator(
+        y_pred_proba={
+            'prepaid_card': 'y_pred_proba_prepaid_card',
+            'highstreet_card': 'y_pred_proba_highstreet_card',
+            'upmarket_card': 'y_pred_proba_upmarket_card',
+            'clazz': 'y_pred_proba_clazz'
+        },
+        y_pred='y_pred',
+        y_true='y_true',
+        metrics=['roc_auc'],
+        problem_type='classification_multiclass',
+    )
+    performance_calculator.fit(reference)
+    _ = performance_calculator.calculate(monitored)
+    expected_exc_test = "does not contain all reported classes, cannot calculate"
+    assert expected_exc_test in caplog.text
 
 
 def test_business_value_getting_classes_from_y_pred_proba(multiclass_data):
