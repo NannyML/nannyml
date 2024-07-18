@@ -16,7 +16,7 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     roc_auc_score,
-    average_precision_score
+    average_precision_score,
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
@@ -43,7 +43,7 @@ from nannyml.sampling_error.multiclass_classification import (
     ap_sampling_error_components,
     ap_sampling_error,
     bv_sampling_error_components,
-    bv_sampling_error
+    bv_sampling_error,
 )
 from nannyml.thresholds import Threshold, calculate_threshold_values
 
@@ -106,7 +106,7 @@ class MulticlassClassificationAUROC(Metric):
         _list_missing([self.y_true] + self.class_probability_columns, list(reference_data.columns))
         reference_data, empty = common_nan_removal(
             reference_data[[self.y_true] + self.class_probability_columns],
-            [self.y_true] + self.class_probability_columns
+            [self.y_true] + self.class_probability_columns,
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for clasz in self.classes]
@@ -120,7 +120,8 @@ class MulticlassClassificationAUROC(Metric):
                     "targets."
                 )
                 raise InvalidArgumentsException(
-                    "y_pred_proba class and class probabilities dictionary does not match reference data.")
+                    "y_pred_proba class and class probabilities dictionary does not match reference data."
+                )
 
             # sampling error
             binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
@@ -978,7 +979,7 @@ class MulticlassClassificationAP(Metric):
         _list_missing([self.y_true] + self.class_probability_columns, list(reference_data.columns))
         reference_data, empty = common_nan_removal(
             reference_data[[self.y_true] + self.class_probability_columns],
-            [self.y_true] + self.class_probability_columns
+            [self.y_true] + self.class_probability_columns,
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for class_col in self.class_probability_columns]
@@ -1022,10 +1023,9 @@ class MulticlassClassificationAP(Metric):
             return average_precision_score(y_true, y_pred_proba, average='macro')
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        _list_missing([self.y_true] + class_y_pred_proba_columns, data)
+        _list_missing([self.y_true] + self.class_probability_columns, data)
         data, empty = common_nan_removal(
-            data[[self.y_true] + class_y_pred_proba_columns], [self.y_true] + class_y_pred_proba_columns
+            data[[self.y_true] + self.class_probability_columns], [self.y_true] + self.class_probability_columns
         )
         if empty:
             warnings.warn(
