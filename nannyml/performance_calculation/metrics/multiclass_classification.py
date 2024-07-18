@@ -40,10 +40,10 @@ from nannyml.sampling_error.multiclass_classification import (
     recall_sampling_error_components,
     specificity_sampling_error,
     specificity_sampling_error_components,
-    ap_sampling_error_components,
-    ap_sampling_error,
-    bv_sampling_error_components,
-    bv_sampling_error,
+    average_precision_sampling_error_components,
+    average_precision_sampling_error,
+    business_value_sampling_error_components,
+    business_value_sampling_error,
 )
 from nannyml.thresholds import Threshold, calculate_threshold_values
 
@@ -987,7 +987,7 @@ class MulticlassClassificationAP(Metric):
             # sampling error
             binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
             y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in self.classes]
-            self._sampling_error_components = ap_sampling_error_components(
+            self._sampling_error_components = average_precision_sampling_error_components(
                 y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
             )
 
@@ -1033,7 +1033,7 @@ class MulticlassClassificationAP(Metric):
             )
             return np.NaN
         else:
-            return ap_sampling_error(self._sampling_error_components, data)
+            return average_precision_sampling_error(self._sampling_error_components, data)
 
 
 @MetricFactory.register(metric='business_value', use_case=ProblemType.CLASSIFICATION_MULTICLASS)
@@ -1146,7 +1146,7 @@ class MulticlassClassificationBusinessValue(Metric):
                     f"business_value_matrix has shape {self.business_value_matrix.shape} "
                     "but we have {num_classes} classes!"
                 )
-            self._sampling_error_components = bv_sampling_error_components(
+            self._sampling_error_components = business_value_sampling_error_components(
                 y_true_reference=data[self.y_true],
                 y_pred_reference=data[self.y_pred],
                 business_value_matrix=self.business_value_matrix,
@@ -1180,4 +1180,4 @@ class MulticlassClassificationBusinessValue(Metric):
             )
             return np.NaN
         else:
-            return bv_sampling_error(self._sampling_error_components, data)
+            return business_value_sampling_error(self._sampling_error_components, data)

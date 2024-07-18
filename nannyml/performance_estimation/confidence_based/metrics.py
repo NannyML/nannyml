@@ -2354,7 +2354,8 @@ class MulticlassClassificationAUROC(Metric):
                     "targets."
                 )
                 raise InvalidArgumentsException(
-                    "y_pred_proba class and class probabilities dictionary does not match reference data.")
+                    "y_pred_proba class and class probabilities dictionary does not match reference data."
+                )
             # sampling error
             binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
             y_pred_proba = [reference_data['uncalibrated_' + self.y_pred_proba[clazz]].T for clazz in self.classes]
@@ -3385,7 +3386,7 @@ class MulticlassClassificationAP(Metric):
             # sampling error
             binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
             y_pred_proba = [reference_data['uncalibrated_' + self.y_pred_proba[clazz]].T for clazz in self.classes]
-            self._sampling_error_components = mse.ap_sampling_error_components(
+            self._sampling_error_components = mse.average_precision_sampling_error_components(
                 y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
             )
 
@@ -3431,7 +3432,7 @@ class MulticlassClassificationAP(Metric):
             )
             return np.NaN
         else:
-            return mse.ap_sampling_error(self._sampling_error_components, data)
+            return mse.average_precision_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
@@ -3525,7 +3526,7 @@ class MulticlassClassificationBusinessValue(Metric):
                     f"business_value_matrix has shape {self.business_value_matrix.shape} "
                     f"but we have {num_classes} classes!"
                 )
-            self._sampling_error_components = mse.bv_sampling_error_components(
+            self._sampling_error_components = mse.business_value_sampling_error_components(
                 y_true_reference=data[self.y_true],
                 y_pred_reference=data[self.y_pred],
                 business_value_matrix=self.business_value_matrix,
@@ -3584,7 +3585,7 @@ class MulticlassClassificationBusinessValue(Metric):
             warnings.warn(_message)
             return np.NaN
         else:
-            return mse.bv_sampling_error(self._sampling_error_components, data)
+            return mse.business_value_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:

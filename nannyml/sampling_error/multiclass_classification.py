@@ -413,7 +413,9 @@ def multiclass_confusion_matrix_sampling_error(sampling_error_components: Tuple,
     return standard_errors
 
 
-def ap_sampling_error_components(y_true_reference: List[np.ndarray], y_pred_proba_reference: List[pd.Series]):
+def average_precision_sampling_error_components(
+    y_true_reference: List[np.ndarray], y_pred_proba_reference: List[pd.Series]
+):
     """Calculate sampling error components for AP using reference data.
 
     The ``y_true_reference`` and ``y_pred_proba_reference`` lists represent the binarized target values and model
@@ -451,7 +453,7 @@ def ap_sampling_error_components(y_true_reference: List[np.ndarray], y_pred_prob
     return class_components
 
 
-def ap_sampling_error(sampling_error_components, data) -> float:
+def average_precision_sampling_error(sampling_error_components, data) -> float:
     """Calculate the AUROC sampling error for a chunk of data.
 
     Parameters
@@ -479,16 +481,12 @@ def _calculate_business_value_per_row(
 
     Intended to be used within a pandas apply function.
     """
-    cm = confusion_matrix(
-        y_true=np.array([row.y_true]),
-        y_pred=np.array([row.y_pred]),
-        labels=classes
-    )
+    cm = confusion_matrix(y_true=np.array([row.y_true]), y_pred=np.array([row.y_pred]), labels=classes)
     bv = (cm * business_value_matrix).sum()
     return bv
 
 
-def bv_sampling_error_components(
+def business_value_sampling_error_components(
     y_true_reference: pd.Series,
     y_pred_reference: pd.Series,
     business_value_matrix: np.ndarray,
@@ -514,15 +512,17 @@ def bv_sampling_error_components(
     -------
     components: tuple
     """
-    data = pd.DataFrame({
-        'y_true': y_true_reference,
-        'y_pred': y_pred_reference,
-    })
+    data = pd.DataFrame(
+        {
+            'y_true': y_true_reference,
+            'y_pred': y_pred_reference,
+        }
+    )
     bvs = data.apply(lambda x: _calculate_business_value_per_row(x, business_value_matrix, classes), axis=1)
     return (bvs.std(), normalize_business_value)
 
 
-def bv_sampling_error(sampling_error_components: Tuple, data) -> float:
+def business_value_sampling_error(sampling_error_components: Tuple, data) -> float:
     """Calculate the false positive rate sampling error for a chunk of data.
 
     Parameters
