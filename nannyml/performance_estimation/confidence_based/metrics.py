@@ -2327,36 +2327,43 @@ class MulticlassClassificationAUROC(Metric):
             threshold=threshold,
             components=[('ROC AUC', 'roc_auc')],
         )
-        # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
         self.y_pred_proba: Dict[str, str]
-
-        # sampling error
+        self.classes: List[str] = [""]
+        self.class_probability_columns: List[str]
+        self.class_uncalibrated_y_pred_proba_columns: List[str]
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
-        classes = class_labels(self.y_pred_proba)
-        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        class_uncalibrated_y_pred_proba_columns = ['uncalibrated_' + el for el in class_y_pred_proba_columns]
-        _list_missing([self.y_true] + class_uncalibrated_y_pred_proba_columns, list(reference_data.columns))
+        self.classes = class_labels(self.y_pred_proba)
+        self.class_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
+        self.class_uncalibrated_y_pred_proba_columns = ['uncalibrated_' + el for el in self.class_probability_columns]
+        _list_missing([self.y_true] + self.class_uncalibrated_y_pred_proba_columns, list(reference_data.columns))
         # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true] + class_uncalibrated_y_pred_proba_columns],
-            [self.y_true] + class_uncalibrated_y_pred_proba_columns,
+            reference_data[[self.y_true] + self.class_uncalibrated_y_pred_proba_columns],
+            [self.y_true] + self.class_uncalibrated_y_pred_proba_columns,
         )
         if empty:
-            self._sampling_error_components = [(np.NaN, 0) for class_col in class_y_pred_proba_columns]
+            self._sampling_error_components = [(np.NaN, 0) for clasz in self.classes]
         else:
+            # test if reference data are represented correctly
+            observed_classes = set(reference_data[self.y_true].unique())
+            if not observed_classes == set(self.classes):
+                self._logger.error(
+                    "The specified classification classes are not the same as the classes observed in the reference"
+                    "targets."
+                )
+                raise InvalidArgumentsException(
+                    "y_pred_proba class and class probabilities dictionary does not match reference data.")
             # sampling error
-            binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
-            y_pred_proba = [reference_data['uncalibrated_' + self.y_pred_proba[clazz]].T for clazz in classes]
+            binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
+            y_pred_proba = [reference_data['uncalibrated_' + self.y_pred_proba[clazz]].T for clazz in self.classes]
             self._sampling_error_components = mse.auroc_sampling_error_components(
                 y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
             )
 
     def _estimate(self, data: pd.DataFrame):
-        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        class_uncalibrated_y_pred_proba_columns = ['uncalibrated_' + el for el in class_y_pred_proba_columns]
-        needed_columns = class_y_pred_proba_columns + class_uncalibrated_y_pred_proba_columns
+        needed_columns = self.class_probability_columns + self.class_uncalibrated_y_pred_proba_columns
         try:
             _list_missing(needed_columns, list(data.columns))
         except InvalidArgumentsException as ex:
@@ -2390,9 +2397,7 @@ class MulticlassClassificationAUROC(Metric):
         return multiclass_roc_auc
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        class_uncalibrated_y_pred_proba_columns = ['uncalibrated_' + el for el in class_y_pred_proba_columns]
-        needed_columns = class_y_pred_proba_columns + class_uncalibrated_y_pred_proba_columns
+        needed_columns = self.class_probability_columns + self.class_uncalibrated_y_pred_proba_columns
         _list_missing(needed_columns, data)
         data, empty = common_nan_removal(data[needed_columns], needed_columns)
         if empty:
@@ -2404,10 +2409,8 @@ class MulticlassClassificationAUROC(Metric):
             return mse.auroc_sampling_error(self._sampling_error_components, data)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
-        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        class_uncalibrated_y_pred_proba_columns = ['uncalibrated_' + el for el in class_y_pred_proba_columns]
         try:
-            _list_missing([self.y_true] + class_uncalibrated_y_pred_proba_columns, data)
+            _list_missing([self.y_true] + self.class_uncalibrated_y_pred_proba_columns, data)
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -2415,14 +2418,19 @@ class MulticlassClassificationAUROC(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(data, [self.y_true] + class_uncalibrated_y_pred_proba_columns)
+        data, empty = common_nan_removal(data, [self.y_true] + self.class_uncalibrated_y_pred_proba_columns)
         if empty:
             warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
 
         y_true = data[self.y_true]
-        if y_true.nunique() <= 1:
-            warnings.warn("Too few unique values present in 'y_true', returning NaN as realized ROC-AUC.")
+        if set(y_true.unique()) != set(self.classes):
+            _message = (
+                f"'{self.y_true}' does not contain all reported classes, cannot calculate {self.display_name}. "
+                "Returning NaN."
+            )
+            warnings.warn(_message)
+            self._logger.warning(_message)
             return np.NaN
 
         _, y_pred_probas, labels = _get_multiclass_uncalibrated_predictions(data, self.y_pred, self.y_pred_proba)
@@ -3158,7 +3166,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
             warnings.warn(
                 f"Too few unique values present in 'y_pred', returning NaN as realized {self.display_name} score."
             )
-            return nan_array    
+            return nan_array
 
         cm = confusion_matrix(
             data[self.y_true], data[self.y_pred], labels=self.classes, normalize=self.normalize_confusion_matrix

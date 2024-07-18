@@ -721,7 +721,6 @@ class BinaryClassificationBusinessValue(Metric):
             Name(s) of the column(s) containing your model output. For binary classification, pass a single string
             refering to the model output column.
         """
-
         if normalize_business_value not in [None, "per_prediction"]:
             raise InvalidArgumentsException(
                 f"normalize_business_value must be None or 'per_prediction', but got {normalize_business_value}"
@@ -863,6 +862,7 @@ class BinaryClassificationConfusionMatrix(Metric):
         self._sampling_error_components: Tuple = ()
 
     def __str__(self):
+        """Get string representation of metric."""
         return "confusion_matrix"
 
     def fit(self, reference_data: pd.DataFrame, chunker: Chunker):

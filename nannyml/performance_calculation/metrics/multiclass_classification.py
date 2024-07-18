@@ -19,7 +19,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 
-from nannyml._typing import ProblemType, class_labels, model_output_column_names
+from nannyml._typing import ProblemType, class_labels
 from nannyml.base import _list_missing, common_nan_removal
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
@@ -84,10 +84,9 @@ class MulticlassClassificationAUROC(Metric):
             upper_threshold_limit=1,
             components=[("ROC AUC", "roc_auc")],
         )
-        # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
         self.y_pred_proba: Dict[str, str]
-
-        # sampling error
+        self.classes: List[str] = [""]
+        self.class_probability_columns: List[str]
         self._sampling_error_components: List[Tuple] = []
 
     def __str__(self):
@@ -95,18 +94,32 @@ class MulticlassClassificationAUROC(Metric):
         return "roc_auc"
 
     def _fit(self, reference_data: pd.DataFrame):
-        classes = class_labels(self.y_pred_proba)
-        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        _list_missing([self.y_true] + class_y_pred_proba_columns, list(reference_data.columns))
+        # set up sorted classes and prob_column_names to use across metric class
+        self.classes = class_labels(self.y_pred_proba)
+        self.class_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
+
+        _list_missing([self.y_true] + self.class_probability_columns, list(reference_data.columns))
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true] + class_y_pred_proba_columns], [self.y_true] + class_y_pred_proba_columns
+            reference_data[[self.y_true] + self.class_probability_columns],
+            [self.y_true] + self.class_probability_columns
         )
         if empty:
-            self._sampling_error_components = [(np.NaN, 0) for class_col in class_y_pred_proba_columns]
+            self._sampling_error_components = [(np.NaN, 0) for clasz in self.classes]
+            # TODO: Ideally we would also raise an error here!
         else:
+            # test if reference data are represented correctly
+            observed_classes = set(reference_data[self.y_true].unique())
+            if not observed_classes == set(self.classes):
+                self._logger.error(
+                    "The specified classification classes are not the same as the classes observed in the reference"
+                    "targets."
+                )
+                raise InvalidArgumentsException(
+                    "y_pred_proba class and class probabilities dictionary does not match reference data.")
+
             # sampling error
-            binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=classes).T)
-            y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in classes]
+            binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
+            y_pred_proba = [reference_data[self.y_pred_proba[clazz]].T for clazz in self.classes]
             self._sampling_error_components = auroc_sampling_error_components(
                 y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
             )
@@ -119,37 +132,34 @@ class MulticlassClassificationAUROC(Metric):
                 "be a dictionary mapping classes to columns."
             )
 
-        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        _list_missing([self.y_true] + class_y_pred_proba_columns, data)
+        _list_missing([self.y_true] + self.class_probability_columns, data)
         data, empty = common_nan_removal(
-            data[[self.y_true] + class_y_pred_proba_columns], [self.y_true] + class_y_pred_proba_columns
+            data[[self.y_true] + self.class_probability_columns], [self.y_true] + self.class_probability_columns
         )
         if empty:
-            warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
+            _message = f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
+            self._logger.warning(_message)
+            warnings.warn(_message)
             return np.NaN
-
-        labels, class_probability_columns = [], []
-        for label in sorted(list(self.y_pred_proba.keys())):
-            labels.append(label)
-            class_probability_columns.append(self.y_pred_proba[label])
 
         y_true = data[self.y_true]
-        y_pred_proba = data[class_probability_columns]
+        y_pred_proba = data[self.class_probability_columns]
 
-        if y_true.nunique() <= 1:
-            warnings.warn(
-                f"'{self.y_true}' only contains a single class for chunk, cannot calculate {self.display_name}. "
+        if set(y_true.unique()) != set(self.classes):
+            _message = (
+                f"'{self.y_true}' does not contain all reported classes, cannot calculate {self.display_name}. "
                 "Returning NaN."
             )
+            warnings.warn(_message)
+            self._logger.warning(_message)
             return np.NaN
         else:
-            return roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average='macro', labels=labels)
+            return roc_auc_score(y_true, y_pred_proba, multi_class='ovr', average='macro', labels=self.classes)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        class_y_pred_proba_columns = model_output_column_names(self.y_pred_proba)
-        _list_missing([self.y_true] + class_y_pred_proba_columns, data)
+        _list_missing([self.y_true] + self.class_probability_columns, data)
         data, empty = common_nan_removal(
-            data[[self.y_true] + class_y_pred_proba_columns], [self.y_true] + class_y_pred_proba_columns
+            data[[self.y_true] + self.class_probability_columns], [self.y_true] + self.class_probability_columns
         )
         if empty:
             warnings.warn(
