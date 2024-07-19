@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2024-07-19
+
+### Changed
+
+- Updated `Pydantic` to `^2.7.4`, `SQLModel` to `^0.0.19`. [(#401)](https://github.com/NannyML/nannyml/issues/401)
+- Removed the `drop_duplicates` step from the `DomainClassifier` for a further speedup. [(#402)](https://github.com/NannyML/nannyml/issues/402)
+- Reverted to previous working dependency configuration for `matplotlib` as the current one causes issues in `conda`. [(#403)](https://github.com/NannyML/nannyml/issues/403)
+
+### Fixed
+
+- Added `DomainClassifier` method for drift detection to be run in the CLI.
+- Fixed `NaN` handling for multiclass confusion matrix estimation in CBPE. [(#400)](https://github.com/NannyML/nannyml/issues/400)
+- Fixed incorrect handling of columns marked as categorical in Wasserstein and Hellinger drift detection methods.
+  The `treat_as_categorical` value was ignored. We've also added a `treat_as_continuous` column to explicitly mark columns as continuous.
+  [(#404)](https://github.com/NannyML/nannyml/issues/404)
+- Fixed an issue with multiclass `AUROC` calculation and estimation when not all classes are available in a
+  reference chunk during fitting. [(#405)](https://github.com/NannyML/nannyml/issues/405)
+
+### Added
+
+- Added a new data quality calculator to check if continuous values in analysis data are within the ranges
+  encountered in the reference data. Big thanks to [@jnesfield](https://github.com/jnesfield)! Still needs some documentation...
+  [(#408)](https://github.com/NannyML/nannyml/issues/408)
+
 ## [0.10.7] - 2024-06-07
 
 ### Changed

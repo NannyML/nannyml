@@ -31,7 +31,7 @@ __email__ = 'niels@nannyml.com'
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.10.7'
+__version__ = '0.11.0'
 
 import logging
 
@@ -39,7 +39,7 @@ from dotenv import load_dotenv
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from .data_quality import MissingValuesCalculator, UnseenValuesCalculator
+from .data_quality import MissingValuesCalculator, UnseenValuesCalculator, NumericalRangeCalculator
 from .datasets import (
     load_modified_california_housing_dataset,
     load_synthetic_binary_classification_dataset,
