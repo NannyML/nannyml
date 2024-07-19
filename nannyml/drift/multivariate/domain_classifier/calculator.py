@@ -230,16 +230,16 @@ class DomainClassifierCalculator(AbstractCalculator):
         # been provided the timestamp column name.
         #
         # The reference data will be sorted according to the timestamp column (when available) to mimic
-        # Chunker behavior. This means the reference data will be "aligned" with chunked reference data. 
+        # Chunker behavior. This means the reference data will be "aligned" with chunked reference data.
         # This way we can use chunk indices on the internal reference data copy.
         if self.chunker.timestamp_column_name:
             if self.chunker.timestamp_column_name not in list(reference_data.columns):
                 raise InvalidArgumentsException(
                     f"timestamp column '{self.chunker.timestamp_column_name}' not in columns: {list(reference_data.columns)}."  # noqa: E501
                 )
-            self._reference_X = reference_data.sort_values(
-                by=[self.chunker.timestamp_column_name]
-            ).reset_index(drop=True)[self.feature_column_names]
+            self._reference_X = reference_data.sort_values(by=[self.chunker.timestamp_column_name]).reset_index(
+                drop=True
+            )[self.feature_column_names]
         else:
             self._reference_X = reference_data[self.feature_column_names]
 
@@ -306,7 +306,7 @@ class DomainClassifierCalculator(AbstractCalculator):
             y = np.concatenate([reference_y, chunk_y])
         else:
             # Use information from chunk indices to identify reference chunk's location. This is possible because
-            # both the internal reference data copy and the chunk data were sorted by timestamp, so these 
+            # both the internal reference data copy and the chunk data were sorted by timestamp, so these
             # indices align. This way we eliminate the need to combine these two data frames and drop duplicate rows,
             # which is a costly operation.
             X = self._reference_X
