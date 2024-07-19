@@ -111,9 +111,8 @@ class NumericalRangeCalculator(AbstractCalculator):
             self.data_quality_metric = 'out_of_range_values_count'
             self.upper_threshold_value_limit = np.nan
 
-        #object tracks values as list [min,max]
-        self._continuous_val_ranges: Dict[str, list] = {column_name: list() for column_name in self.column_names}
-
+        # object tracks values as list [min,max]
+        self._reference_value_ranges: Dict[str, list] = {column_name: list() for column_name in self.column_names}
 
     def _calculate_out_of_range_stats(self, data: pd.Series, lower_bound: float, upper_bound: float):
         # to do make this calc out of range stats
@@ -141,7 +140,7 @@ class NumericalRangeCalculator(AbstractCalculator):
             )
         
         for col in self.column_names:
-            self._continuous_val_ranges[col] = [reference_data[col].min(), reference_data[col].max()]
+            self._reference_value_ranges[col] = [reference_data[col].min(), reference_data[col].max()]
 
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
@@ -206,8 +205,8 @@ class NumericalRangeCalculator(AbstractCalculator):
 
     def _calculate_for_column(self, data: pd.DataFrame, column_name: str) -> Dict[str, Any]:
         result = {}
-        value_range = self._continuous_val_ranges[column_name]
-        value = self._calculate_out_of_range_stats(data[column_name], value_range[0],value_range[1])
+        value_range = self._reference_value_ranges[column_name]
+        value = self._calculate_out_of_range_stats(data[column_name], value_range[0], value_range[1])
         result['value'] = value
         return result
 
