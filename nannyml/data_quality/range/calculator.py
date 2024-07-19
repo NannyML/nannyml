@@ -13,7 +13,7 @@ from pandas import MultiIndex
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
+from nannyml.thresholds import Threshold, calculate_threshold_values, ConstantThreshold
 from nannyml.usage_logging import UsageEvent, log_usage
 
 from .result import Result
@@ -35,7 +35,7 @@ class NumericalRangeCalculator(AbstractCalculator):
         chunk_number: Optional[int] = None,
         chunk_period: Optional[str] = None,
         chunker: Optional[Chunker] = None,
-        threshold: Threshold = StandardDeviationThreshold(),
+        threshold: Threshold = ConstantThreshold(lower=None, upper=0),
     ):
         """Creates a new NumericalRangeCalculator instance.
 
