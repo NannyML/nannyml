@@ -2,7 +2,7 @@
 #
 #  License: Apache Software License 2.0
 
-"""Continous numerical variable range monitor to ensure range supplied is within training bounds."""
+"""Continuous numerical variable range monitor to ensure range supplied is within training bounds."""
 
 from typing import Any, Dict, List, Optional, Union
 
@@ -15,7 +15,6 @@ from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.thresholds import Threshold, calculate_threshold_values, ConstantThreshold
 from nannyml.usage_logging import UsageEvent, log_usage
-
 from .result import Result
 
 """
@@ -24,7 +23,7 @@ Values Out Of Range Data Quality Module.
 
 
 class NumericalRangeCalculator(AbstractCalculator):
-    """NumericalRangeCalculator implementation to ensure inference data numerical ranges match training."""
+    """NumericalRangeCalculator ensures the monitoring data set numerical ranges match the reference data set ones."""
 
     def __init__(
         self,
@@ -68,7 +67,8 @@ class NumericalRangeCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
-        >>> feature_column_names = [col for col in reference_df.columns if col not in ['fuel','transmission','timestamp', 'y_pred', 'y_true']]
+        >>> feature_column_names = [col for col in reference_df.columns if col not in [
+        ...     'fuel','transmission','timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.NumericalRangeCalculator(
         ...     column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
@@ -117,7 +117,7 @@ class NumericalRangeCalculator(AbstractCalculator):
     def _calculate_out_of_range_stats(self, data: pd.Series, lower_bound: float, upper_bound: float):
         # to do make this calc out of range stats
         count_tot = data.shape[0]
-        count_out_of_range  = ((data < lower_bound) | (data > upper_bound)).sum()
+        count_out_of_range = ((data < lower_bound) | (data > upper_bound)).sum()
         if self.normalize:
             count_out_of_range = count_out_of_range / count_tot
         return count_out_of_range
@@ -138,7 +138,7 @@ class NumericalRangeCalculator(AbstractCalculator):
                 f"Specified columns_names for NumericalRangeCalculator must all be continuous.\n"
                 f"Categorical columns found:\n{categorical_column_names}"
             )
-        
+
         for col in self.column_names:
             self._reference_value_ranges[col] = [reference_data[col].min(), reference_data[col].max()]
 
@@ -212,7 +212,10 @@ class NumericalRangeCalculator(AbstractCalculator):
 
     def _set_metric_thresholds(self, result_data: pd.DataFrame):
         for column_name in self.column_names:
-            self._lower_alert_thresholds[column_name], self._upper_alert_thresholds[column_name] = calculate_threshold_values(  # noqa: E501
+            (
+                self._lower_alert_thresholds[column_name],
+                self._upper_alert_thresholds[column_name],
+            ) = calculate_threshold_values(  # noqa: E501
                 threshold=self.threshold,
                 data=result_data.loc[:, (column_name, 'value')],
                 lower_threshold_value_limit=self.lower_threshold_value_limit,
@@ -227,11 +230,17 @@ class NumericalRangeCalculator(AbstractCalculator):
             result_data[(column_name, 'alert')] = result_data.apply(
                 lambda row: True
                 if (
-                    row[(column_name, 'value')] > (
-                        np.inf if row[(column_name, 'upper_threshold')] is None else row[(column_name, 'upper_threshold')]  # noqa: E501
+                    row[(column_name, 'value')]
+                    > (
+                        np.inf
+                        if row[(column_name, 'upper_threshold')] is None
+                        else row[(column_name, 'upper_threshold')]  # noqa: E501
                     )
-                    or row[(column_name, 'value')] < (
-                        -np.inf if row[(column_name, 'lower_threshold')] is None else row[(column_name, 'lower_threshold')]  # noqa: E501
+                    or row[(column_name, 'value')]
+                    < (
+                        -np.inf
+                        if row[(column_name, 'lower_threshold')] is None
+                        else row[(column_name, 'lower_threshold')]  # noqa: E501
                     )
                 )
                 else False,

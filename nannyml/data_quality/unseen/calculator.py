@@ -13,6 +13,7 @@ from pandas import MultiIndex
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
+
 # from nannyml.data_quality.base import _add_alert_flag
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.thresholds import ConstantThreshold, Threshold, calculate_threshold_values
@@ -69,7 +70,8 @@ class UnseenValuesCalculator(AbstractCalculator):
         --------
         >>> import nannyml as nml
         >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
-        >>> column_names = [col for col in reference.columns if col not in ['car_age', 'km_driven', 'price_new', 'accident_count', 'door_count','timestamp', 'y_pred', 'y_true']]
+        >>> column_names = [col for col in reference.columns if col not in [
+        ...     'car_age', 'km_driven', 'price_new', 'accident_count', 'door_count','timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.UnseenValuesCalculator(
         ...     column_names=column_names,
         ...     timestamp_column_name='timestamp',
@@ -217,7 +219,10 @@ class UnseenValuesCalculator(AbstractCalculator):
 
     def _set_metric_thresholds(self, result_data: pd.DataFrame):
         for column_name in self.column_names:
-            self._lower_alert_thresholds[column_name], self._upper_alert_thresholds[column_name] = calculate_threshold_values(  # noqa: E501
+            (
+                self._lower_alert_thresholds[column_name],
+                self._upper_alert_thresholds[column_name],
+            ) = calculate_threshold_values(  # noqa: E501
                 threshold=self.threshold,
                 data=result_data.loc[:, (column_name, 'value')],
                 lower_threshold_value_limit=self.lower_threshold_value_limit,
@@ -232,11 +237,17 @@ class UnseenValuesCalculator(AbstractCalculator):
             result_data[(column_name, 'alert')] = result_data.apply(
                 lambda row: True
                 if (
-                    row[(column_name, 'value')] > (
-                        np.inf if row[(column_name, 'upper_threshold')] is None else row[(column_name, 'upper_threshold')]  # noqa: E501
+                    row[(column_name, 'value')]
+                    > (
+                        np.inf
+                        if row[(column_name, 'upper_threshold')] is None
+                        else row[(column_name, 'upper_threshold')]  # noqa: E501
                     )
-                    or row[(column_name, 'value')] < (
-                        -np.inf if row[(column_name, 'lower_threshold')] is None else row[(column_name, 'lower_threshold')]  # noqa: E501
+                    or row[(column_name, 'value')]
+                    < (
+                        -np.inf
+                        if row[(column_name, 'lower_threshold')] is None
+                        else row[(column_name, 'lower_threshold')]  # noqa: E501
                     )
                 )
                 else False,
