@@ -143,6 +143,9 @@ class NumericalRangeCalculator(AbstractCalculator):
         for col in self.column_names:
             self._continuous_val_ranges[col] = [reference_data[col].min(), reference_data[col].max()]
 
+        self.result = self._calculate(data=reference_data)
+        self.result.data[('chunk', 'period')] = 'reference'
+
         return self
 
     @log_usage(UsageEvent.DQ_CALC_VALUES_OUT_OF_RANGE_RUN, metadata_from_self=['normalize'])
