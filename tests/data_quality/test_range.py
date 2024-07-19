@@ -8,7 +8,8 @@
 import pandas as pd
 import pytest
 
-from nannyml.data_quality.range import NumericalRangeCalculator, Result
+from nannyml._typing import Result
+from nannyml.data_quality.range import NumericalRangeCalculator
 from nannyml.datasets import load_synthetic_car_loan_data_quality_dataset
 from nannyml.exceptions import InvalidArgumentsException
 
