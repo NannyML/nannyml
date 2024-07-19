@@ -135,8 +135,8 @@ class NumericalRangeCalculator(AbstractCalculator):
         continuous_column_names, categorical_column_names = _split_features_by_type(reference_data, self.column_names)
         if not set(self.column_names) == set(continuous_column_names):
             raise InvalidArgumentsException(
-                f"Specified columns_names for NumericalRangeCalculator must all be continuous.\n"
-                f"Categorical columns found:\n{categorical_column_names}"
+                f"Specified columns_names for NumericalRangeCalculator must all be continuous. "
+                f"Categorical columns found: {categorical_column_names}"
             )
 
         for col in self.column_names:
