@@ -76,7 +76,7 @@ class Result(PerColumnResult, ResultCompareMixin):
         >>> import nannyml as nml
         >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
         >>> column_names = [col for col in reference.columns if col not in [
-        ....    'car_age', 'km_driven', 'price_new', 'accident_count', 'door_count','timestamp', 'y_pred', 'y_true']]
+        ...     'car_age', 'km_driven', 'price_new', 'accident_count', 'door_count','timestamp', 'y_pred', 'y_true']]
         >>> calc = nml.UnseenValuesCalculator(
         ...     column_names=column_names,
         ...     timestamp_column_name='timestamp',
@@ -85,7 +85,6 @@ class Result(PerColumnResult, ResultCompareMixin):
         >>> res.filter(period='analysis').plot().show()
 
         """
-
         return plot_metrics(
             self,
             title='Data Quality ',

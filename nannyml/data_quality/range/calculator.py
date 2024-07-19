@@ -1,10 +1,9 @@
-#  Author:   Niels Nuyttens  <niels@nannyml.com>
-#  Author:   Nikolaos Perrakis  <nikos@nannyml.com>
+#  Author:   James Nesfield  <jamesnesfield@live.com>
 #
 #  License: Apache Software License 2.0
 
-"""Drift calculator using Reconstruction Error as a measure of drift."""
-import logging
+"""Continuous numerical variable range monitor to ensure range supplied is within training bounds."""
+
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
@@ -13,23 +12,18 @@ from pandas import MultiIndex
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
-
-# from nannyml.data_quality.base import _add_alert_flag
 from nannyml.exceptions import InvalidArgumentsException
-from nannyml.thresholds import ConstantThreshold, Threshold, calculate_threshold_values
+from nannyml.thresholds import Threshold, calculate_threshold_values, ConstantThreshold
 from nannyml.usage_logging import UsageEvent, log_usage
-
 from .result import Result
 
 """
-Unseen Values Data Quality Module.
+Values Out Of Range Data Quality Module.
 """
 
 
-class UnseenValuesCalculator(AbstractCalculator):
-    """UnseenValuesCalculator implementation using unseen value rate as a measure of data quality.
-
-    This only works for categorical features. Seen values are the ones encountered on the reference data."""
+class NumericalRangeCalculator(AbstractCalculator):
+    """NumericalRangeCalculator ensures the monitoring data set numerical ranges match the reference data set ones."""
 
     def __init__(
         self,
@@ -42,15 +36,15 @@ class UnseenValuesCalculator(AbstractCalculator):
         chunker: Optional[Chunker] = None,
         threshold: Threshold = ConstantThreshold(lower=None, upper=0),
     ):
-        """Creates a new MissingValuesCalculator instance.
+        """Creates a new NumericalRangeCalculator instance.
 
         Parameters
         ----------
         column_names: Union[str, List[str]]
             A string or list containing the names of features in the provided data set.
-            Unseen Values will be calculated for each entry in this list.
+            Missing Values will be calculated for each entry in this list.
         normalize: bool, default=True
-            Whether to provide the unseen value ratio (True) or the absolute number of unseen values (False).
+            Whether to provide the missing value ratio (True) or the absolute number of missing values (False).
         timestamp_column_name: str
             The name of the column containing the timestamp of the model prediction.
         chunk_size: int
@@ -64,22 +58,25 @@ class UnseenValuesCalculator(AbstractCalculator):
             Only one of `chunk_size`, `chunk_number` or `chunk_period` should be given.
         chunker : Chunker
             The `Chunker` used to split the data sets into a lists of chunks.
+        threshold: Threshold, default=StandardDeviationThreshold
+            The threshold you wish to evaluate values on. Defaults to a StandardDeviationThreshold with default
+            options. The other available value is ConstantThreshold.
 
 
         Examples
         --------
         >>> import nannyml as nml
-        >>> reference, analysis, _ = nml.load_synthetic_car_price_dataset()
-        >>> column_names = [col for col in reference.columns if col not in [
-        ...     'car_age', 'km_driven', 'price_new', 'accident_count', 'door_count','timestamp', 'y_pred', 'y_true']]
-        >>> calc = nml.UnseenValuesCalculator(
-        ...     column_names=column_names,
+        >>> reference_df, analysis_df, _ = nml.load_synthetic_car_price_dataset()
+        >>> feature_column_names = [col for col in reference_df.columns if col not in [
+        ...     'fuel','transmission','timestamp', 'y_pred', 'y_true']]
+        >>> calc = nml.NumericalRangeCalculator(
+        ...     column_names=feature_column_names,
         ...     timestamp_column_name='timestamp',
-        ... ).fit(reference)
-        >>> res = calc.calculate(analysis)
+        ... ).fit(reference_df)
+        >>> res = calc.calculate(analysis_df)
         >>> res.filter(period='analysis').plot().show()
         """
-        super(UnseenValuesCalculator, self).__init__(
+        super(NumericalRangeCalculator, self).__init__(
             chunk_size, chunk_number, chunk_period, chunker, timestamp_column_name
         )
         if isinstance(column_names, str):
@@ -97,34 +94,35 @@ class UnseenValuesCalculator(AbstractCalculator):
                 "found\n{column_names}"
             )
         self.result: Optional[Result] = None
-        # Threshold strategy is the same across all columns
-        # By default for unseen values there is no lower threshold or threshold limit.
-        # The value should be 0 and can't go lower.
-        # The upper limit is also 0 because there shouldn't be any. If there is we alert.
+
+        # threshold strategy is the same across all columns
         self.threshold = threshold
         self._upper_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
         self._lower_alert_thresholds: Dict[str, Optional[float]] = {column_name: 0 for column_name in self.column_names}
 
         self.lower_threshold_value_limit: float = 0
-        self.upper_threshold_value_limit: float
+        self.upper_threshold_value_limit: Optional[float] = None
         self.normalize = normalize
+
         if self.normalize:
-            self.data_quality_metric = 'unseen_values_rate'
+            self.data_quality_metric = 'out_of_range_values_rate'
             self.upper_threshold_value_limit = 1
         else:
-            self.data_quality_metric = 'unseen_values_count'
+            self.data_quality_metric = 'out_of_range_values_count'
             self.upper_threshold_value_limit = np.nan
 
-        self._categorical_seen_values: Dict[str, set] = {column_name: set() for column_name in self.column_names}
+        # object tracks values as list [min,max]
+        self._reference_value_ranges: Dict[str, list] = {column_name: list() for column_name in self.column_names}
 
-    def _calculate_unseen_value_stats(self, data: pd.Series, seen_set: set):
+    def _calculate_out_of_range_stats(self, data: pd.Series, lower_bound: float, upper_bound: float):
+        # to do make this calc out of range stats
         count_tot = data.shape[0]
-        count_uns = count_tot - data.isin(seen_set).sum()
+        count_out_of_range = ((data < lower_bound) | (data > upper_bound)).sum()
         if self.normalize:
-            count_uns = count_uns / count_tot
-        return count_uns
+            count_out_of_range = count_out_of_range / count_tot
+        return count_out_of_range
 
-    @log_usage(UsageEvent.DQ_CALC_UNSEEN_VALUES_FIT, metadata_from_self=['normalize'])
+    @log_usage(UsageEvent.DQ_CALC_VALUES_OUT_OF_RANGE_FIT, metadata_from_self=['normalize'])
     def _fit(self, reference_data: pd.DataFrame, *args, **kwargs):
         """Fits the drift calculator to a set of reference data."""
         if reference_data.empty:
@@ -132,29 +130,24 @@ class UnseenValuesCalculator(AbstractCalculator):
 
         _list_missing(self.column_names, reference_data)
 
-        # Included columns of dtype=int should be considered categorical. We'll try converting those explicitly.
-        reference_data = _convert_int_columns_to_categorical(reference_data, self.column_names, self._logger)
-
-        # All provided columns must be categorical
+        # All provided columns must be continuous
+        # We do not make int categorical
         continuous_column_names, categorical_column_names = _split_features_by_type(reference_data, self.column_names)
-        if not set(self.column_names) == set(categorical_column_names):
+        if not set(self.column_names) == set(continuous_column_names):
             raise InvalidArgumentsException(
-                f"Specified columns_names for UnseenValuesCalculator must all be categorical.\n"
-                f"Continuous columns found:\n{continuous_column_names}"
+                f"Specified columns_names for NumericalRangeCalculator must all be continuous. "
+                f"Categorical columns found: {categorical_column_names}"
             )
 
         for col in self.column_names:
-            self._categorical_seen_values[col] = set(reference_data[col].unique())
+            self._reference_value_ranges[col] = [reference_data[col].min(), reference_data[col].max()]
 
-        # By definition everything (sampling error and confidence boundaries) here is 0.
-        # We are not breaking pattern by artificially creating the result object
-        # But maybe we should? to be more efficient??
         self.result = self._calculate(data=reference_data)
         self.result.data[('chunk', 'period')] = 'reference'
 
         return self
 
-    @log_usage(UsageEvent.DQ_CALC_UNSEEN_VALUES_RUN, metadata_from_self=['normalize'])
+    @log_usage(UsageEvent.DQ_CALC_VALUES_OUT_OF_RANGE_RUN, metadata_from_self=['normalize'])
     def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
         """Calculates methods for both categorical and continuous columns."""
         if data.empty:
@@ -212,8 +205,8 @@ class UnseenValuesCalculator(AbstractCalculator):
 
     def _calculate_for_column(self, data: pd.DataFrame, column_name: str) -> Dict[str, Any]:
         result = {}
-        seen_values = self._categorical_seen_values[column_name]
-        value = self._calculate_unseen_value_stats(data[column_name], seen_values)
+        value_range = self._reference_value_ranges[column_name]
+        value = self._calculate_out_of_range_stats(data[column_name], value_range[0], value_range[1])
         result['value'] = value
         return result
 
@@ -254,25 +247,6 @@ class UnseenValuesCalculator(AbstractCalculator):
                 axis=1,
             )
         return result_data
-
-
-def _convert_int_columns_to_categorical(
-    data: pd.DataFrame, column_names: List[str], logger: Optional[logging.Logger]
-) -> pd.DataFrame:
-    res = data.copy()
-    int_cols = list(
-        filter(
-            lambda c: c in column_names
-            and data[c].dtype in ('int_', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'),
-            data.columns,
-        )
-    )
-    for col in int_cols:
-        res[col] = res[col].astype('category')
-
-    if logger:
-        logger.warning(f"converting integer columns to categorical: {list(int_cols)}")
-    return res
 
 
 def _create_multilevel_index(

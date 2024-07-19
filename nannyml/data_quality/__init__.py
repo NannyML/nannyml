@@ -7,3 +7,4 @@
 
 from .missing import MissingValuesCalculator
 from .unseen import UnseenValuesCalculator
+from .range import NumericalRangeCalculator
