@@ -2326,6 +2326,8 @@ class MulticlassClassificationAUROC(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('ROC AUC', 'roc_auc')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
         self.y_pred_proba: Dict[str, str]
         self.classes: List[str] = [""]
@@ -2463,6 +2465,8 @@ class MulticlassClassificationF1(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('F1', 'f1')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error:
@@ -2577,6 +2581,8 @@ class MulticlassClassificationPrecision(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Precision', 'precision')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -2692,6 +2698,8 @@ class MulticlassClassificationRecall(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Recall', 'recall')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -2807,6 +2815,8 @@ class MulticlassClassificationSpecificity(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Specificity', 'specificity')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -2927,6 +2937,8 @@ class MulticlassClassificationAccuracy(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Accuracy', 'accuracy')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
 
         # sampling error
@@ -3356,6 +3368,8 @@ class MulticlassClassificationAP(Metric):
             chunker=chunker,
             threshold=threshold,
             components=[('Average Precision', 'average_precision')],
+            lower_threshold_value_limit=0,
+            upper_threshold_value_limit=1,
         )
         # FIXME: Should we check the y_pred_proba argument here to ensure it's a dict?
         self.y_pred_proba: Dict[str, str]
