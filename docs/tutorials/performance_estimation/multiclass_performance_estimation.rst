@@ -27,3 +27,4 @@ refer to the :ref:`multiclass-confusion-matrix-estimation` section.
 
    multiclass_performance_estimation/standard_metric_estimation
    multiclass_performance_estimation/confusion_matrix_estimation
+   multiclass_performance_estimation/business_value_estimation

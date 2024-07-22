@@ -1,8 +1,8 @@
 .. _standard-metric-calculation:
 
-========================================================================================
+==================================================================
 Calculating Standard Performance Metrics for Binary Classification
-========================================================================================
+==================================================================
 
 This tutorial explains how to use NannyML to calculate standard performance metrics for binary classification
 models.
@@ -15,7 +15,7 @@ models.
 .. _standard-metric-calculation-binary-just-the-code:
 
 Just The Code
-----------------
+-------------
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Calculating Standard Metrics - Binary Classification.ipynb
@@ -28,7 +28,7 @@ Just The Code
     - To learn how :class:`~nannyml.thresholds.ConstantThreshold` works and to set up custom threshold check out the :ref:`thresholds tutorial <thresholds>`
 
 Walkthrough
---------------
+-----------
 
 For simplicity this guide is based on a synthetic dataset included in the library, where the monitored model
 predicts whether a customer will repay a loan to buy a car.
@@ -123,17 +123,16 @@ Apart from chunk-related data, the results data have a set of columns for each c
 
 The results can be plotted for visual inspection. Our plot contains several key elements.
 
-* *The purple step plot* shows the performance in each chunk of the analysis period. Thick squared point
-  markers indicate the middle of these chunks.
-
-* *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate
+* *The blue step plot* shows the performance in each chunk of the provided data. Thick squared point markers indicate
   the middle of these chunks.
 
-* *The gray vertical line* splits the reference and analysis periods.
+* *The gray vertical line* splits the reference and analysis data periods.
 
-* *The red horizontal dashed lines* show upper and lower thresholds for alerting purposes.
+* *The red horizontal dashed lines* show upper and lower thresholds that indicate the range of
+  expected performance values.
 
-* *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised. Alerts are caused by the performance crossing the upper or lower threshold.
+* *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised.
+  Alerts are caused by the performance crossing the upper or lower threshold.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Calculating Standard Metrics - Binary Classification.ipynb

@@ -816,6 +816,8 @@ def business_value_sampling_error_components(
         Predictions for the reference dataset.
     business_value_matrix: np.ndarray
         A 2x2 matrix of values for the business problem.
+    normalize_business_value: Optional[str], default=None
+            Determines how the business value will be normalized. Allowed values are None and 'per_prediction'.
     Returns
     -------
     components: tuple

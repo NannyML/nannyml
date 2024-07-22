@@ -125,17 +125,16 @@ calculated metric.
 
 The results can be plotted for visual inspection. Our plot contains several key elements.
 
-* *The purple step plot* shows the performance in each chunk of the analysis period. Thick squared point
-  markers indicate the middle of these chunks.
-
-* *The blue step plot* shows the performance in each chunk of the reference period. Thick squared point markers indicate
+* *The blue step plot* shows the performance in each chunk of the provided data. Thick squared point markers indicate
   the middle of these chunks.
 
-* *The gray vertical line* splits the reference and analysis periods.
+* *The gray vertical line* splits the reference and analysis data periods.
 
-* *The red horizontal dashed lines* show upper and lower thresholds for alerting purposes.
+* *The red horizontal dashed lines* show upper and lower thresholds that indicate the range of
+  expected performance values.
 
-* *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised. Alerts are caused by the performance crossing the upper or lower threshold.
+* *The red diamond-shaped point markers* in the middle of a chunk indicate that an alert has been raised.
+  Alerts are caused by the performance crossing the upper or lower threshold.
 
 .. nbimport::
     :path: ./example_notebooks/Tutorial - Calculating Confusion Matrix - Multiclass Classification.ipynb
