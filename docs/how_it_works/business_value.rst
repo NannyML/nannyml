@@ -55,6 +55,13 @@ observations in that cell of the :term:`confusion matrix<Confusion Matrix>`. Usi
 matrix notation the element on the i-th row and j-column of the business value matrix tells us the value
 of the i-th target when we have predicted the j-th value.
 
+.. note::
+    In Multiclass classification the classes are ordered alphanumerically.
+    This is used in the creation of the confusion matrix. The rows of the confusion matrix
+    represent target values in the corresponding alphanumerical order. And the columns
+    of the confusion matrix represent predicted classes in the same alphanumerical order.
+    Therefore the elements of the business value matrix should be constructed accordingly.
+
 For binary classification this formula is easier to manage hence we will use it as an example. Classificatio problems
 with more classes follow the same pattern.
 Using the `sklearn confusion matrix convention`_ we designate label 0 as negative and label 1 as positive.
