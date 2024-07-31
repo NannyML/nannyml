@@ -19,7 +19,7 @@ from nannyml.datasets import (
 )
 from nannyml.drift.multivariate.data_reconstruction import DataReconstructionDriftCalculator
 from nannyml.drift.univariate import UnivariateDriftCalculator
-from nannyml.io import DatabaseWriter, PickleFileWriter, RawFilesWriter
+from nannyml.io import PickleFileWriter, RawFilesWriter
 from nannyml.performance_calculation import PerformanceCalculator
 from nannyml.performance_estimation.confidence_based import CBPE
 from nannyml.performance_estimation.direct_loss_estimation import DLE
@@ -303,8 +303,11 @@ def test_raw_files_writer_raises_no_exceptions_when_writing_to_csv(result):  # n
 )
 def test_database_writer_raises_no_exceptions_when_writing(result):  # noqa: D103
     try:
+        from nannyml.io.db import DatabaseWriter
         writer = DatabaseWriter(connection_string='sqlite:///', model_name='test')
         writer.write(result)
+    except ImportError:
+        pytest.skip("`db` module is not available.")
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
@@ -378,6 +381,7 @@ def test_pickle_file_writer_raises_no_exceptions_when_writing(result):  # noqa: 
 )
 def test_database_writer_exports_correctly(result, table_name, expected_row_count):  # noqa: D103
     try:
+        from nannyml.io.db import DatabaseWriter
         writer = DatabaseWriter(connection_string='sqlite:///test.db', model_name='test')
         writer.write(result)
 
@@ -386,12 +390,15 @@ def test_database_writer_exports_correctly(result, table_name, expected_row_coun
         with sqlite3.connect("test.db", uri=True) as db:
             res = db.cursor().execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()
             assert res[0] == expected_row_count
+    except ImportError:
+        pytest.skip("`db` module is not available.")
 
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
     finally:
-        os.remove('test.db')
+        if os.path.exists('test.db'):
+            os.remove('test.db')
 
 
 @pytest.mark.parametrize(
@@ -403,6 +410,7 @@ def test_database_writer_exports_correctly(result, table_name, expected_row_coun
 )
 def test_database_writer_deals_with_metric_components(result, table_name):  # noqa: D103
     try:
+        from nannyml.io.db import DatabaseWriter
         writer = DatabaseWriter(connection_string='sqlite:///test.db', model_name='test')
         writer.write(result.filter(metrics=['confusion_matrix']))
 
@@ -416,9 +424,12 @@ def test_database_writer_deals_with_metric_components(result, table_name):  # no
             assert 'false_positive' in sut
             assert 'true_negative' in sut
             assert 'false_negative' in sut
+    except ImportError:
+        pytest.skip("`db` module is not available.")
 
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
     finally:
-        os.remove('test.db')
+        if os.path.exists('test.db'):
+            os.remove('test.db')

@@ -14,11 +14,16 @@ The `store` module implements an object cache, meant to cache fitted calculators
 """
 
 from .base import Reader, Writer, WriterFactory
-from .db import DatabaseWriter
 from .file_reader import FileReader
 from .file_writer import FileWriter
 from .pickle_file_writer import PickleFileWriter
 from .raw_files_writer import RawFilesWriter
 from .store import FilesystemStore, JoblibPickleSerializer, Serializer, Store
+
+try:
+    from .db import DatabaseWriter
+except ImportError:
+    print("`db` module is not available. Install the `nannyml[db]` extra to use this functionality.")
+
 
 DEFAULT_WRITER = RawFilesWriter(path='out')

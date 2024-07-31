@@ -39,7 +39,7 @@ from dotenv import load_dotenv
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
-from .data_quality import MissingValuesCalculator, UnseenValuesCalculator, NumericalRangeCalculator
+from .data_quality import MissingValuesCalculator, NumericalRangeCalculator, UnseenValuesCalculator
 from .datasets import (
     load_modified_california_housing_dataset,
     load_synthetic_binary_classification_dataset,
@@ -59,7 +59,14 @@ from .drift import (
     UnivariateDriftCalculator,
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
-from .io import DatabaseWriter, PickleFileWriter, RawFilesWriter
+from .io import PickleFileWriter, RawFilesWriter
+
+try:
+    from .io.db import DatabaseWriter
+except ImportError:
+    logging.getLogger().warning(
+        "`db` module is not available. Install the `nannyml[db]` extra to use this functionality."
+    )
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, DLE
 from .stats import (

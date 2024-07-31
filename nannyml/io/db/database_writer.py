@@ -1,6 +1,11 @@
 from typing import Any, Dict, Optional
 
-from sqlmodel import Session, SQLModel, create_engine, select
+try:
+    from sqlmodel import Session, SQLModel, create_engine, select
+except ImportError:
+    raise ImportError(
+        "`sqlmodel` module is not available. Please install the `nannyml[db]` extra to use this functionality."
+    )
 
 from nannyml._typing import Result
 from nannyml.exceptions import WriterException

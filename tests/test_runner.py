@@ -166,6 +166,8 @@ def test_runner_executes_for_binary_classification_with_database_writer_without_
                 run_in_console=False,
                 ignore_errors=False,
             )
+    except ImportError:
+        pytest.skip("the `sqlmodel` module is not available")
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
@@ -206,6 +208,8 @@ def test_runner_executes_for_multiclass_classification_with_database_writer_with
                 run_in_console=False,
                 ignore_errors=False,
             )
+    except ImportError:
+        pytest.skip("the `sqlmodel` module is not available")
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
 
@@ -241,5 +245,7 @@ def test_runner_executes_for_regression_with_database_writer_without_exceptions(
                 run_in_console=False,
                 ignore_errors=False,
             )
+    except ImportError:
+        pytest.skip("the `sqlmodel` module is not available")
     except Exception as exc:
         pytest.fail(f"an unexpected exception occurred: {exc}")
