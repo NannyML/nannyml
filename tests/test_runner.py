@@ -15,7 +15,7 @@ from nannyml.datasets import (
     load_synthetic_car_price_dataset,
     load_synthetic_multiclass_classification_dataset,
 )
-from nannyml.io import DatabaseWriter, RawFilesWriter
+from nannyml.io import RawFilesWriter
 from nannyml.io.store import FilesystemStore
 from nannyml.runner import run
 
@@ -140,6 +140,7 @@ def test_runner_executes_for_binary_classification_with_database_writer_without_
     analysis_with_targets = analysis.merge(analysis_targets, on='identifier')
 
     try:
+        from nannyml.io.db import DatabaseWriter
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
@@ -178,6 +179,7 @@ def test_runner_executes_for_multiclass_classification_with_database_writer_with
     analysis_with_targets = analysis.merge(analysis_targets, left_index=True, right_index=True)
 
     try:
+        from nannyml.io.db import DatabaseWriter
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
@@ -220,6 +222,7 @@ def test_runner_executes_for_regression_with_database_writer_without_exceptions(
     analysis_with_targets = analysis.join(analysis_targets)
 
     try:
+        from nannyml.io.db import DatabaseWriter
         with tempfile.TemporaryDirectory() as tmpdir:
             run(
                 reference_data=reference,
