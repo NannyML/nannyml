@@ -441,14 +441,17 @@ class BinaryClassificationAUROC(Metric):
             return bse.auroc_sampling_error(self._sampling_error_components, data)
 
 
-def estimate_roc_auc(true_y_pred_proba: pd.Series, model_y_pred_proba: pd.Series) -> float:
+def estimate_roc_auc(
+    true_y_pred_proba: Union[pd.Series, np.ndarray],
+    model_y_pred_proba: Union[pd.Series, np.ndarray]
+) -> float:
     """Estimates the ROC AUC metric.
 
     Parameters
     ----------
-    true_y_pred_proba : pd.Series
+    true_y_pred_proba : Union[pd.Series, np.ndarray]
         Calibrated score predictions from the model.
-    model_y_pred_proba : pd.Series
+    model_y_pred_proba : Union[pd.Series, np.ndarray]
         Un-Calibrated score predictions from the model.
 
     Returns
@@ -456,8 +459,9 @@ def estimate_roc_auc(true_y_pred_proba: pd.Series, model_y_pred_proba: pd.Series
     metric: float
         Estimated ROC AUC score.
     """
-    true_y_pred_proba = true_y_pred_proba.to_numpy()
-    model_y_pred_proba = model_y_pred_proba.to_numpy()
+    # TODO: Update Code to only accept np.ndarray (and add checkand remove code below)
+    true_y_pred_proba = np.asarray(true_y_pred_proba)
+    model_y_pred_proba = np.asarray(model_y_pred_proba)
 
     sorted_index = np.argsort(model_y_pred_proba)[::-1]
     model_y_pred_proba = model_y_pred_proba[sorted_index]
@@ -589,14 +593,17 @@ class BinaryClassificationAP(Metric):
             return bse.ap_sampling_error(self._sampling_error_components, data)
 
 
-def estimate_ap(calibrated_y_pred_proba: np.ndarray, uncalibrated_y_pred_proba: np.ndarray) -> float:
+def estimate_ap(
+    calibrated_y_pred_proba: Union[pd.Series, np.ndarray],
+    uncalibrated_y_pred_proba: Union[pd.Series, np.ndarray]
+) -> float:
     """Estimates the AP metric.
 
     Parameters
     ----------
-    calibrated_y_pred_proba : pd.Series
+    calibrated_y_pred_proba: Union[pd.Series, np.ndarray]
         Calibrated probability estimates of the sample for each class in the model.
-    uncalibrated_y_pred_proba : pd.Series
+    uncalibrated_y_pred_proba: Union[pd.Series, np.ndarray]
         Raw probability estimates of the sample for each class in the model.
 
     Returns
@@ -604,6 +611,10 @@ def estimate_ap(calibrated_y_pred_proba: np.ndarray, uncalibrated_y_pred_proba: 
     metric: float
         Estimated AP score.
     """
+    # TODO: Update Code to only accept np.ndarray (and add checkand remove code below)
+    calibrated_y_pred_proba = np.asarray(calibrated_y_pred_proba)
+    uncalibrated_y_pred_proba = np.asarray(uncalibrated_y_pred_proba)
+
     descending_order_index = np.argsort(uncalibrated_y_pred_proba)[::-1]
     calibrated_y_pred_proba = calibrated_y_pred_proba[descending_order_index]
 
@@ -748,14 +759,14 @@ class BinaryClassificationF1(Metric):
         return f1_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
 
-def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+def estimate_f1(y_pred: Union[pd.Series, np.ndarray], y_pred_proba: Union[pd.Series, np.ndarray]) -> float:
     """Estimates the F1 metric.
 
     Parameters
     ----------
-    y_pred: pd.DataFrame
+    y_pred: Union[pd.Series, np.ndarray]
         Predicted class labels of the sample
-    y_pred_proba: pd.DataFrame
+    y_pred_proba: Union[pd.Series, np.ndarray]
         Probability estimates of the sample for each class in the model.
 
     Returns
@@ -763,11 +774,18 @@ def estimate_f1(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
     metric: float
         Estimated F1 score.
     """
+    # TODO: Update Code to only accept np.ndarray (and add checkand remove code below)
+    y_pred = np.asarray(y_pred)
+    y_pred_proba = np.asarray(y_pred_proba)
+
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     fn = np.where(y_pred == 0, y_pred_proba, 0)
     TP, FP, FN = np.sum(tp), np.sum(fp), np.sum(fn)
-    metric = TP / (TP + 0.5 * (FP + FN))
+    if TP + 0.5 * (FP + FN) == 0:
+        metric = 0
+    else:
+        metric = TP / (TP + 0.5 * (FP + FN))
     return metric
 
 
@@ -889,14 +907,14 @@ class BinaryClassificationPrecision(Metric):
         return precision_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
 
-def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+def estimate_precision(y_pred: Union[pd.Series, np.ndarray], y_pred_proba: Union[pd.Series, np.ndarray]) -> float:
     """Estimates the Precision metric.
 
     Parameters
     ----------
-    y_pred: pd.DataFrame
+    y_pred: Union[pd.Series, np.ndarray]
         Predicted class labels of the sample
-    y_pred_proba: pd.DataFrame
+    y_pred_proba: Union[pd.Series, np.ndarray]
         Probability estimates of the sample for each class in the model.
 
     Returns
@@ -904,10 +922,17 @@ def estimate_precision(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> floa
     metric: float
         Estimated Precision score.
     """
+    # TODO: Update Code to only accept np.ndarray (and add checkand remove code below)
+    y_pred = np.asarray(y_pred)
+    y_pred_proba = np.asarray(y_pred_proba)
+
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     TP, FP = np.sum(tp), np.sum(fp)
-    metric = TP / (TP + FP)
+    if TP + FP == 0:
+        metric = 0
+    else:
+        metric = TP / (TP + FP)
     return metric
 
 
@@ -1029,14 +1054,14 @@ class BinaryClassificationRecall(Metric):
         return recall_score(y_true=y_true, y_pred=y_pred, zero_division='warn')
 
 
-def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+def estimate_recall(y_pred: Union[pd.Series, np.ndarray], y_pred_proba: Union[pd.Series, np.ndarray]) -> float:
     """Estimates the Recall metric.
 
     Parameters
     ----------
-    y_pred: pd.DataFrame
+    y_pred: Union[pd.Series, np.ndarray]
         Predicted class labels of the sample
-    y_pred_proba: pd.DataFrame
+    y_pred_proba: Union[pd.Series, np.ndarray]
         Probability estimates of the sample for each class in the model.
 
     Returns
@@ -1044,10 +1069,17 @@ def estimate_recall(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
     metric: float
         Estimated Recall score.
     """
+    # TODO: Update Code to only accept np.ndarray (and add checkand remove code below)
+    y_pred = np.asarray(y_pred)
+    y_pred_proba = np.asarray(y_pred_proba)
+
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     fn = np.where(y_pred == 0, y_pred_proba, 0)
     TP, FN = np.sum(tp), np.sum(fn)
-    metric = TP / (TP + FN)
+    if TP + FN == 0:
+        metric = 0
+    else:
+        metric = TP / (TP + FN)
     return metric
 
 
@@ -1161,14 +1193,14 @@ class BinaryClassificationSpecificity(Metric):
             return tn / denominator
 
 
-def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> float:
+def estimate_specificity(y_pred: Union[pd.Series, np.ndarray], y_pred_proba: Union[pd.Series, np.ndarray]) -> float:
     """Estimates the Specificity metric.
 
     Parameters
     ----------
-    y_pred: pd.DataFrame
+    y_pred: Union[pd.Series, np.ndarray]
         Predicted class labels of the sample
-    y_pred_proba: pd.DataFrame
+    y_pred_proba: Union[pd.Series, np.ndarray]
         Probability estimates of the sample for each class in the model.
 
     Returns
@@ -1176,10 +1208,17 @@ def estimate_specificity(y_pred: pd.DataFrame, y_pred_proba: pd.DataFrame) -> fl
     metric: float
         Estimated Specificity score.
     """
+    # TODO: Update Code to only accept np.ndarray (and add checkand remove code below)
+    y_pred = np.asarray(y_pred)
+    y_pred_proba = np.asarray(y_pred_proba)
+
     tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
     fp = np.where(y_pred == 1, 1 - y_pred_proba, 0)
     TN, FP = np.sum(tn), np.sum(fp)
-    metric = TN / (TN + FP)
+    if TN + FP == 0:
+        metric = 0
+    else:
+        metric = TN / (TN + FP)
     return metric
 
 
@@ -1286,14 +1325,14 @@ class BinaryClassificationAccuracy(Metric):
         return accuracy_score(y_true=y_true, y_pred=y_pred)
 
 
-def estimate_accuracy(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
+def estimate_accuracy(y_pred: Union[pd.Series, np.ndarray], y_pred_proba: Union[pd.Series, np.ndarray]) -> float:
     """Estimates the accuracy metric.
 
     Parameters
     ----------
-    y_pred: pd.Series
+    y_pred: Union[pd.Series, np.ndarray]
         Predicted class labels of the sample
-    y_pred_proba: pd.Series
+    y_pred_proba: Union[pd.Series, np.ndarray]
         Probability estimates of the sample for each class in the model.
 
     Returns
@@ -1301,6 +1340,10 @@ def estimate_accuracy(y_pred: pd.Series, y_pred_proba: pd.Series) -> float:
     metric: float
         Estimated accuracy score.
     """
+    # TODO: Update Code to only accept np.ndarray (and add checkand remove code below)
+    y_pred = np.asarray(y_pred)
+    y_pred_proba = np.asarray(y_pred_proba)
+
     tp = np.where(y_pred == 1, y_pred_proba, 0)
     tn = np.where(y_pred == 0, 1 - y_pred_proba, 0)
     TP, TN = np.sum(tp), np.sum(tn)
