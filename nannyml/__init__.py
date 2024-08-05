@@ -31,11 +31,13 @@ __email__ = 'niels@nannyml.com'
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.11.0'
+__version__ = '0.12.0'
 
 import logging
 
 from dotenv import load_dotenv
+from importlib import import_module
+
 
 from .calibration import Calibrator, IsotonicCalibrator, needs_calibration
 from .chunk import Chunk, Chunker, CountBasedChunker, DefaultChunker, PeriodBasedChunker, SizeBasedChunker
@@ -60,13 +62,6 @@ from .drift import (
 )
 from .exceptions import ChunkerException, InvalidArgumentsException, MissingMetadataException
 from .io import PickleFileWriter, RawFilesWriter
-
-try:
-    from .io.db import DatabaseWriter
-except ImportError:
-    logging.getLogger().warning(
-        "`db` module is not available. Install the `nannyml[db]` extra to use this functionality."
-    )
 from .performance_calculation import PerformanceCalculator
 from .performance_estimation import CBPE, DLE
 from .stats import (
@@ -77,6 +72,20 @@ from .stats import (
     SummaryStatsSumCalculator,
 )
 from .usage_logging import UsageEvent, disable_usage_logging, enable_usage_logging, log_usage
+
+
+_optional_dependencies = {
+    'DatabaseWriter': '.io.db',
+}
+
+
+def __getattr__(name: str):
+    optional_module_path = _optional_dependencies.get(name)
+    if optional_module_path is not None:
+        module = import_module(optional_module_path, package=__name__)
+        return getattr(module, name)
+    raise AttributeError(f"module {__name__} has no attribute {name}")
+
 
 try:
     import nannyml_premium
