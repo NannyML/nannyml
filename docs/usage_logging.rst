@@ -65,7 +65,7 @@ What about personal data
 Apart from the hardware ID, there is nothing to link back to your machine, let alone to your identity.
 You have our word on this: we will never collect any Personally Identifiable Information.
 And don't just take our word: verify it! We invite you to review the implementation at
-https://github.com/NannyML/nannyml/blob/feature/usage_logging/nannyml/usage_logging.py.
+https://github.com/NannyML/nannyml/blob/main/nannyml/usage_logging.py.
 
 What about my dataset?
 ######################
@@ -113,7 +113,7 @@ How usage logging works
 We'll give a very brief overview of how we've implemented usage analytics.
 
 1. We've created a `usage_logging` module within the library. It contains all the functionality related to usage analytics.
-   Feel free to browse the source code at https://github.com/NannyML/nannyml/blob/feature/usage_logging/nannyml/usage_logging.py.
+   Feel free to browse the source code at https://github.com/NannyML/nannyml/blob/main/nannyml/usage_logging.py.
 2. We instrument our library by adding a `log_usage` decorator to our key functions, sometimes also providing some additional data (e.g. metric names).
 3. Upon calling one of these key functions, the decorator will capture the required information. Our `usage_logging` module will then try to send it over
    to **Segment**, a third-party service provider specializing in customer data.
@@ -129,7 +129,7 @@ We'll give a very brief overview of how we've implemented usage analytics.
 Whilst our team at NannyML saw the need for usage analytics, we did have some deeper discussions about how to present
 this to you, the end user.
 
-Do we disable usage analytics collection by default and have the end user explicitly opt in? ]
+Do we disable usage analytics collection by default and have the end user explicitly opt in? 
 Whilst it felt very intuitive and "correct” to do so, we asked ourselves the following question.
 “Would I go through the trouble of explicitly enabling this every time I use NannyML?".
 Our answer was no, we probably wouldn't bother. And if we wouldn't, it is only fair we don't expect you to.
