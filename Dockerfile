@@ -55,7 +55,7 @@ ENV POETRY_INSTALLER_MAX_WORKERS=10
 
 # Install project in editable mode and with development dependencies
 WORKDIR $APP_PATH
-RUN poetry install
+RUN poetry install --all-extras
 
 ENTRYPOINT ["poetry", "run"]
 CMD ["nml"]
