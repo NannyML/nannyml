@@ -414,7 +414,7 @@ def _plot_metric(  # noqa: C901
                 showlegend=show_in_legend,
             )
 
-    if analysis_upper_confidence_boundary is not None and analysis_upper_confidence_boundary is not None:
+    if analysis_upper_confidence_boundary is not None and analysis_lower_confidence_boundary is not None:
         figure.add_confidence_band(
             upper_confidence_boundaries=analysis_upper_confidence_boundary,
             lower_confidence_boundaries=analysis_lower_confidence_boundary,
