@@ -253,7 +253,7 @@ def test_input_dataframes_are_not_altered_by_calculator():  # noqa: D103
     pd.testing.assert_frame_equal(reference, reference2)
 
 
-def test_int_values_are_treated_as_categorical():  # noqa: D103
+def test_float_target_values_are_treated_as_categorical():  # noqa: D103
     reference, analysis, _ = load_synthetic_car_loan_data_quality_dataset()
     try:
         _ = UnseenValuesCalculator(
@@ -262,6 +262,8 @@ def test_int_values_are_treated_as_categorical():  # noqa: D103
             ],
             timestamp_column_name='timestamp',
             normalize=False,
+            y_pred_column_name='y_pred',
+            y_true_column_name='repaid',
         ).fit(reference)
     except InvalidArgumentsException:
         pytest.fail()
