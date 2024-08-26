@@ -263,7 +263,8 @@ def _convert_int_columns_to_categorical(
     int_cols = list(
         filter(
             lambda c: c in column_names
-            and data[c].dtype in ('int_', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64'),
+            and data[c].dtype in ('int_', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64')
+            or (data[c].dtype in ('float_', 'float16', 'float32', 'float64') and (data[c] % 1 == 0).all()),
             data.columns,
         )
     )
