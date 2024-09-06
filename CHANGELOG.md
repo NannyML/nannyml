@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed component filtering misbehaving for CBPE results. [(#423)](https://github.com/NannyML/nannyml/issues/423)
+
+## [0.12.0] - 2024-09-06
+
+### Fixed
+
 - Fixed broken links in usage logging docs. Cheers once more to [@NeoKish](https://github.com/neokish)! [(#417)](https://github.com/NannyML/nannyml/issues/417)
 - Fixed issues with runner type validation due to changes in Pydantic 2 behavior. [(#421)](https://github.com/NannyML/nannyml/issues/421)
 - Fixed a typo in one the plotting blueprint modules. Eagle eyes [@nikml](https://github.com/nikml)! [(#418)](https://github.com/NannyML/nannyml/issues/418)
