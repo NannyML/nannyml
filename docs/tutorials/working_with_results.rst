@@ -202,6 +202,9 @@ results to disk using a :class:`~nannyml.io.raw_files_writer.RawFilesWriter`, se
 :class:`~nannyml.io.db.database_writer.DatabaseWriter`. This example will show how to use the
 :class:`~nannyml.io.db.database_writer.DatabaseWriter`.
 
+In order to get the dependencies required for database access, please ensure you've installed the
+optional `db` dependency. Check the :ref:`installation instructions<installing_nannyml>` for more information.
+
 We construct the :class:`~nannyml.io.db.database_writer.DatabaseWriter` by providing a database connection string.
 Upon calling the :meth:`~nannyml.io.base.Writer.write` method, all results will be written into
 the database, in this case, an `SQLite` database.

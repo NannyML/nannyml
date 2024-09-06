@@ -149,6 +149,21 @@ docker -v /local/config/dir/:/config/ run nannyml/nannyml nml run
 python -m pip install git+https://github.com/NannyML/nannyml
 ```
 
+#### Extras
+
+If you're using database connections to read model inputs/outputs or you're exporting monitoring results to a database,
+you'll need to include the optional `db` dependency. For example using `pip`:
+
+```bash
+pip install nannyml[db]
+```
+
+or using `poetry`
+
+```bash
+poetry install nannyml --all-extras
+```
+
 ### Quick Start
 
 _The following snippet is based on our [latest release](https://github.com/NannyML/nannyml/releases/latest)_.
