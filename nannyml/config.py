@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import jinja2
 import yaml
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 
 from nannyml._typing import Self
 from nannyml.exceptions import IOException
@@ -20,31 +20,31 @@ CONFIG_PATH_ENV_VAR_KEY = 'NML_CONFIG_PATH'
 
 class InputDataConfig(BaseModel):
     path: str
-    credentials: Optional[Dict[str, Any]]
-    read_args: Optional[Dict[str, Any]]
+    credentials: Optional[Dict[str, Any]] = Field(default=None)
+    read_args: Optional[Dict[str, Any]] = Field(default=None)
 
 
 class TargetDataConfig(InputDataConfig):
-    join_column: Optional[str]
+    join_column: Optional[str] = Field(default=None)
 
 
 class InputConfig(BaseModel):
     reference_data: InputDataConfig
     analysis_data: InputDataConfig
-    target_data: Optional[TargetDataConfig]
+    target_data: Optional[TargetDataConfig] = Field(default=None)
 
 
 class WriterConfig(BaseModel):
     type: str
-    params: Optional[Dict[str, Any]]
-    write_args: Optional[Dict[str, Any]]
+    params: Optional[Dict[str, Any]] = Field(default=None)
+    write_args: Optional[Dict[str, Any]] = Field(default=None)
 
 
 class IntervalSchedulingConfig(BaseModel):
-    weeks: Optional[int]
-    days: Optional[int]
-    hours: Optional[int]
-    minutes: Optional[int]
+    weeks: Optional[int] = Field(default=None)
+    days: Optional[int] = Field(default=None)
+    hours: Optional[int] = Field(default=None)
+    minutes: Optional[int] = Field(default=None)
 
 
 class CronSchedulingConfig(BaseModel):
@@ -52,23 +52,23 @@ class CronSchedulingConfig(BaseModel):
 
 
 class SchedulingConfig(BaseModel):
-    interval: Optional[IntervalSchedulingConfig]
-    cron: Optional[CronSchedulingConfig]
+    interval: Optional[IntervalSchedulingConfig] = Field(default=None)
+    cron: Optional[CronSchedulingConfig] = Field(default=None)
 
 
 class StoreConfig(BaseModel):
     path: str
-    credentials: Optional[Dict[str, Any]]
-    filename: Optional[str]
+    credentials: Optional[Dict[str, Any]] = Field(default=None)
+    filename: Optional[str] = Field(default=None)
     invalidate: bool = False
 
 
 class CalculatorConfig(BaseModel):
     type: str
-    name: Optional[str] = None
-    enabled: Optional[bool] = True
-    outputs: Optional[List[WriterConfig]]
-    store: Optional[StoreConfig]
+    name: Optional[str] = Field(default=None)
+    enabled: Optional[bool] = Field(default=True)
+    outputs: Optional[List[WriterConfig]] = Field(default=None)
+    store: Optional[StoreConfig] = Field(default=None)
     params: Dict[str, Any]
 
     @validator('params')
@@ -88,18 +88,18 @@ class CalculatorConfig(BaseModel):
 
 
 class Config(BaseModel):
-    input: Optional[InputConfig] = None
+    input: Optional[InputConfig] = Field(default=None)
     calculators: List[CalculatorConfig]
-    scheduling: Optional[SchedulingConfig] = None
+    scheduling: Optional[SchedulingConfig] = Field(default=None)
 
-    ignore_errors: Optional[bool] = None
+    ignore_errors: Optional[bool] = Field(default=None)
 
     @classmethod
     @lru_cache(maxsize=1)
     def load(cls, config_path: Optional[str] = None):
         with open(get_config_path(config_path), "r") as config_file:
             config_dict = yaml.load(config_file, Loader=yaml.FullLoader)
-            return Config.parse_obj(config_dict)._render()
+            return Config.model_validate(config_dict)._render()
 
     @classmethod
     def parse(cls, config: str):
