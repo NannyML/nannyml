@@ -80,7 +80,10 @@ parameters:
     The format of the business value matrix must be specified so that each element represents the business
     value of it's respective confusion matrix element. Hence the element on the i-th row and j-column of the
     business value matrix tells us the value of the i-th target when we have predicted the j-th value.
-    It can be provided as a list of lists or a numpy array.
+    The target values that each column and row refer are sorted alphanumerically for both
+    the confusion matrix and the business value matrices.
+
+    The business value matrix can be provided as a list of lists or a numpy array.
     For more information about the business value matrix,
     check out the :ref:`Business Value "How it Works" page<business-value-deep-dive>`.
 

@@ -35,6 +35,8 @@ class UnseenValuesCalculator(AbstractCalculator):
         self,
         column_names: Union[str, List[str]],
         normalize: bool = True,
+        y_pred_column_name: Optional[str] = None,
+        y_true_column_name: Optional[str] = None,
         timestamp_column_name: Optional[str] = None,
         chunk_size: Optional[int] = None,
         chunk_number: Optional[int] = None,
@@ -96,6 +98,10 @@ class UnseenValuesCalculator(AbstractCalculator):
                 "column_names should be either a column name string or a list of columns names strings, "
                 "found\n{column_names}"
             )
+
+        self.y_pred_column_name = y_pred_column_name
+        self.y_true_column_name = y_true_column_name
+
         self.result: Optional[Result] = None
         # Threshold strategy is the same across all columns
         # By default for unseen values there is no lower threshold or threshold limit.
@@ -134,6 +140,12 @@ class UnseenValuesCalculator(AbstractCalculator):
 
         # Included columns of dtype=int should be considered categorical. We'll try converting those explicitly.
         reference_data = _convert_int_columns_to_categorical(reference_data, self.column_names, self._logger)
+
+        # y_true and y_pred columns are treated as categorical for the purpose of this calculator
+        if self.y_pred_column_name:
+            reference_data[self.y_pred_column_name] = reference_data[self.y_pred_column_name].astype('category')
+        if self.y_true_column_name:
+            reference_data[self.y_true_column_name] = reference_data[self.y_true_column_name].astype('category')
 
         # All provided columns must be categorical
         continuous_column_names, categorical_column_names = _split_features_by_type(reference_data, self.column_names)
