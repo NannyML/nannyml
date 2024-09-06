@@ -9,12 +9,17 @@
 """
 
 import sys
-
 from datetime import datetime
 from typing import List, Optional
 
 from pydantic import ConfigDict
-from sqlmodel import Field, Relationship, SQLModel
+
+try:
+    from sqlmodel import Field, Relationship, SQLModel
+except ImportError:
+    raise ImportError(
+        "`sqlmodel` module is not available. Please install the `nannyml[db]` extra to use this functionality."
+    )
 
 
 class Model(SQLModel, table=True):  # type: ignore[call-arg]

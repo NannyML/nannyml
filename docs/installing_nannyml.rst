@@ -32,6 +32,21 @@ or
 
 Any issues with installation? `Let us know`_ so we can help you.
 
+Extras
+------
+
+If you're using database connections to read model inputs/outputs or you're exporting monitoring results to a database,
+you'll need to include the optional `db` dependency. For example using `pip`:
+
+.. code-block:: bash
+
+    $ pip install nannyml[db]
+
+or using `poetry`
+
+.. code-block:: bash
+
+    $ poetry install nannyml --all-extras
 
 .. _`Let us know`: https://github.com/NannyML/nannyml/issues
 .. _`LightGBM`: https://github.com/microsoft/LightGBM
