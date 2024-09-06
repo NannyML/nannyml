@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2024-09-06
+
+### Fixed
+
+- Fixed broken links in usage logging docs. Cheers once more to [@NeoKish](https://github.com/neokish)! [(#417)](https://github.com/NannyML/nannyml/issues/417)
+- Fixed issues with runner type validation due to changes in Pydantic 2 behavior. [(#421)](https://github.com/NannyML/nannyml/issues/421)
+- Fixed a typo in one the plotting blueprint modules. Eagle eyes [@nikml](https://github.com/nikml)! [(#418)](https://github.com/NannyML/nannyml/issues/418)
+
+### Added
+
+- Added multiclass support for estimated and realized performance metrics `average_precision` and `business_value`. [(#409)](https://github.com/NannyML/nannyml/issues/409)
+- Added threshold value limits for multiclass metrics. [(#411)](https://github.com/NannyML/nannyml/issues/411)
+
+### Changed
+
+- Made the dependencies required for database access optional. Big thanks to [@Duncan-Hunter](https://github.com/Duncan-Hunter)
+- Improved denominator checks in CBPE base estimation functions. [(#416)](https://github.com/NannyML/nannyml/issues/416)
+- Relaxed constraints for the `rich` dependency. [(#422)](https://github.com/NannyML/nannyml/issues/422)
+
+### Removed
+
+- Dropped support for Python 3.7 as it was causing major issues with dependencies. [(#410)](https://github.com/NannyML/nannyml/issues/410)
+
 ## [0.11.0] - 2024-07-19
 
 ### Changed
