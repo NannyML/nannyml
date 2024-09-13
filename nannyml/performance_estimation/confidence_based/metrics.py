@@ -113,10 +113,15 @@ class Metric(abc.ABC):
         self.lower_threshold_value_limit: Optional[float] = lower_threshold_value_limit
         self.upper_threshold_value_limit: Optional[float] = upper_threshold_value_limit
 
-        self.uncalibrated_y_pred_proba = f'uncalibrated_{self.y_pred_proba}'
-
         # A list of (display_name, column_name) tuples
         self.components: List[Tuple[str, str]] = components
+
+    @property
+    def calibrated_y_pred_proba(self):
+        if isinstance(self.y_pred_proba, Dict):
+            return [f'calibrated_{self.y_pred_proba[class_name]}' for class_name in sorted(self.y_pred_proba)]
+        else:
+            return f'calibrated_{self.y_pred_proba}'
 
     @property
     def _logger(self) -> logging.Logger:
@@ -380,7 +385,7 @@ class BinaryClassificationAUROC(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _list_missing([self.y_pred_proba, self.uncalibrated_y_pred_proba], list(data.columns))
+            _list_missing([self.y_pred_proba, self.calibrated_y_pred_proba], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -389,8 +394,8 @@ class BinaryClassificationAUROC(Metric):
                 raise ex
 
         data, empty = common_nan_removal(
-            data[[self.y_pred_proba, self.uncalibrated_y_pred_proba]],
-            [self.y_pred_proba, self.uncalibrated_y_pred_proba],
+            data[[self.y_pred_proba, self.calibrated_y_pred_proba]],
+            [self.y_pred_proba, self.calibrated_y_pred_proba],
         )
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
@@ -398,12 +403,12 @@ class BinaryClassificationAUROC(Metric):
             return np.NaN
 
         y_pred_proba = data[self.y_pred_proba]
-        uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba]
-        return estimate_roc_auc(y_pred_proba, uncalibrated_y_pred_proba)
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
+        return estimate_roc_auc(calibrated_y_pred_proba, y_pred_proba)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _list_missing([self.uncalibrated_y_pred_proba, self.y_true], list(data.columns))
+            _list_missing([self.y_pred_proba, self.y_true], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -412,7 +417,7 @@ class BinaryClassificationAUROC(Metric):
                 raise ex
 
         data, empty = common_nan_removal(
-            data[[self.uncalibrated_y_pred_proba, self.y_true]], [self.uncalibrated_y_pred_proba, self.y_true]
+            data[[self.y_pred_proba, self.y_true]], [self.y_pred_proba, self.y_true]
         )
         if empty:
             self._logger.debug(f"Not enough data to compute realized {self.display_name}.")
@@ -420,18 +425,18 @@ class BinaryClassificationAUROC(Metric):
             return np.NaN
 
         y_true = data[self.y_true]
-        uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba]
+        y_pred_proba = data[self.y_pred_proba]
 
         if y_true.nunique() <= 1:
             warnings.warn(
                 f"'{self.y_true}' contains a single class for chunk, " f"cannot compute realized {self.display_name}."
             )
             return np.NaN
-        return roc_auc_score(y_true, uncalibrated_y_pred_proba)
+        return roc_auc_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        data = data[[self.y_pred_proba, self.uncalibrated_y_pred_proba]]
-        data, empty = common_nan_removal(data, [self.y_pred_proba, self.uncalibrated_y_pred_proba])
+        data = data[[self.y_pred_proba, self.calibrated_y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_pred_proba, self.calibrated_y_pred_proba])
         if empty:
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
@@ -533,7 +538,7 @@ class BinaryClassificationAP(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _list_missing([self.y_pred_proba, self.uncalibrated_y_pred_proba], list(data.columns))
+            _list_missing([self.y_pred_proba, self.calibrated_y_pred_proba], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -542,21 +547,21 @@ class BinaryClassificationAP(Metric):
                 raise ex
 
         data, empty = common_nan_removal(
-            data[[self.y_pred_proba, self.uncalibrated_y_pred_proba]],
-            [self.y_pred_proba, self.uncalibrated_y_pred_proba],
+            data[[self.y_pred_proba, self.calibrated_y_pred_proba]],
+            [self.y_pred_proba, self.calibrated_y_pred_proba],
         )
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
-        calibrated_y_pred_proba = data[self.y_pred_proba].to_numpy()
-        uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba].to_numpy()
-        return estimate_ap(calibrated_y_pred_proba, uncalibrated_y_pred_proba)
+        y_pred_proba = data[self.y_pred_proba].to_numpy()
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba].to_numpy()
+        return estimate_ap(y_pred_proba, calibrated_y_pred_proba)
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _list_missing([self.uncalibrated_y_pred_proba, self.y_true], list(data.columns))
+            _list_missing([self.y_pred_proba, self.y_true], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -565,11 +570,11 @@ class BinaryClassificationAP(Metric):
                 raise ex
 
         data, _ = common_nan_removal(
-            data[[self.uncalibrated_y_pred_proba, self.y_true]], [self.uncalibrated_y_pred_proba, self.y_true]
+            data[[self.y_pred_proba, self.y_true]], [self.y_pred_proba, self.y_true]
         )
 
         y_true = data[self.y_true]
-        uncalibrated_y_pred_proba = data[self.uncalibrated_y_pred_proba]
+        y_pred_proba = data[self.y_pred_proba]
 
         # if empty then positive class won't be part of y_true series
         if 1 not in y_true.unique():
@@ -579,11 +584,11 @@ class BinaryClassificationAP(Metric):
             )
             return np.NaN
         else:
-            return average_precision_score(y_true, uncalibrated_y_pred_proba)
+            return average_precision_score(y_true, y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        data = data[[self.y_pred_proba, self.uncalibrated_y_pred_proba]]
-        data, empty = common_nan_removal(data, [self.y_pred_proba, self.uncalibrated_y_pred_proba])
+        data = data[[self.y_pred_proba, self.calibrated_y_pred_proba]]
+        data, empty = common_nan_removal(data, [self.y_pred_proba, self.calibrated_y_pred_proba])
         if empty:
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
@@ -594,8 +599,8 @@ class BinaryClassificationAP(Metric):
 
 
 def estimate_ap(
-    calibrated_y_pred_proba: Union[pd.Series, np.ndarray],
-    uncalibrated_y_pred_proba: Union[pd.Series, np.ndarray]
+    y_pred_proba: Union[pd.Series, np.ndarray],
+    calibrated_y_pred_proba: Union[pd.Series, np.ndarray]
 ) -> float:
     """Estimates the AP metric.
 
@@ -603,7 +608,7 @@ def estimate_ap(
     ----------
     calibrated_y_pred_proba: Union[pd.Series, np.ndarray]
         Calibrated probability estimates of the sample for each class in the model.
-    uncalibrated_y_pred_proba: Union[pd.Series, np.ndarray]
+    y_pred_proba: Union[pd.Series, np.ndarray]
         Raw probability estimates of the sample for each class in the model.
 
     Returns
@@ -612,10 +617,10 @@ def estimate_ap(
         Estimated AP score.
     """
     # TODO: Update Code to only accept np.ndarray (and add checkand remove code below)
+    y_pred_proba = np.asarray(y_pred_proba)
     calibrated_y_pred_proba = np.asarray(calibrated_y_pred_proba)
-    uncalibrated_y_pred_proba = np.asarray(uncalibrated_y_pred_proba)
 
-    descending_order_index = np.argsort(uncalibrated_y_pred_proba)[::-1]
+    descending_order_index = np.argsort(y_pred_proba)[::-1]
     calibrated_y_pred_proba = calibrated_y_pred_proba[descending_order_index]
 
     tps = np.cumsum(calibrated_y_pred_proba)
@@ -693,7 +698,7 @@ class BinaryClassificationF1(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -701,15 +706,16 @@ class BinaryClassificationF1(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
-        return estimate_f1(y_pred, y_pred_proba)
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
+        return estimate_f1(y_pred, calibrated_y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         data = data[[self.y_pred_proba, self.y_pred]]
@@ -839,7 +845,7 @@ class BinaryClassificationPrecision(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -847,15 +853,15 @@ class BinaryClassificationPrecision(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(data[[self.calibrated_y_pred_proba, self.y_pred]], [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
-        return estimate_precision(y_pred, y_pred_proba)
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
+        return estimate_precision(y_pred, calibrated_y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         data = data[[self.y_pred_proba, self.y_pred]]
@@ -984,7 +990,7 @@ class BinaryClassificationRecall(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -992,15 +998,16 @@ class BinaryClassificationRecall(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
-        return estimate_recall(y_pred, y_pred_proba)
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
+        return estimate_recall(y_pred, calibrated_y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         data = data[[self.y_pred_proba, self.y_pred]]
@@ -1132,7 +1139,7 @@ class BinaryClassificationSpecificity(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1140,15 +1147,16 @@ class BinaryClassificationSpecificity(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
-        return estimate_specificity(y_pred, y_pred_proba)
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
+        return estimate_specificity(y_pred, calibrated_y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         data = data[[self.y_pred_proba, self.y_pred]]
@@ -1266,7 +1274,7 @@ class BinaryClassificationAccuracy(Metric):
 
     def _estimate(self, data: pd.DataFrame):
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1274,15 +1282,16 @@ class BinaryClassificationAccuracy(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
-        return estimate_accuracy(y_pred, y_pred_proba)
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
+        return estimate_accuracy(y_pred, calibrated_y_pred_proba)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         data = data[[self.y_pred_proba, self.y_pred]]
@@ -1625,7 +1634,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated true positive rate.
         """
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1633,18 +1642,19 @@ class BinaryClassificationConfusionMatrix(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(chunk_data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(chunk_data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
 
-        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
+        est_tp_ratio = np.mean(np.where(y_pred == 1, calibrated_y_pred_proba, 0))
+        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - calibrated_y_pred_proba, 0))
+        est_fn_ratio = np.mean(np.where(y_pred == 0, calibrated_y_pred_proba, 0))
 
         if self.normalize_confusion_matrix is None:
             normalized_est_tp_ratio = est_tp_ratio * len(y_pred)
@@ -1682,7 +1692,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated true negative rate.
         """
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1690,18 +1700,19 @@ class BinaryClassificationConfusionMatrix(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(chunk_data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(chunk_data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
 
-        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
-        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
+        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - calibrated_y_pred_proba, 0))
+        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - calibrated_y_pred_proba, 0))
+        est_fn_ratio = np.mean(np.where(y_pred == 0, calibrated_y_pred_proba, 0))
 
         if self.normalize_confusion_matrix is None:
             normalized_est_tn_ratio = est_tn_ratio * len(y_pred)
@@ -1739,7 +1750,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated false positive rate.
         """
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1747,18 +1758,19 @@ class BinaryClassificationConfusionMatrix(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(chunk_data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(chunk_data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
 
-        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - y_pred_proba, 0))
-        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
+        est_tp_ratio = np.mean(np.where(y_pred == 1, calibrated_y_pred_proba, 0))
+        est_fp_ratio = np.mean(np.where(y_pred == 1, 1 - calibrated_y_pred_proba, 0))
+        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - calibrated_y_pred_proba, 0))
 
         if self.normalize_confusion_matrix is None:
             normalized_est_fp_ratio = est_fp_ratio * len(y_pred)
@@ -1796,7 +1808,7 @@ class BinaryClassificationConfusionMatrix(Metric):
             Estimated false negative rate.
         """
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -1804,18 +1816,19 @@ class BinaryClassificationConfusionMatrix(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(chunk_data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(chunk_data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
 
-        est_tp_ratio = np.mean(np.where(y_pred == 1, y_pred_proba, 0))
-        est_fn_ratio = np.mean(np.where(y_pred == 0, y_pred_proba, 0))
-        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - y_pred_proba, 0))
+        est_tp_ratio = np.mean(np.where(y_pred == 1, calibrated_y_pred_proba, 0))
+        est_fn_ratio = np.mean(np.where(y_pred == 0, calibrated_y_pred_proba, 0))
+        est_tn_ratio = np.mean(np.where(y_pred == 0, 1 - calibrated_y_pred_proba, 0))
 
         if self.normalize_confusion_matrix is None:
             normalized_est_fn_ratio = est_fn_ratio * len(y_pred)
@@ -2226,7 +2239,7 @@ class BinaryClassificationBusinessValue(Metric):
 
     def _estimate(self, chunk_data: pd.DataFrame) -> float:
         try:
-            _list_missing([self.y_pred_proba, self.y_pred], list(chunk_data.columns))
+            _list_missing([self.calibrated_y_pred_proba, self.y_pred], list(chunk_data.columns))
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -2234,19 +2247,20 @@ class BinaryClassificationBusinessValue(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(chunk_data[[self.y_pred_proba, self.y_pred]], [self.y_pred_proba, self.y_pred])
+        data, empty = common_nan_removal(chunk_data[[self.calibrated_y_pred_proba, self.y_pred]],
+                                         [self.calibrated_y_pred_proba, self.y_pred])
         if empty:
             self._logger.debug(f"Not enough data to compute estimated {self.display_name}.")
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
         y_pred = data[self.y_pred]
-        y_pred_proba = data[self.y_pred_proba]
+        calibrated_y_pred_proba = data[self.calibrated_y_pred_proba]
 
         business_value_normalization = self.normalize_business_value
         business_value_matrix = self.business_value_matrix
 
-        return estimate_business_value(y_pred, y_pred_proba, business_value_normalization, business_value_matrix)
+        return estimate_business_value(y_pred, calibrated_y_pred_proba, business_value_normalization, business_value_matrix)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         data = data[[self.y_pred_proba, self.y_pred]]
@@ -2309,6 +2323,7 @@ def estimate_business_value(
     return (bv_array * cm).sum()
 
 
+# TODO: review for memory usage
 def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pred_proba: ModelOutputsType):
     if not isinstance(y_pred_proba, dict):
         raise CalculatorException(
@@ -2316,10 +2331,10 @@ def _get_binarized_multiclass_predictions(data: pd.DataFrame, y_pred: str, y_pre
             f"'{y_pred_proba}' is of type '{type(y_pred_proba)}'"
         )
 
-    classes = sorted(y_pred_proba.keys())
+    classes = sorted(y_pred_proba)
     y_preds = list(label_binarize(data[y_pred], classes=classes).T)
 
-    y_pred_probas = [data[y_pred_proba[clazz]] for clazz in classes]
+    y_pred_probas = [data[f'calibrated_{y_pred_proba[clazz]}'] for clazz in classes]
     return y_preds, y_pred_probas, classes
 
 
@@ -2333,7 +2348,7 @@ def _get_multiclass_uncalibrated_predictions(data: pd.DataFrame, y_pred: str, y_
     labels, class_probability_columns = [], []
     for label in sorted(y_pred_proba.keys()):
         labels.append(label)
-        class_probability_columns.append(f'uncalibrated_{y_pred_proba[label]}')
+        class_probability_columns.append(y_pred_proba[label])
     return data[y_pred], data[class_probability_columns], labels
 
 
@@ -2366,22 +2381,22 @@ class MulticlassClassificationAUROC(Metric):
         )
         self.y_pred_proba: Dict[str, str]
         self.classes: List[str] = [""]
-        self.class_probability_columns: List[str]
-        self.class_uncalibrated_y_pred_proba_columns: List[str]
+        self.y_pred_proba_columns: List[str]
+        self.class_calibrated_y_pred_proba_columns: List[str]
         self._sampling_error_components: List[Tuple] = []
 
     def _fit(self, reference_data: pd.DataFrame):
         self.classes = class_labels(self.y_pred_proba)
-        self.class_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
-        self.class_uncalibrated_y_pred_proba_columns = ['uncalibrated_' + el for el in self.class_probability_columns]
-        _list_missing([self.y_true] + self.class_uncalibrated_y_pred_proba_columns, list(reference_data.columns))
+        self.y_pred_proba_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
+        self.class_calibrated_y_pred_proba_columns = ['calibrated_' + el for el in self.y_pred_proba_columns]
+        _list_missing([self.y_true] + self.y_pred_proba_columns, list(reference_data.columns))
         # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true] + self.class_uncalibrated_y_pred_proba_columns],
-            [self.y_true] + self.class_uncalibrated_y_pred_proba_columns,
+            reference_data[[self.y_true] + self.y_pred_proba_columns],
+            [self.y_true] + self.y_pred_proba_columns,
         )
         if empty:
-            self._sampling_error_components = [(np.NaN, 0) for clasz in self.classes]
+            self._sampling_error_components = [(np.NaN, 0) for _ in self.classes]
         else:
             # test if reference data are represented correctly
             observed_classes = set(reference_data[self.y_true].unique())
@@ -2395,13 +2410,13 @@ class MulticlassClassificationAUROC(Metric):
                 )
             # sampling error
             binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
-            y_pred_proba = [reference_data['uncalibrated_' + self.y_pred_proba[clazz]].T for clazz in self.classes]
+            y_pred_proba = [reference_data[col] for col in self.y_pred_proba_columns]
             self._sampling_error_components = mse.auroc_sampling_error_components(
                 y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
             )
 
     def _estimate(self, data: pd.DataFrame):
-        needed_columns = self.class_probability_columns + self.class_uncalibrated_y_pred_proba_columns
+        needed_columns = self.y_pred_proba_columns + self.class_calibrated_y_pred_proba_columns
         try:
             _list_missing(needed_columns, list(data.columns))
         except InvalidArgumentsException as ex:
@@ -2417,25 +2432,25 @@ class MulticlassClassificationAUROC(Metric):
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
-        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
-        _, y_pred_probas_uncalibrated, _ = _get_multiclass_uncalibrated_predictions(
+        _, calibrated_y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
+        _, y_pred_probas, _ = _get_multiclass_uncalibrated_predictions(
             data, self.y_pred, self.y_pred_proba
         )
         ovr_estimates = []
-        for el in range(len(y_pred_probas)):
+        for el in range(len(calibrated_y_pred_probas)):
             ovr_estimates.append(
                 estimate_roc_auc(
                     # sorting according to classes is/should_be the same across
                     # _get_binarized_multiclass_predictions and _get_multiclass_uncalibrated_predictions
-                    y_pred_probas[el],
-                    y_pred_probas_uncalibrated.iloc[:, el],
+                    calibrated_y_pred_probas[el],
+                    y_pred_probas.iloc[:, el],
                 )
             )
         multiclass_roc_auc = np.mean(ovr_estimates)
         return multiclass_roc_auc
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        needed_columns = self.class_probability_columns + self.class_uncalibrated_y_pred_proba_columns
+        needed_columns = self.y_pred_proba_columns + self.class_calibrated_y_pred_proba_columns
         _list_missing(needed_columns, data)
         data, empty = common_nan_removal(data[needed_columns], needed_columns)
         if empty:
@@ -2448,7 +2463,7 @@ class MulticlassClassificationAUROC(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            _list_missing([self.y_true] + self.class_uncalibrated_y_pred_proba_columns, data)
+            _list_missing([self.y_true] + self.y_pred_proba_columns, data)
         except InvalidArgumentsException as ex:
             if "missing required columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -2456,7 +2471,7 @@ class MulticlassClassificationAUROC(Metric):
             else:
                 raise ex
 
-        data, empty = common_nan_removal(data, [self.y_true] + self.class_uncalibrated_y_pred_proba_columns)
+        data, empty = common_nan_removal(data, [self.y_true] + self.y_pred_proba_columns)
         if empty:
             warnings.warn(f"Too many missing values, cannot calculate {self.display_name}. " f"Returning NaN.")
             return np.NaN
@@ -3239,7 +3254,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.full((len(self.classes), len(self.classes)), np.nan)
 
-        y_pred_proba = {key: chunk_data[value] for key, value in self.y_pred_proba.items()}
+        calibrated_y_pred_proba = {key: chunk_data[f'calibrated_{value}'] for key, value in self.y_pred_proba.items()}
 
         y_pred = chunk_data[self.y_pred]
 
@@ -3252,7 +3267,7 @@ class MulticlassClassificationConfusionMatrix(Metric):
                 est_confusion_matrix[i, j] = np.mean(
                     np.where(
                         (y_pred == self.classes[j]),
-                        y_pred_proba[self.classes[i]],
+                        calibrated_y_pred_proba[self.classes[i]],
                         0,
                     )
                 )
@@ -3414,33 +3429,35 @@ class MulticlassClassificationAP(Metric):
 
         # classes and class probability columns
         self.classes: List[str]
-        self.class_probability_columns: List[str]
-        self.class_uncalibrated_y_pred_proba_columns: List[str]
+        self.class_calibrated_probability_columns: List[str]
+        self.class_uncalibrated_probability_columns: List[str]
 
     def _fit(self, reference_data: pd.DataFrame):
         # set up sorted classes and prob_column_names to use across metric class
         self.classes = class_labels(self.y_pred_proba)
-        self.class_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
-        self.class_uncalibrated_y_pred_proba_columns = ['uncalibrated_' + el for el in self.class_probability_columns]
+        self.class_uncalibrated_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
+        self.class_calibrated_probability_columns = [
+            'calibrated_' + el for el in self.class_uncalibrated_probability_columns
+        ]
 
-        _list_missing([self.y_true] + self.class_uncalibrated_y_pred_proba_columns, list(reference_data.columns))
+        _list_missing([self.y_true] + self.class_uncalibrated_probability_columns, list(reference_data.columns))
         # filter nans here
         reference_data, empty = common_nan_removal(
-            reference_data[[self.y_true] + self.class_uncalibrated_y_pred_proba_columns],
-            [self.y_true] + self.class_uncalibrated_y_pred_proba_columns,
+            reference_data[[self.y_true] + self.class_uncalibrated_probability_columns],
+            [self.y_true] + self.class_uncalibrated_probability_columns,
         )
         if empty:
             self._sampling_error_components = [(np.NaN, 0) for clazz in self.classes]
         else:
             # sampling error
             binarized_y_true = list(label_binarize(reference_data[self.y_true], classes=self.classes).T)
-            y_pred_proba = [reference_data['uncalibrated_' + self.y_pred_proba[clazz]].T for clazz in self.classes]
+            y_pred_proba = [reference_data[col] for col in self.class_uncalibrated_probability_columns]
             self._sampling_error_components = mse.average_precision_sampling_error_components(
                 y_true_reference=binarized_y_true, y_pred_proba_reference=y_pred_proba
             )
 
     def _estimate(self, data: pd.DataFrame):
-        needed_columns = self.class_probability_columns + self.class_uncalibrated_y_pred_proba_columns
+        needed_columns = self.class_calibrated_probability_columns + self.class_uncalibrated_probability_columns
         try:
             data, empty = common_nan_removal(data, needed_columns)
         except InvalidArgumentsException as ex:
@@ -3454,25 +3471,25 @@ class MulticlassClassificationAP(Metric):
             warnings.warn(f"Not enough data to compute estimated {self.display_name}.")
             return np.NaN
 
-        _, y_pred_probas, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
+        _, y_pred_probas_calibrated, _ = _get_binarized_multiclass_predictions(data, self.y_pred, self.y_pred_proba)
         _, y_pred_probas_uncalibrated, _ = _get_multiclass_uncalibrated_predictions(
             data, self.y_pred, self.y_pred_proba
         )
         ovr_estimates = []
-        for el in range(len(y_pred_probas)):
+        for el in range(len(y_pred_probas_calibrated)):
             ovr_estimates.append(
                 estimate_ap(
                     # sorting according to classes is/should_be the same across
                     # _get_binarized_multiclass_predictions and _get_multiclass_uncalibrated_predictions
-                    y_pred_probas[el],
                     y_pred_probas_uncalibrated.iloc[:, el],
+                    y_pred_probas_calibrated[el],
                 )
             )
         multiclass_ap = np.mean(ovr_estimates)
         return multiclass_ap
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
-        needed_columns = self.class_probability_columns + self.class_uncalibrated_y_pred_proba_columns
+        needed_columns = self.class_calibrated_probability_columns + self.class_uncalibrated_probability_columns
         _list_missing(needed_columns, data)
         data, empty = common_nan_removal(data[needed_columns], needed_columns)
         if empty:
@@ -3485,7 +3502,7 @@ class MulticlassClassificationAP(Metric):
 
     def _realized_performance(self, data: pd.DataFrame) -> float:
         try:
-            data, empty = common_nan_removal(data, [self.y_true] + self.class_uncalibrated_y_pred_proba_columns)
+            data, empty = common_nan_removal(data, [self.y_true] + self.class_uncalibrated_probability_columns)
         except InvalidArgumentsException as ex:
             if "not all present in provided data columns" in str(ex):
                 self._logger.debug(str(ex))
@@ -3586,7 +3603,7 @@ class MulticlassClassificationBusinessValue(Metric):
         self.class_probability_columns = [self.y_pred_proba[clazz] for clazz in self.classes]
 
     def _estimate(self, data: pd.DataFrame):
-        needed_columns = self.class_probability_columns + [self.y_pred]
+        needed_columns = self.calibrated_y_pred_proba + [self.y_pred]
         try:
             data, empty = common_nan_removal(data, needed_columns)
         except InvalidArgumentsException as ex:
@@ -3602,7 +3619,8 @@ class MulticlassClassificationBusinessValue(Metric):
             return np.NaN
 
         # TODO: put in a function? Also for MC CM.
-        y_pred_proba = {key: data[value] for key, value in self.y_pred_proba.items()}
+        calibrated_y_pred_proba = {class_name: data[f'calibrated_{self.y_pred_proba[class_name]}']
+                                   for class_name in sorted(self.y_pred_proba)}
         y_pred = data[self.y_pred]
         num_classes = len(self.classes)
         est_confusion_matrix = np.zeros((num_classes, num_classes))
@@ -3612,7 +3630,7 @@ class MulticlassClassificationBusinessValue(Metric):
                 est_confusion_matrix[i, j] = np.sum(
                     np.where(
                         (y_pred == self.classes[j]),
-                        y_pred_proba[self.classes[i]],
+                        calibrated_y_pred_proba[self.classes[i]],
                         0,
                     )
                 )

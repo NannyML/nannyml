@@ -365,22 +365,24 @@ class CBPE(AbstractEstimator):
                 required_cols.append(self.y_pred)
             _list_missing(required_cols, list(data.columns))
 
-            # We need uncalibrated data to calculate the realized performance on.
-            # https://github.com/NannyML/nannyml/issues/98
-            data[f'uncalibrated_{self.y_pred_proba}'] = data[self.y_pred_proba]
-
             if self.needs_calibration:
-                data[self.y_pred_proba] = self.calibrator.calibrate(data[self.y_pred_proba])
+                data[f'calibrated_{self.y_pred_proba}'] = self.calibrator.calibrate(data[self.y_pred_proba])
+
         else:
             assert isinstance(self.y_pred_proba, Dict)
             _list_missing([self.y_pred] + model_output_column_names(self.y_pred_proba), data)
 
-            # We need uncalibrated data to calculate the realized performance on.
-            # https://github.com/NannyML/nannyml/issues/98
-            for class_proba in model_output_column_names(self.y_pred_proba):
-                data[f'uncalibrated_{class_proba}'] = data[class_proba]
+            calibrated_probas = _calibrate_predicted_probabilities(
+                data, self.y_true, self.y_pred_proba, self._calibrators
+            )
 
-            data = _calibrate_predicted_probabilities(data, self.y_true, self.y_pred_proba, self._calibrators)
+            # TODO: refactor to pass calibrated probabilities separately to `estimate_chunk`
+            calibrated_probas = {
+                f'calibrated_{self.y_pred_proba[class_name]}': proba for class_name, proba in calibrated_probas.items()
+            }
+            calibrated_probas_df = pd.DataFrame.from_dict(calibrated_probas)
+            calibrated_probas_df.index = data.index
+            data = pd.concat([data, calibrated_probas_df], axis=1)
 
         chunks = self.chunker.split(data)
 
@@ -440,11 +442,6 @@ class CBPE(AbstractEstimator):
             required_cols.append(self.y_pred)
         _list_missing(required_cols, list(reference_data.columns))
 
-        # We need uncalibrated data to calculate the realized performance on.
-        # We need realized performance in threshold calculations.
-        # https://github.com/NannyML/nannyml/issues/98
-        reference_data[f'uncalibrated_{self.y_pred_proba}'] = reference_data[self.y_pred_proba]
-
         for metric in self.metrics:
             metric.fit(reference_data)
 
@@ -472,12 +469,6 @@ class CBPE(AbstractEstimator):
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing([self.y_true, self.y_pred] + model_output_column_names(self.y_pred_proba), reference_data)
-
-        # We need uncalibrated data to calculate the realized performance on.
-        # We need realized performance in threshold calculations.
-        # https://github.com/NannyML/nannyml/issues/98
-        for class_proba in model_output_column_names(self.y_pred_proba):
-            reference_data[f'uncalibrated_{class_proba}'] = reference_data[class_proba]
 
         for metric in self.metrics:
             metric.fit(reference_data)
@@ -523,25 +514,10 @@ def _create_multilevel_index(metric_names: List[str]) -> MultiIndex:
 
 
 def _get_class_splits(
-    data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str], include_targets: bool = True
-) -> List[Tuple]:
-    classes = sorted(y_pred_proba.keys())
-    y_trues: Dict[str, np.ndarray] = {}
-
-    if include_targets:
-        binarized_labels = label_binarize(data[y_true], classes=classes)
-        y_trues = {classes[idx]: (binarized_labels.T[idx]) for idx in range(len(classes))}
-
-    y_pred_probas = {clazz: data[y_pred_proba[clazz]] for clazz in classes}
-
-    return [(cls, y_trues[cls] if include_targets else None, y_pred_probas[cls]) for cls in classes]
-
-
-def _binarize(data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str]) -> Iterable[Tuple]:
-    classes = sorted(y_pred_proba.keys())
-    for class_name in classes:
-        binarized_labels = label_binarize(data[y_true], classes=[class_name]).ravel()
-        yield class_name, binarized_labels, data[y_pred_proba[class_name]]
+    data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str]
+) -> Iterable[Tuple]:
+    for class_name in sorted(y_pred_proba):
+        yield class_name, data[y_true] == class_name if y_true in data.columns else None, data[y_pred_proba[class_name]]
 
 
 def _fit_calibrators(
@@ -550,7 +526,7 @@ def _fit_calibrators(
     fitted_calibrators = {}
     noop_calibrator = NoopCalibrator()
 
-    for clazz, y_true, y_pred_proba in _binarize(reference_data, y_true_col, y_pred_proba_col):
+    for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, y_true_col, y_pred_proba_col):
         _calibrator = copy.deepcopy(calibrator)
         if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator):
             _calibrator = noop_calibrator
@@ -563,14 +539,13 @@ def _fit_calibrators(
 
 def _calibrate_predicted_probabilities(
     data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str], calibrators: Dict[str, Calibrator]
-) -> pd.DataFrame:
-    class_splits = _get_class_splits(data, y_true, y_pred_proba, include_targets=False)
+) -> Dict[str, np.ndarray]:
     number_of_observations = len(data)
-    number_of_classes = len(class_splits)
+    number_of_classes = len(y_pred_proba)
 
     calibrated_probas = np.zeros((number_of_observations, number_of_classes))
 
-    for idx, split in enumerate(class_splits):
+    for idx, split in enumerate(_get_class_splits(data, y_true, y_pred_proba)):
         clazz, _, y_pred_proba_zz = split
         calibrated_probas[:, idx] = calibrators[clazz].calibrate(y_pred_proba_zz)
 
@@ -579,12 +554,9 @@ def _calibrate_predicted_probabilities(
 
     calibrated_probas = np.divide(calibrated_probas, denominator, out=uniform_proba, where=denominator != 0)
 
-    calibrated_data = data.copy(deep=True)
-    predicted_class_proba_column_names = [y_pred_proba[cls] for cls in sorted(y_pred_proba.keys())]
-    for idx in range(number_of_classes):
-        calibrated_data[predicted_class_proba_column_names[idx]] = calibrated_probas[:, idx]
+    class_name_to_calibrated_proba = dict(zip(sorted(y_pred_proba), calibrated_probas.T))
 
-    return calibrated_data
+    return class_name_to_calibrated_proba
 
 
 def raise_if_metrics_require_y_pred(metrics: List[str], y_pred: Optional[str]):
