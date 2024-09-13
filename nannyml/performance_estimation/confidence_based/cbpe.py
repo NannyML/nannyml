@@ -327,8 +327,6 @@ class CBPE(AbstractEstimator):
         estimator: PerformanceEstimator
             The fitted estimator.
         """
-        reference_data = reference_data.copy(deep=True)
-
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             return self._fit_binary(reference_data)
         elif self.problem_type == ProblemType.CLASSIFICATION_MULTICLASS:
