@@ -22,7 +22,7 @@ For more information, check out the `tutorial`_ and the `deep dive`_.
 from __future__ import annotations
 
 import copy
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union, Iterable
 
 import numpy as np
 import pandas as pd
@@ -529,11 +529,19 @@ def _get_class_splits(
     y_trues: Dict[str, np.ndarray] = {}
 
     if include_targets:
-        y_trues = {classes[idx]: (label_binarize(data[y_true], classes=classes).T[idx]) for idx in range(len(classes))}
+        binarized_labels = label_binarize(data[y_true], classes=classes)
+        y_trues = {classes[idx]: (binarized_labels.T[idx]) for idx in range(len(classes))}
 
     y_pred_probas = {clazz: data[y_pred_proba[clazz]] for clazz in classes}
 
     return [(cls, y_trues[cls] if include_targets else None, y_pred_probas[cls]) for cls in classes]
+
+
+def _binarize(data: pd.DataFrame, y_true: str, y_pred_proba: Dict[str, str]) -> Iterable[Tuple]:
+    classes = sorted(y_pred_proba.keys())
+    for class_name in classes:
+        binarized_labels = label_binarize(data[y_true], classes=[class_name]).ravel()
+        yield class_name, binarized_labels, data[y_pred_proba[class_name]]
 
 
 def _fit_calibrators(
@@ -542,7 +550,7 @@ def _fit_calibrators(
     fitted_calibrators = {}
     noop_calibrator = NoopCalibrator()
 
-    for clazz, y_true, y_pred_proba in _get_class_splits(reference_data, y_true_col, y_pred_proba_col):
+    for clazz, y_true, y_pred_proba in _binarize(reference_data, y_true_col, y_pred_proba_col):
         _calibrator = copy.deepcopy(calibrator)
         if not needs_calibration(np.asarray(y_true), np.asarray(y_pred_proba), calibrator):
             _calibrator = noop_calibrator
