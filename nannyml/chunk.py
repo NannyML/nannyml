@@ -162,7 +162,7 @@ class Chunker(abc.ABC):
                     f"timestamp column '{self.timestamp_column_name}' not in columns: {list(data.columns)}."
                 )
 
-            data = data.sort_values(by=[self.timestamp_column_name]).reset_index(drop=True)
+            data = data.sort_values(by=[self.timestamp_column_name], ignore_index=True)
 
         try:
             chunks = self._split(data)
