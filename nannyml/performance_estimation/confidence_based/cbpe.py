@@ -356,6 +356,7 @@ class CBPE(AbstractEstimator):
 
         data = data.copy(deep=True)
 
+        calibrated_probas_df = None
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             assert isinstance(self.y_pred_proba, str)
             required_cols = [self.y_pred_proba]
@@ -378,9 +379,9 @@ class CBPE(AbstractEstimator):
             calibrated_probas = {
                 f'calibrated_{self.y_pred_proba[class_name]}': proba for class_name, proba in calibrated_probas.items()
             }
-            calibrated_probas_df = pd.DataFrame.from_dict(calibrated_probas)
+            calibrated_probas_df = pd.DataFrame(calibrated_probas)
             calibrated_probas_df.index = data.index
-            data = pd.concat([data, calibrated_probas_df], axis=1)
+            # data = pd.concat([data, calibrated_probas_df], axis=1)
 
         chunks = self.chunker.split(data)
 
@@ -394,7 +395,11 @@ class CBPE(AbstractEstimator):
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'period': 'analysis',
-                    **self._estimate_chunk(chunk),
+                    **self._estimate_chunk(
+                        chunk,
+                        calibrated_probas_df.iloc[chunk.start_index: chunk.end_index]
+                        if calibrated_probas_df is not None else None
+                    ),
                 }
                 for chunk in chunks
             ]
@@ -423,10 +428,13 @@ class CBPE(AbstractEstimator):
 
         return self.result
 
-    def _estimate_chunk(self, chunk: Chunk) -> Dict:
+    def _estimate_chunk(self, chunk: Chunk, calibrated_probas: Optional[pd.DataFrame]) -> Dict:
         chunk_records: Dict[str, Any] = {}
+        chunk_data = (
+            pd.concat([chunk.data, calibrated_probas], axis=1) if calibrated_probas is not None else chunk.data
+        )
         for metric in self.metrics:
-            chunk_record = metric.get_chunk_record(chunk.data)
+            chunk_record = metric.get_chunk_record(chunk_data)
             # add the chunk record to the chunk_records dict
             chunk_records.update(chunk_record)
         return chunk_records
