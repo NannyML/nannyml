@@ -638,7 +638,10 @@ def _common_nan_removal_dataframe(data: pd.DataFrame, selected_columns: List[str
         raise InvalidArgumentsException(
             f"Selected columns: {selected_columns} not all present in provided data columns {list(data.columns)}"
         )
-    df = data.dropna(axis=0, how='any', inplace=False, subset=selected_columns).reset_index(drop=True).infer_objects()
+    df = data.dropna(axis=0, how='any', inplace=False, subset=selected_columns)
+    df.reset_index(drop=True, inplace=True)
+    df.infer_objects()
+
     empty: bool = df.shape[0] == 0
     return df, empty
 
