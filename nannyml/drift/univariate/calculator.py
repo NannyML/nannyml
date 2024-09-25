@@ -118,10 +118,10 @@ class UnivariateDriftCalculator(AbstractCalculator):
 
                 {
                     'kolmogorov_smirnov': StandardDeviationThreshold(std_lower_multiplier=None),
-                    'jensen_shannon': ConstantThreshold(upper=0.1),
+                    'jensen_shannon': StandardDeviationThreshold(std_lower_multiplier=None),
                     'wasserstein': StandardDeviationThreshold(std_lower_multiplier=None),
-                    'hellinger': ConstantThreshold(upper=0.1),
-                    'l_infinity': ConstantThreshold(upper=0.1)
+                    'hellinger': StandardDeviationThreshold(std_lower_multiplier=None),
+                    'l_infinity': StandardDeviationThreshold(std_lower_multiplier=None),
                 }
 
             A dictionary allowing users to set a custom threshold for each method. It links a `Threshold` subclass
@@ -130,10 +130,10 @@ class UnivariateDriftCalculator(AbstractCalculator):
             will be applied. The default method thresholds are as follows:
 
                 - `kolmogorov_smirnov`: `StandardDeviationThreshold(std_lower_multiplier=None)`
-                - `jensen_shannon`: `ConstantThreshold(upper=0.1)`
+                - `jensen_shannon`: `StandardDeviationThreshold(std_lower_multiplier=None)`
                 - `wasserstein`: `StandardDeviationThreshold(std_lower_multiplier=None)`
-                - `hellinger`: `ConstantThreshold(upper=0.1)`
-                - `l_infinity`: `ConstantThreshold(upper=0.1)`
+                - `hellinger`: `StandardDeviationThreshold(std_lower_multiplier=None)`
+                - `l_infinity`: `StandardDeviationThreshold(std_lower_multiplier=None)`
 
             The `chi2` method does not support custom thresholds for now. Additional research is required to determine
             how to transition from its current p-value based implementation.
