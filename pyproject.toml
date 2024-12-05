@@ -57,7 +57,7 @@ sqlmodel = {version = "^0.0.19", optional = true}
 APScheduler = "^3.9.1"
 psycopg2-binary = {version = "^2.9.3", optional = true}
 segment-analytics-python = "^2.3.2"
-python-dotenv = "^0.21.0"
+python-dotenv = ">=1.0.0,<2.0"
 types-pyyaml = "^6.0.12.8"
 types-python-dateutil = "^2.8.19.10"
 
