@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import jinja2
 import yaml
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, validator, Field, field_validator
 
 from nannyml._typing import Self
 from nannyml.exceptions import IOException
@@ -71,7 +71,7 @@ class CalculatorConfig(BaseModel):
     store: Optional[StoreConfig] = Field(default=None)
     params: Dict[str, Any]
 
-    @validator('params')
+    @field_validator('params')
     def _parse_thresholds(cls, value: Dict[str, Any]):
         """Parse thresholds in params and convert them to :class:`Threshold`'s"""
         # Some calculators expect `thresholds` parameter as dict
