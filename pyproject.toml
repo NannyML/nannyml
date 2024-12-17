@@ -28,21 +28,26 @@ nml = "nannyml.cli.cli:cli"
 nannyml = "nannyml.cli.cli:cli"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.12"
-pandas = [
-    {version="^1.5", python=">=3.8,<3.12"}
-]
+python = ">=3.9,<3.13"
+
+numpy = "^2.0"
+
+scipy = "^1.13"
+
+pandas = "^2.2"
+
+scikit-learn = "^1.6"
+
+pyarrow = "^18.1"
+
 python-dateutil = "^2.8.2"
-scikit-learn = "^1.2"
 joblib = "^1.1.0"
 category-encoders = "^2.3.0"
 matplotlib = "^3.7"
 plotly = "^5.6.0"
-scipy = "^1.10"
-numpy = "^1.24,<1.25"
 seaborn = "^0.13.2"
 kaleido = "0.2.1"
-pyarrow = "^14.0.0"
+
 gcsfs = ">=2022.5.0"
 pydantic = "^2.7.4"
 rich = ">=12.5.1"
@@ -57,7 +62,7 @@ sqlmodel = {version = "^0.0.19", optional = true}
 APScheduler = "^3.9.1"
 psycopg2-binary = {version = "^2.9.3", optional = true}
 segment-analytics-python = "^2.3.2"
-python-dotenv = "^0.21.0"
+python-dotenv = "^1.0"
 types-pyyaml = "^6.0.12.8"
 types-python-dateutil = "^2.8.19.10"
 
