@@ -12,7 +12,7 @@ from sklearn.metrics import (
     mean_absolute_error,
     mean_absolute_percentage_error,
     mean_squared_error,
-    mean_squared_log_error,
+    mean_squared_log_error, root_mean_squared_error, root_mean_squared_log_error,
 )
 
 from nannyml._typing import ProblemType
@@ -406,7 +406,7 @@ class RMSE(Metric):
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
-        return mean_squared_error(y_true, y_pred, squared=False)
+        return root_mean_squared_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
@@ -486,7 +486,7 @@ class RMSLE(Metric):
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
 
-        return mean_squared_log_error(y_true, y_pred, squared=False)
+        return root_mean_squared_log_error(y_true, y_pred)
 
     def _sampling_error(self, data: pd.DataFrame) -> float:
         data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
