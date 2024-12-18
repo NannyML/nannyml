@@ -1377,41 +1377,45 @@ flake8 = ">=3.8"
 
 [[package]]
 name = "flaml"
-version = "1.2.4"
+version = "2.3.3"
 description = "A fast library for automated machine learning and tuning"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 files = [
-    {file = "FLAML-1.2.4-py3-none-any.whl", hash = "sha256:ffa41445ca2ccc82c3dd620e587460647cbcd30f4860cb711e84a945bcce67a8"},
-    {file = "FLAML-1.2.4.tar.gz", hash = "sha256:ba8b62df4f459e226f951e03c4238a699b3168f708e30c4e7c75eba261896fe2"},
+    {file = "FLAML-2.3.3-py3-none-any.whl", hash = "sha256:7f866da9d8a961715d26f7b4b68ac2ed6da8c1e3802630148257b098c5dbac04"},
+    {file = "flaml-2.3.3.tar.gz", hash = "sha256:f3237d3e4970b93800ff175389362a8de6d68af4bc333c211931791e9b26debe"},
 ]
 
 [package.dependencies]
-lightgbm = ">=2.3.1"
-NumPy = ">=1.17.0rc1"
-pandas = ">=1.1.4"
-scikit-learn = ">=0.24"
-scipy = ">=1.4.1"
-xgboost = ">=0.90"
+lightgbm = {version = ">=2.3.1", optional = true, markers = "extra == \"automl\""}
+NumPy = ">=1.17"
+pandas = {version = ">=1.1.4", optional = true, markers = "extra == \"automl\""}
+scikit-learn = {version = ">=1.0.0", optional = true, markers = "extra == \"automl\""}
+scipy = {version = ">=1.4.1", optional = true, markers = "extra == \"automl\""}
+xgboost = {version = ">=0.90,<3.0.0", optional = true, markers = "extra == \"automl\""}
 
 [package.extras]
-autogen = ["diskcache", "docker", "openai (==0.27.4)"]
+autogen = ["diskcache", "openai (==0.27.8)", "termcolor"]
+automl = ["lightgbm (>=2.3.1)", "pandas (>=1.1.4)", "scikit-learn (>=1.0.0)", "scipy (>=1.4.1)", "xgboost (>=0.90,<3.0.0)"]
+autozero = ["packaging", "pandas", "scikit-learn"]
 azureml = ["azureml-mlflow"]
-benchmark = ["catboost (>=0.26)", "psutil (==5.8.0)", "xgboost (==1.3.3)"]
-blendsearch = ["optuna (==2.8.0)"]
-catboost = ["catboost (>=0.26)"]
-forecast = ["hcrystalball (==0.1.10)", "holidays (<0.14)", "prophet (>=1.0.1)", "pytorch-forecasting (>=0.9.0)", "statsmodels (>=0.12.2)"]
-hf = ["datasets", "nltk", "rouge-score", "seqeval", "transformers[torch] (==4.26)"]
-nlp = ["datasets", "nltk", "rouge-score", "seqeval", "transformers[torch] (==4.26)"]
+benchmark = ["catboost (>=0.26)", "pandas (==1.1.4)", "psutil (==5.8.0)", "xgboost (==1.3.3)"]
+blendsearch = ["optuna (>=2.8.0,<=3.6.1)", "packaging"]
+catboost = ["catboost (>=0.26,<1.2)", "catboost (>=0.26,<=1.2.5)"]
+forecast = ["hcrystalball (==0.1.10)", "holidays (<0.14)", "prophet (>=1.0.1)", "pytorch-forecasting (>=0.9.0)", "pytorch-lightning (==1.9.0)", "statsmodels (>=0.12.2)", "tensorboardX (==2.6)"]
+hf = ["datasets", "nltk (<=3.8.1)", "rouge-score", "seqeval", "transformers[torch] (==4.26)"]
+mathchat = ["diskcache", "openai (==0.27.8)", "pydantic (==1.10.9)", "sympy", "termcolor", "wolframalpha"]
+nlp = ["datasets", "nltk (<=3.8.1)", "rouge-score", "seqeval", "transformers[torch] (==4.26)"]
 nni = ["nni"]
-notebook = ["jupyter", "matplotlib", "openml (==0.10.2)"]
-openai = ["diskcache", "openai (==0.27.4)"]
+notebook = ["jupyter"]
+openai = ["diskcache", "openai (==0.27.8)"]
 ray = ["ray[tune] (>=1.13,<2.0)"]
-spark = ["joblibspark (>=0.5.0)", "pyspark (>=3.2.0)"]
-synapse = ["joblibspark (>=0.5.0)", "optuna (==2.8.0)", "pyspark (>=3.2.0)"]
-test = ["catboost (>=0.26,<1.2)", "coverage (>=5.3)", "dataclasses", "datasets", "hcrystalball (==0.1.10)", "ipykernel", "joblibspark (>=0.5.0)", "mlflow", "nbconvert", "nbformat", "nltk", "openml (==0.10.2)", "optuna (==2.8.0)", "pre-commit", "psutil (==5.8.0)", "pyspark (>=3.2.0)", "pytest (>=6.1.1)", "pytorch-forecasting (>=0.9.0,<=0.10.1)", "pytorch-lightning (<1.9.1)", "requests (<2.29.0)", "rgf-python", "rouge-score", "seqeval", "statsmodels (>=0.12.2)", "thop", "torch", "torchvision", "transformers[torch] (==4.26)"]
+retrievechat = ["chromadb", "diskcache", "openai (==0.27.8)", "sentence-transformers", "termcolor", "tiktoken"]
+spark = ["joblib (<=1.3.2)", "joblibspark (>=0.5.0)", "pyspark (>=3.2.0)"]
+synapse = ["joblibspark (>=0.5.0)", "optuna (>=2.8.0,<=3.6.1)", "pyspark (>=3.2.0)"]
+test = ["catboost (>=0.26)", "catboost (>=0.26,<1.2)", "coverage (>=5.3)", "dataclasses", "datasets", "dill", "hcrystalball (==0.1.10)", "ipykernel", "joblib (<=1.3.2)", "joblibspark (>=0.5.0)", "jupyter", "lightgbm (>=2.3.1)", "mlflow (==2.15.1)", "nbconvert", "nbformat", "nltk (<=3.8.1)", "openml", "optuna (>=2.8.0,<=3.6.1)", "packaging", "pandas (>=1.1.4)", "pandas (>=1.1.4,<2.0.0)", "pre-commit", "psutil (==5.8.0)", "pydantic (==1.10.9)", "pytest (>=6.1.1)", "pytorch-forecasting (>=0.9.0,<=0.10.1)", "pytorch-lightning (<1.9.1)", "requests (<2.29.0)", "rgf-python", "rouge-score", "scikit-learn (>=1.0.0)", "scipy (>=1.4.1)", "seqeval", "statsmodels (>=0.12.2)", "sympy", "tensorboardX (==2.6)", "thop", "torch", "torchvision", "transformers[torch] (==4.26)", "wolframalpha", "xgboost (>=0.90,<2.0.0)"]
 ts-forecast = ["hcrystalball (==0.1.10)", "holidays (<0.14)", "prophet (>=1.0.1)", "statsmodels (>=0.12.2)"]
-vw = ["vowpalwabbit (>=8.10.0,<9.0.0)"]
+vw = ["scikit-learn", "vowpalwabbit (>=8.10.0,<9.0.0)"]
 
 [[package]]
 name = "fonttools"
@@ -6734,4 +6738,4 @@ db = ["psycopg2-binary", "sqlmodel"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "a74bc162ea85be33fe4aaca229d371cb3200053606b054b77fe5b999ed70c625"
+content-hash = "e25c81572abe9ec130eb4e7731716670e4d8f5be3de883b799c2722686706a9d"
