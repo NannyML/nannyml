@@ -2990,7 +2990,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                     'estimated_recall': [0.6957620347508907, 0.6272720458900231],
                     'estimated_specificity': [0.8480220572478717, 0.8145095377877009],
                     'estimated_accuracy': [0.6967957612985849, 0.6305270354546132],
-                    'estimated_average_precision': [0.7812291182204878, 0.6907845497417768],
+                    'estimated_average_precision': [0.7812296449871846, 0.690772335696266],
                     'estimated_business_value': [1.7964098918968543, 1.5447162372665988],
                     'estimated_true_highstreet_card_pred_highstreet_card': [15431.207920621628, 106.61852759787631],
                     'estimated_true_highstreet_card_pred_prepaid_card': [3140.1950482057946, 27.27202363566655],

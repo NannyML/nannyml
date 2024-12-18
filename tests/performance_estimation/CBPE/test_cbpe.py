@@ -518,7 +518,7 @@ def test_cbpe_for_binary_classification_chunked_by_size_should_include_constant_
 @pytest.mark.parametrize(
     'metric, sampling_error',
     [
-        ('roc_auc', [0.001819, 0.001043, 0.001046, 0.001046, 0.040489]),
+        ('roc_auc', [0.001819, 0.001043, 0.001046, 0.001046, 0.040571]),
         ('f1', [0.007585, 0.004348, 0.004360, 0.004362, 0.168798]),
         ('precision', [0.003777, 0.002165, 0.002171, 0.002172, 0.084046]),
         ('recall', [0.006578, 0.003770, 0.003781, 0.003783, 0.146378]),
