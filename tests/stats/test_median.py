@@ -48,7 +48,7 @@ def test_stats_median_calculator_should_not_fail_given_nan_values(  # noqa: D103
     binary_classification_data
 ):
     reference, monitored = binary_classification_data
-    reference.loc[1000:11000, 'car_value'] = np.NaN
+    reference.loc[1000:11000, 'car_value'] = np.nan
     try:
         calc = SummaryStatsMedianCalculator(
             column_names=['car_value'],

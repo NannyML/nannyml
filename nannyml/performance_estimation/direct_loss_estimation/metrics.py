@@ -24,7 +24,7 @@ from sklearn.metrics import (
     mean_absolute_error,
     mean_absolute_percentage_error,
     mean_squared_error,
-    mean_squared_log_error,
+    mean_squared_log_error, root_mean_squared_error, root_mean_squared_log_error,
 )
 
 from nannyml._typing import ProblemType
@@ -474,7 +474,7 @@ class MAE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return mae_sampling_error(self._sampling_error_components, data)
 
@@ -494,10 +494,10 @@ class MAE(Metric):
             Mean Absolute Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
+            return np.nan
         data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -613,7 +613,7 @@ class MAPE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return mape_sampling_error(self._sampling_error_components, data)
 
@@ -633,10 +633,10 @@ class MAPE(Metric):
             Mean Absolute Percentage Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
+            return np.nan
         data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -751,7 +751,7 @@ class MSE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return mse_sampling_error(self._sampling_error_components, data)
 
@@ -771,10 +771,10 @@ class MSE(Metric):
             Mean Squared Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
+            return np.nan
         data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
         return mean_squared_error(y_true, y_pred)
@@ -890,7 +890,7 @@ class MSLE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return msle_sampling_error(self._sampling_error_components, data)
 
@@ -914,10 +914,10 @@ class MSLE(Metric):
             Mean Squared Log Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
+            return np.nan
         data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
         return mean_squared_log_error(y_true, y_pred)
@@ -1031,7 +1031,7 @@ class RMSE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return rmse_sampling_error(self._sampling_error_components, data)
 
@@ -1051,13 +1051,13 @@ class RMSE(Metric):
             Root Mean Squared Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
+            return np.nan
         data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
-        return mean_squared_error(y_true, y_pred, squared=False)
+        return root_mean_squared_error(y_true, y_pred)
 
 
 @MetricFactory.register('rmsle', ProblemType.REGRESSION)
@@ -1171,7 +1171,7 @@ class RMSLE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return rmsle_sampling_error(self._sampling_error_components, data)
 
@@ -1195,14 +1195,14 @@ class RMSLE(Metric):
             Root Mean Squared Log Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
+            return np.nan
         data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
 
-        return mean_squared_log_error(y_true, y_pred, squared=False)
+        return root_mean_squared_log_error(y_true, y_pred)

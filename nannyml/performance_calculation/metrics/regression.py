@@ -78,7 +78,7 @@ class MAE(Metric):
             reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
-            self._sampling_error_components = (np.NaN,)
+            self._sampling_error_components = (np.nan,)
         else:
             self._sampling_error_components = mae_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],
@@ -93,7 +93,7 @@ class MAE(Metric):
             warnings.warn(
                 f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -106,7 +106,7 @@ class MAE(Metric):
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
-            return np.NaN
+            return np.nan
         else:
             return mae_sampling_error(self._sampling_error_components, data)
 
@@ -154,7 +154,7 @@ class MAPE(Metric):
             reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
-            self._sampling_error_components = (np.NaN,)
+            self._sampling_error_components = (np.nan,)
         else:
             self._sampling_error_components = mape_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],
@@ -169,7 +169,7 @@ class MAPE(Metric):
             warnings.warn(
                 f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -182,7 +182,7 @@ class MAPE(Metric):
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
-            return np.NaN
+            return np.nan
         else:
             return mape_sampling_error(self._sampling_error_components, data)
 
@@ -230,7 +230,7 @@ class MSE(Metric):
             reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
-            self._sampling_error_components = (np.NaN,)
+            self._sampling_error_components = (np.nan,)
         else:
             self._sampling_error_components = mse_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],
@@ -245,7 +245,7 @@ class MSE(Metric):
             warnings.warn(
                 f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -258,7 +258,7 @@ class MSE(Metric):
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
-            return np.NaN
+            return np.nan
         else:
             return mse_sampling_error(self._sampling_error_components, data)
 
@@ -306,7 +306,7 @@ class MSLE(Metric):
             reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
-            self._sampling_error_components = (np.NaN,)
+            self._sampling_error_components = (np.nan,)
         else:
             self._sampling_error_components = msle_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],
@@ -321,7 +321,7 @@ class MSLE(Metric):
             warnings.warn(
                 f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -338,7 +338,7 @@ class MSLE(Metric):
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
-            return np.NaN
+            return np.nan
         else:
             return msle_sampling_error(self._sampling_error_components, data)
 
@@ -386,7 +386,7 @@ class RMSE(Metric):
             reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
-            self._sampling_error_components = (np.NaN,)
+            self._sampling_error_components = (np.nan,)
         else:
             self._sampling_error_components = rmse_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],
@@ -401,7 +401,7 @@ class RMSE(Metric):
             warnings.warn(
                 f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -414,7 +414,7 @@ class RMSE(Metric):
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
-            return np.NaN
+            return np.nan
         else:
             return rmse_sampling_error(self._sampling_error_components, data)
 
@@ -462,7 +462,7 @@ class RMSLE(Metric):
             reference_data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
         )
         if empty:
-            self._sampling_error_components = (np.NaN,)
+            self._sampling_error_components = (np.nan,)
         else:
             self._sampling_error_components = rmsle_sampling_error_components(
                 y_true_reference=reference_data[self.y_true],
@@ -477,7 +477,7 @@ class RMSLE(Metric):
             warnings.warn(
                 f"No data or too many missing values, cannot calculate {self.display_name}. " f"Returning NaN."
             )
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
@@ -494,6 +494,6 @@ class RMSLE(Metric):
             warnings.warn(
                 f"Too many missing values, cannot calculate {self.display_name} sampling error. " "Returning NaN."
             )
-            return np.NaN
+            return np.nan
         else:
             return rmsle_sampling_error(self._sampling_error_components, data)

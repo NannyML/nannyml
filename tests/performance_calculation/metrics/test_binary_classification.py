@@ -262,17 +262,17 @@ def test_metric_values_without_timestamp_are_calculated_correctly(  # noqa: D103
 @pytest.mark.parametrize(
     'metric, expected',
     [
-        ('roc_auc', [0.97096, 0.97025, 0.97628, 0.96772, 0.96989, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('f1', [0.92186, 0.92124, 0.92678, 0.91684, 0.92356, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('precision', [0.96729, 0.96607, 0.96858, 0.96819, 0.9661, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('recall', [0.88051, 0.88039, 0.88843, 0.87067, 0.8846, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('specificity', [0.9681, 0.9701, 0.97277, 0.9718, 0.96864, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('accuracy', [0.9228, 0.926, 0.9318, 0.9216, 0.9264, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('business_value', [775, 710, 655, 895, 670, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('true_positive', [2277, 2164, 2158, 2161, 2223, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('false_positive', [77, 76, 70, 71, 78, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('true_negative', [2337, 2466, 2501, 2447, 2409, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
-        ('false_negative', [309, 294, 271, 321, 290, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]),
+        ('roc_auc', [0.97096, 0.97025, 0.97628, 0.96772, 0.96989, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('f1', [0.92186, 0.92124, 0.92678, 0.91684, 0.92356, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('precision', [0.96729, 0.96607, 0.96858, 0.96819, 0.9661, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('recall', [0.88051, 0.88039, 0.88843, 0.87067, 0.8846, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('specificity', [0.9681, 0.9701, 0.97277, 0.9718, 0.96864, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('accuracy', [0.9228, 0.926, 0.9318, 0.9216, 0.9264, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('business_value', [775, 710, 655, 895, 670, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('true_positive', [2277, 2164, 2158, 2161, 2223, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('false_positive', [77, 76, 70, 71, 78, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('true_negative', [2337, 2466, 2501, 2447, 2409, np.nan, np.nan, np.nan, np.nan, np.nan]),
+        ('false_negative', [309, 294, 271, 321, 290, np.nan, np.nan, np.nan, np.nan, np.nan]),
     ],
 )
 def test_metric_values_with_partial_targets_are_calculated_correctly(  # noqa: D103
