@@ -50,21 +50,22 @@ def calculate_value_counts(
     # TODO: deal with None timestamps
     if isinstance(timestamps, pd.Series):
         timestamps = timestamps.reset_index()
-    data_with_chunk_keys = pd.concat(
-        [
-            chunk.data.assign(chunk_key=chunk.key, chunk_index=chunk.chunk_index)
-            for chunk in chunker.split(pd.concat([pd.Series(categorical_data, name=column_name), timestamps], axis=1))
-        ]
-    )
+
+    chunks = chunker.split(pd.concat([pd.Series(categorical_data, name=column_name), timestamps], axis=1))
+    data_with_chunk_keys = pd.concat([chunk.data.assign(chunk_index=chunk.chunk_index) for chunk in chunks])
+
+    chunk_keys_lookup = {chunk.chunk_index: chunk.key for chunk in chunks}
 
     value_counts_table = (
-        data_with_chunk_keys.groupby(['chunk_key', 'chunk_index'])[column_name]
+        data_with_chunk_keys.groupby(['chunk_index'])[column_name]
         .value_counts()
         .to_frame('value_counts')
         .sort_values(by=['chunk_index', 'value_counts'])
         .reset_index()
-        .rename(columns={'level_2': column_name, 'chunk_index': 'chunk_indices'})
+        .rename(columns={'chunk_index': 'chunk_indices'})
     )
+
+    value_counts_table['chunk_key'] = value_counts_table['chunk_indices'].map(lambda i: chunk_keys_lookup[i])
 
     value_counts_table['value_counts_total'] = value_counts_table['chunk_key'].map(
         value_counts_table.groupby('chunk_key')['value_counts'].sum()
