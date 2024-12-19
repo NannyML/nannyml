@@ -278,7 +278,9 @@ class ContinuousJensenShannonDistance(Method):
         reference_data = _remove_nans(reference_data)
         len_reference = len(reference_data)
 
-        bins = np.histogram_bin_edges(reference_data, bins='doane')
+        # Explicit conversion to float because of
+        # https://github.com/numpy/numpy/commit/c63969c6e1d58e791632aacfb88ecae465d6dcfc
+        bins = np.histogram_bin_edges(reference_data.astype("float64"), bins='doane')
         reference_proba_in_bins = np.histogram(reference_data, bins=bins)[0] / len_reference
         self._bins = bins
         self._reference_proba_in_bins = reference_proba_in_bins
@@ -731,7 +733,7 @@ class ContinuousHellingerDistance(Method):
         reference_data = _remove_nans(reference_data)
         len_reference = len(reference_data)
 
-        bins = np.histogram_bin_edges(reference_data, bins='doane')
+        bins = np.histogram_bin_edges(reference_data.astype("float64"), bins='doane')
         reference_proba_in_bins = np.histogram(reference_data, bins=bins)[0] / len_reference
         self._bins = bins
         self._reference_proba_in_bins = reference_proba_in_bins
