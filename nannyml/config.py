@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import jinja2
 import yaml
-from pydantic import BaseModel, validator, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from nannyml._typing import Self
 from nannyml.exceptions import IOException
