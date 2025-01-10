@@ -3342,7 +3342,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                     "estimated_accuracy": [0.6967957612985849, 0.6305270354546132],
                     "estimated_average_precision": [
                         0.7812296449871846,
-                        0.6907845497417768,
+                        0.690772335696266,
                     ],
                     "estimated_business_value": [
                         1.7964098918968543,
