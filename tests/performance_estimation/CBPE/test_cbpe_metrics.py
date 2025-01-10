@@ -1,4 +1,5 @@
 """Tests."""
+
 import re
 
 import pandas as pd
@@ -29,528 +30,442 @@ LOGGER = getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    'calculator_opts, expected',
+    "calculator_opts, expected",
     [
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': None,
-                'business_value_matrix': [[2, -5], [-10, 10]],
-                'normalize_business_value': None,
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": None,
+                "business_value_matrix": [[2, -5], [-10, 10]],
+                "normalize_business_value": None,
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [9488.96406430504, 14537.180201036117],
-                    'estimated_true_negative': [9468.107941981285, 13200.5981195499],
-                    'estimated_false_positive': [567.0359356949585, 1267.8197989638852],
-                    'estimated_false_negative': [475.8920580187156, 994.4018804500995],
-                    'estimated_business_value': [106231.75626835103, 155489.88045014057],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [9488.96406430504, 14537.180201036117],
+                    "estimated_true_negative": [9468.107941981285, 13200.5981195499],
+                    "estimated_false_positive": [567.0359356949585, 1267.8197989638852],
+                    "estimated_false_negative": [475.8920580187156, 994.4018804500995],
+                    "estimated_business_value": [
+                        106231.75626835103,
+                        155489.88045014057,
+                    ],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': None,
-                'business_value_matrix': [[2, -5], [-10, 10]],
-                'normalize_business_value': 'per_prediction',
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": None,
+                "business_value_matrix": [[2, -5], [-10, 10]],
+                "normalize_business_value": "per_prediction",
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [9488.96406430504, 14537.180201036117],
-                    'estimated_true_negative': [9468.107941981285, 13200.5981195499],
-                    'estimated_false_positive': [567.0359356949585, 1267.8197989638852],
-                    'estimated_false_negative': [475.8920580187156, 994.4018804500995],
-                    'estimated_business_value': [10.579896199609875, 9.956118766770157],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [9488.96406430504, 14537.180201036117],
+                    "estimated_true_negative": [9468.107941981285, 13200.5981195499],
+                    "estimated_false_positive": [567.0359356949585, 1267.8197989638852],
+                    "estimated_false_negative": [475.8920580187156, 994.4018804500995],
+                    "estimated_business_value": [10.579896199609875, 9.956118766770157],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': 'all',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": "all",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [0.47444820321525205, 0.4845726733678706],
-                    'estimated_true_negative': [0.47340539709906426, 0.44001993731833],
-                    'estimated_false_positive': [0.02835179678474793, 0.04226065996546284],
-                    'estimated_false_negative': [0.02379460290093578, 0.03314672934833665],
-                    'estimated_business_value': [-79304.54024949206, -116471.5454883825],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [
+                        0.47444820321525205,
+                        0.4845726733678706,
+                    ],
+                    "estimated_true_negative": [0.47340539709906426, 0.44001993731833],
+                    "estimated_false_positive": [
+                        0.02835179678474793,
+                        0.04226065996546284,
+                    ],
+                    "estimated_false_negative": [
+                        0.02379460290093578,
+                        0.03314672934833665,
+                    ],
+                    "estimated_business_value": [
+                        -79304.54024949206,
+                        -116471.5454883825,
+                    ],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': 'true',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": "true",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_true_negative': [0.9434949869571514, 0.9123732942949082],
-                    'estimated_false_positive': [0.05650501304284861, 0.08762670570509186],
-                    'estimated_false_negative': [0.04775704256809077, 0.06402450666216646],
-                    'estimated_business_value': [-79304.54024949206, -116471.5454883825],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_true_negative": [0.9434949869571514, 0.9123732942949082],
+                    "estimated_false_positive": [
+                        0.05650501304284861,
+                        0.08762670570509186,
+                    ],
+                    "estimated_false_negative": [
+                        0.04775704256809077,
+                        0.06402450666216646,
+                    ],
+                    "estimated_business_value": [
+                        -79304.54024949206,
+                        -116471.5454883825,
+                    ],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': 'pred',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": "pred",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_true_negative': [0.952142793843653, 0.9299470320218318],
-                    'estimated_false_positive': [0.05638782176759731, 0.08021637449945493],
-                    'estimated_false_negative': [0.0478572061563471, 0.07005296797816835],
-                    'estimated_business_value': [-79304.54024949206, -116471.5454883825],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_true_negative": [0.952142793843653, 0.9299470320218318],
+                    "estimated_false_positive": [
+                        0.05638782176759731,
+                        0.08021637449945493,
+                    ],
+                    "estimated_false_negative": [
+                        0.0478572061563471,
+                        0.07005296797816835,
+                    ],
+                    "estimated_business_value": [
+                        -79304.54024949206,
+                        -116471.5454883825,
+                    ],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': None,
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": None,
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [9488.96406430504, 14537.180201036117],
-                    'estimated_true_negative': [9468.107941981285, 13200.5981195499],
-                    'estimated_false_positive': [567.0359356949585, 1267.8197989638852],
-                    'estimated_false_negative': [475.8920580187156, 994.4018804500995],
-                    'estimated_business_value': [-79304.54024949206, -116471.5454883825],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [9488.96406430504, 14537.180201036117],
+                    "estimated_true_negative": [9468.107941981285, 13200.5981195499],
+                    "estimated_false_positive": [567.0359356949585, 1267.8197989638852],
+                    "estimated_false_negative": [475.8920580187156, 994.4018804500995],
+                    "estimated_business_value": [
+                        -79304.54024949206,
+                        -116471.5454883825,
+                    ],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': 'all',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": "all",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [0.47444820321525205, 0.4845726733678706],
-                    'estimated_true_negative': [0.47340539709906426, 0.44001993731833],
-                    'estimated_false_positive': [0.02835179678474793, 0.04226065996546284],
-                    'estimated_false_negative': [0.02379460290093578, 0.03314672934833665],
-                    'estimated_business_value': [-79304.54024949206, -116471.5454883825],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [
+                        0.47444820321525205,
+                        0.4845726733678706,
+                    ],
+                    "estimated_true_negative": [0.47340539709906426, 0.44001993731833],
+                    "estimated_false_positive": [
+                        0.02835179678474793,
+                        0.04226065996546284,
+                    ],
+                    "estimated_false_negative": [
+                        0.02379460290093578,
+                        0.03314672934833665,
+                    ],
+                    "estimated_business_value": [
+                        -79304.54024949206,
+                        -116471.5454883825,
+                    ],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': 'all',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[2, -5], [-10, 10]],
-                'normalize_business_value': 'per_prediction',
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": "all",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[2, -5], [-10, 10]],
+                "normalize_business_value": "per_prediction",
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [0.47444820321525205, 0.4845726733678706],
-                    'estimated_true_negative': [0.47340539709906426, 0.44001993731833],
-                    'estimated_false_positive': [0.02835179678474793, 0.04226065996546284],
-                    'estimated_false_negative': [0.02379460290093578, 0.03314672934833665],
-                    'estimated_business_value': [10.579896199609875, 9.956118766770157],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [
+                        0.47444820321525205,
+                        0.4845726733678706,
+                    ],
+                    "estimated_true_negative": [0.47340539709906426, 0.44001993731833],
+                    "estimated_false_positive": [
+                        0.02835179678474793,
+                        0.04226065996546284,
+                    ],
+                    "estimated_false_negative": [
+                        0.02379460290093578,
+                        0.03314672934833665,
+                    ],
+                    "estimated_business_value": [10.579896199609875, 9.956118766770157],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': 'true',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": "true",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_true_negative': [0.9434949869571514, 0.9123732942949082],
-                    'estimated_false_positive': [0.05650501304284861, 0.08762670570509186],
-                    'estimated_false_negative': [0.04775704256809077, 0.06402450666216646],
-                    'estimated_business_value': [-79304.54024949206, -116471.5454883825],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_true_negative": [0.9434949869571514, 0.9123732942949082],
+                    "estimated_false_positive": [
+                        0.05650501304284861,
+                        0.08762670570509186,
+                    ],
+                    "estimated_false_negative": [
+                        0.04775704256809077,
+                        0.06402450666216646,
+                    ],
+                    "estimated_business_value": [
+                        -79304.54024949206,
+                        -116471.5454883825,
+                    ],
                 }
             ),
         ),
         (
             {
-                'chunker': SizeBasedChunker(chunk_size=20000, incomplete='append'),
-                'normalize_confusion_matrix': 'pred',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunker": SizeBasedChunker(chunk_size=20000, incomplete="append"),
+                "normalize_confusion_matrix": "pred",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:49999]'],
-                    'estimated_roc_auc': [0.9711057564966745, 0.9636286015592977],
-                    'estimated_f1': [0.9479079222515973, 0.9278089207836576],
-                    'estimated_precision': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_average_precision': [0.9629778663941202, 0.9576117462271682],
-                    'estimated_recall': [0.9522429574319092, 0.9359754933378336],
-                    'estimated_specificity': [0.9434949869571513, 0.9123732942949082],
-                    'estimated_accuracy': [0.9478536003143163, 0.9245926106862006],
-                    'estimated_true_positive': [0.9436121782324026, 0.9197836255005452],
-                    'estimated_true_negative': [0.952142793843653, 0.9299470320218318],
-                    'estimated_false_positive': [0.05638782176759731, 0.08021637449945493],
-                    'estimated_false_negative': [0.0478572061563471, 0.07005296797816835],
-                    'estimated_business_value': [-79304.54024949206, -116471.5454883825],
+                    "key": ["[0:19999]", "[20000:49999]"],
+                    "estimated_roc_auc": [0.9711057564966745, 0.9636286015592977],
+                    "estimated_f1": [0.9479079222515973, 0.9278089207836576],
+                    "estimated_precision": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_average_precision": [
+                        0.9629778663941202,
+                        0.9576117462271682,
+                    ],
+                    "estimated_recall": [0.9522429574319092, 0.9359754933378336],
+                    "estimated_specificity": [0.9434949869571513, 0.9123732942949082],
+                    "estimated_accuracy": [0.9478536003143163, 0.9245926106862006],
+                    "estimated_true_positive": [0.9436121782324026, 0.9197836255005452],
+                    "estimated_true_negative": [0.952142793843653, 0.9299470320218318],
+                    "estimated_false_positive": [
+                        0.05638782176759731,
+                        0.08021637449945493,
+                    ],
+                    "estimated_false_negative": [
+                        0.0478572061563471,
+                        0.07005296797816835,
+                    ],
+                    "estimated_business_value": [
+                        -79304.54024949206,
+                        -116471.5454883825,
+                    ],
                 }
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': None, 'business_value_matrix': [[-1, 4], [8, -8]]},
+            {
+                "chunk_number": 4,
+                "normalize_confusion_matrix": None,
+                "business_value_matrix": [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
-                    'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
-                    'estimated_roc_auc': [
+                    "key": [
+                        "[0:12499]",
+                        "[12500:24999]",
+                        "[25000:37499]",
+                        "[37500:49999]",
+                    ],
+                    "estimated_roc_auc": [
                         0.9710577647083807,
                         0.9711638319733471,
                         0.9614012753095441,
                         0.9617878072895653,
                     ],
-                    'estimated_f1': [0.9478220802546018, 0.9483683062849226, 0.9235839411719146, 0.9239534478264141],
-                    'estimated_precision': [
+                    "estimated_f1": [
+                        0.9478220802546018,
+                        0.9483683062849226,
+                        0.9235839411719146,
+                        0.9239534478264141,
+                    ],
+                    "estimated_precision": [
                         0.9432817252782693,
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
                         0.9560973858800224,
                     ],
-                    'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
-                    'estimated_specificity': [
+                    "estimated_recall": [
+                        0.9524063553647716,
+                        0.9521109162736728,
+                        0.9327863750020324,
+                        0.932843314818147,
+                    ],
+                    "estimated_specificity": [
                         0.9426505776503413,
                         0.9446298328855539,
                         0.9050174893945843,
                         0.9065202406788675,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9475319773956268,
                         0.9483565214666658,
                         0.9194997180834459,
                         0.920199809204049,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         5956.8240951322705,
                         5928.6548076450235,
                         6080.918132437733,
                         6059.74723012613,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         5887.325622313064,
                         5925.8017106883,
                         5412.82834360534,
                         5442.750384924482,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         358.1759048677297,
                         347.3451923549768,
                         568.0818675622668,
                         561.2527698738705,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         297.6743776869358,
                         298.19828931170053,
                         438.1716563946605,
                         436.2496150755182,
                     ],
-                    'estimated_business_value': [
-                        -49727.81974240482,
-                        -49580.07308793498,
-                        -48282.472681700856,
-                        -48185.720225833895,
-                    ],
-                }
-            ),
-        ),
-        (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'all', 'business_value_matrix': [[-1, 4], [8, -8]]},
-            pd.DataFrame(
-                {
-                    'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
-                    'estimated_roc_auc': [
-                        0.9710577647083807,
-                        0.9711638319733471,
-                        0.9614012753095441,
-                        0.9617878072895653,
-                    ],
-                    'estimated_f1': [0.9478220802546018, 0.9483683062849226, 0.9235839411719146, 0.9239534478264141],
-                    'estimated_precision': [
-                        0.9432817252782693,
-                        0.9446550044048795,
-                        0.9145613073300847,
-                        0.915231419744167,
-                    ],
-                    'estimated_average_precision': [
-                        0.9630540175544957,
-                        0.9630490923729641,
-                        0.9559875174554471,
-                        0.9560973858800224,
-                    ],
-                    'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
-                    'estimated_specificity': [
-                        0.9426505776503413,
-                        0.9446298328855539,
-                        0.9050174893945843,
-                        0.9065202406788675,
-                    ],
-                    'estimated_accuracy': [
-                        0.9475319773956268,
-                        0.9483565214666658,
-                        0.9194997180834459,
-                        0.920199809204049,
-                    ],
-                    'estimated_true_positive': [
-                        0.4765459276105816,
-                        0.4742923846116019,
-                        0.4864734505950187,
-                        0.48477977841009035,
-                    ],
-                    'estimated_true_negative': [
-                        0.4709860497850451,
-                        0.474064136855064,
-                        0.4330262674884272,
-                        0.4354200307939586,
-                    ],
-                    'estimated_false_positive': [
-                        0.028654072389418375,
-                        0.027787615388398145,
-                        0.04544654940498134,
-                        0.044900221589909646,
-                    ],
-                    'estimated_false_negative': [
-                        0.023813950214954867,
-                        0.023855863144936044,
-                        0.03505373251157284,
-                        0.03489996920604146,
-                    ],
-                    'estimated_business_value': [
-                        -49727.81974240482,
-                        -49580.07308793498,
-                        -48282.472681700856,
-                        -48185.720225833895,
-                    ],
-                }
-            ),
-        ),
-        (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'true', 'business_value_matrix': [[-1, 4], [8, -8]]},
-            pd.DataFrame(
-                {
-                    'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
-                    'estimated_roc_auc': [
-                        0.9710577647083807,
-                        0.9711638319733471,
-                        0.9614012753095441,
-                        0.9617878072895653,
-                    ],
-                    'estimated_f1': [0.9478220802546018, 0.9483683062849226, 0.9235839411719146, 0.9239534478264141],
-                    'estimated_precision': [
-                        0.9432817252782693,
-                        0.9446550044048795,
-                        0.9145613073300847,
-                        0.915231419744167,
-                    ],
-                    'estimated_average_precision': [
-                        0.9630540175544957,
-                        0.9630490923729641,
-                        0.9559875174554471,
-                        0.9560973858800224,
-                    ],
-                    'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
-                    'estimated_specificity': [
-                        0.9426505776503413,
-                        0.9446298328855539,
-                        0.9050174893945843,
-                        0.9065202406788675,
-                    ],
-                    'estimated_accuracy': [
-                        0.9475319773956268,
-                        0.9483565214666658,
-                        0.9194997180834459,
-                        0.920199809204049,
-                    ],
-                    'estimated_true_positive': [
-                        0.9524063553647716,
-                        0.9521109162736727,
-                        0.9327863750020323,
-                        0.932843314818147,
-                    ],
-                    'estimated_true_negative': [
-                        0.9426505776503413,
-                        0.9446298328855538,
-                        0.9050174893945843,
-                        0.9065202406788674,
-                    ],
-                    'estimated_false_positive': [
-                        0.057349422349658695,
-                        0.055370167114446193,
-                        0.09498251060541579,
-                        0.09347975932113255,
-                    ],
-                    'estimated_false_negative': [
-                        0.04759364463522837,
-                        0.047889083726327226,
-                        0.06721362499796762,
-                        0.06715668518185315,
-                    ],
-                    'estimated_business_value': [
-                        -49727.81974240482,
-                        -49580.07308793498,
-                        -48282.472681700856,
-                        -48185.720225833895,
-                    ],
-                }
-            ),
-        ),
-        (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'pred', 'business_value_matrix': [[-1, 4], [8, -8]]},
-            pd.DataFrame(
-                {
-                    'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
-                    'estimated_roc_auc': [
-                        0.9710577647083807,
-                        0.9711638319733471,
-                        0.9614012753095441,
-                        0.9617878072895653,
-                    ],
-                    'estimated_f1': [0.9478220802546018, 0.9483683062849226, 0.9235839411719146, 0.9239534478264141],
-                    'estimated_precision': [
-                        0.9432817252782693,
-                        0.9446550044048795,
-                        0.9145613073300847,
-                        0.915231419744167,
-                    ],
-                    'estimated_average_precision': [
-                        0.9630540175544957,
-                        0.9630490923729641,
-                        0.9559875174554471,
-                        0.9560973858800224,
-                    ],
-                    'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
-                    'estimated_specificity': [
-                        0.9426505776503413,
-                        0.9446298328855539,
-                        0.9050174893945843,
-                        0.9065202406788675,
-                    ],
-                    'estimated_accuracy': [
-                        0.9475319773956268,
-                        0.9483565214666658,
-                        0.9194997180834459,
-                        0.920199809204049,
-                    ],
-                    'estimated_true_positive': [
-                        0.9432817252782693,
-                        0.9446550044048793,
-                        0.9145613073300847,
-                        0.9152314197441669,
-                    ],
-                    'estimated_true_negative': [
-                        0.9518715638339635,
-                        0.9520889637995341,
-                        0.925111663579788,
-                        0.925795268740344,
-                    ],
-                    'estimated_false_positive': [
-                        0.05671827472173075,
-                        0.05534499559512058,
-                        0.08543869266991529,
-                        0.08476858025583303,
-                    ],
-                    'estimated_false_negative': [
-                        0.048128436166036515,
-                        0.04791103620046603,
-                        0.074888336420212,
-                        0.0742047312596561,
-                    ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -49727.81974240482,
                         -49580.07308793498,
                         -48282.472681700856,
@@ -561,71 +476,353 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'chunk_number': 4,
-                'normalize_confusion_matrix': None,
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunk_number": 4,
+                "normalize_confusion_matrix": "all",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
-                    'estimated_roc_auc': [
+                    "key": [
+                        "[0:12499]",
+                        "[12500:24999]",
+                        "[25000:37499]",
+                        "[37500:49999]",
+                    ],
+                    "estimated_roc_auc": [
                         0.9710577647083807,
                         0.9711638319733471,
                         0.9614012753095441,
                         0.9617878072895653,
                     ],
-                    'estimated_f1': [0.9478220802546018, 0.9483683062849226, 0.9235839411719146, 0.9239534478264141],
-                    'estimated_precision': [
+                    "estimated_f1": [
+                        0.9478220802546018,
+                        0.9483683062849226,
+                        0.9235839411719146,
+                        0.9239534478264141,
+                    ],
+                    "estimated_precision": [
                         0.9432817252782693,
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
                         0.9560973858800224,
                     ],
-                    'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
-                    'estimated_specificity': [
+                    "estimated_recall": [
+                        0.9524063553647716,
+                        0.9521109162736728,
+                        0.9327863750020324,
+                        0.932843314818147,
+                    ],
+                    "estimated_specificity": [
                         0.9426505776503413,
                         0.9446298328855539,
                         0.9050174893945843,
                         0.9065202406788675,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9475319773956268,
                         0.9483565214666658,
                         0.9194997180834459,
                         0.920199809204049,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
+                        0.4765459276105816,
+                        0.4742923846116019,
+                        0.4864734505950187,
+                        0.48477977841009035,
+                    ],
+                    "estimated_true_negative": [
+                        0.4709860497850451,
+                        0.474064136855064,
+                        0.4330262674884272,
+                        0.4354200307939586,
+                    ],
+                    "estimated_false_positive": [
+                        0.028654072389418375,
+                        0.027787615388398145,
+                        0.04544654940498134,
+                        0.044900221589909646,
+                    ],
+                    "estimated_false_negative": [
+                        0.023813950214954867,
+                        0.023855863144936044,
+                        0.03505373251157284,
+                        0.03489996920604146,
+                    ],
+                    "estimated_business_value": [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
+                }
+            ),
+        ),
+        (
+            {
+                "chunk_number": 4,
+                "normalize_confusion_matrix": "true",
+                "business_value_matrix": [[-1, 4], [8, -8]],
+            },
+            pd.DataFrame(
+                {
+                    "key": [
+                        "[0:12499]",
+                        "[12500:24999]",
+                        "[25000:37499]",
+                        "[37500:49999]",
+                    ],
+                    "estimated_roc_auc": [
+                        0.9710577647083807,
+                        0.9711638319733471,
+                        0.9614012753095441,
+                        0.9617878072895653,
+                    ],
+                    "estimated_f1": [
+                        0.9478220802546018,
+                        0.9483683062849226,
+                        0.9235839411719146,
+                        0.9239534478264141,
+                    ],
+                    "estimated_precision": [
+                        0.9432817252782693,
+                        0.9446550044048795,
+                        0.9145613073300847,
+                        0.915231419744167,
+                    ],
+                    "estimated_average_precision": [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224,
+                    ],
+                    "estimated_recall": [
+                        0.9524063553647716,
+                        0.9521109162736728,
+                        0.9327863750020324,
+                        0.932843314818147,
+                    ],
+                    "estimated_specificity": [
+                        0.9426505776503413,
+                        0.9446298328855539,
+                        0.9050174893945843,
+                        0.9065202406788675,
+                    ],
+                    "estimated_accuracy": [
+                        0.9475319773956268,
+                        0.9483565214666658,
+                        0.9194997180834459,
+                        0.920199809204049,
+                    ],
+                    "estimated_true_positive": [
+                        0.9524063553647716,
+                        0.9521109162736727,
+                        0.9327863750020323,
+                        0.932843314818147,
+                    ],
+                    "estimated_true_negative": [
+                        0.9426505776503413,
+                        0.9446298328855538,
+                        0.9050174893945843,
+                        0.9065202406788674,
+                    ],
+                    "estimated_false_positive": [
+                        0.057349422349658695,
+                        0.055370167114446193,
+                        0.09498251060541579,
+                        0.09347975932113255,
+                    ],
+                    "estimated_false_negative": [
+                        0.04759364463522837,
+                        0.047889083726327226,
+                        0.06721362499796762,
+                        0.06715668518185315,
+                    ],
+                    "estimated_business_value": [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
+                }
+            ),
+        ),
+        (
+            {
+                "chunk_number": 4,
+                "normalize_confusion_matrix": "pred",
+                "business_value_matrix": [[-1, 4], [8, -8]],
+            },
+            pd.DataFrame(
+                {
+                    "key": [
+                        "[0:12499]",
+                        "[12500:24999]",
+                        "[25000:37499]",
+                        "[37500:49999]",
+                    ],
+                    "estimated_roc_auc": [
+                        0.9710577647083807,
+                        0.9711638319733471,
+                        0.9614012753095441,
+                        0.9617878072895653,
+                    ],
+                    "estimated_f1": [
+                        0.9478220802546018,
+                        0.9483683062849226,
+                        0.9235839411719146,
+                        0.9239534478264141,
+                    ],
+                    "estimated_precision": [
+                        0.9432817252782693,
+                        0.9446550044048795,
+                        0.9145613073300847,
+                        0.915231419744167,
+                    ],
+                    "estimated_average_precision": [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224,
+                    ],
+                    "estimated_recall": [
+                        0.9524063553647716,
+                        0.9521109162736728,
+                        0.9327863750020324,
+                        0.932843314818147,
+                    ],
+                    "estimated_specificity": [
+                        0.9426505776503413,
+                        0.9446298328855539,
+                        0.9050174893945843,
+                        0.9065202406788675,
+                    ],
+                    "estimated_accuracy": [
+                        0.9475319773956268,
+                        0.9483565214666658,
+                        0.9194997180834459,
+                        0.920199809204049,
+                    ],
+                    "estimated_true_positive": [
+                        0.9432817252782693,
+                        0.9446550044048793,
+                        0.9145613073300847,
+                        0.9152314197441669,
+                    ],
+                    "estimated_true_negative": [
+                        0.9518715638339635,
+                        0.9520889637995341,
+                        0.925111663579788,
+                        0.925795268740344,
+                    ],
+                    "estimated_false_positive": [
+                        0.05671827472173075,
+                        0.05534499559512058,
+                        0.08543869266991529,
+                        0.08476858025583303,
+                    ],
+                    "estimated_false_negative": [
+                        0.048128436166036515,
+                        0.04791103620046603,
+                        0.074888336420212,
+                        0.0742047312596561,
+                    ],
+                    "estimated_business_value": [
+                        -49727.81974240482,
+                        -49580.07308793498,
+                        -48282.472681700856,
+                        -48185.720225833895,
+                    ],
+                }
+            ),
+        ),
+        (
+            {
+                "chunk_number": 4,
+                "normalize_confusion_matrix": None,
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
+            },
+            pd.DataFrame(
+                {
+                    "key": [
+                        "[0:12499]",
+                        "[12500:24999]",
+                        "[25000:37499]",
+                        "[37500:49999]",
+                    ],
+                    "estimated_roc_auc": [
+                        0.9710577647083807,
+                        0.9711638319733471,
+                        0.9614012753095441,
+                        0.9617878072895653,
+                    ],
+                    "estimated_f1": [
+                        0.9478220802546018,
+                        0.9483683062849226,
+                        0.9235839411719146,
+                        0.9239534478264141,
+                    ],
+                    "estimated_precision": [
+                        0.9432817252782693,
+                        0.9446550044048795,
+                        0.9145613073300847,
+                        0.915231419744167,
+                    ],
+                    "estimated_average_precision": [
+                        0.9630540175544957,
+                        0.9630490923729641,
+                        0.9559875174554471,
+                        0.9560973858800224,
+                    ],
+                    "estimated_recall": [
+                        0.9524063553647716,
+                        0.9521109162736728,
+                        0.9327863750020324,
+                        0.932843314818147,
+                    ],
+                    "estimated_specificity": [
+                        0.9426505776503413,
+                        0.9446298328855539,
+                        0.9050174893945843,
+                        0.9065202406788675,
+                    ],
+                    "estimated_accuracy": [
+                        0.9475319773956268,
+                        0.9483565214666658,
+                        0.9194997180834459,
+                        0.920199809204049,
+                    ],
+                    "estimated_true_positive": [
                         5956.8240951322705,
                         5928.6548076450235,
                         6080.918132437733,
                         6059.74723012613,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         5887.325622313064,
                         5925.8017106883,
                         5412.82834360534,
                         5442.750384924482,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         358.1759048677297,
                         347.3451923549768,
                         568.0818675622668,
                         561.2527698738705,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         297.6743776869358,
                         298.19828931170053,
                         438.1716563946605,
                         436.2496150755182,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -49727.81974240482,
                         -49580.07308793498,
                         -48282.472681700856,
@@ -636,71 +833,86 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'chunk_number': 4,
-                'normalize_confusion_matrix': 'all',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunk_number": 4,
+                "normalize_confusion_matrix": "all",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
-                    'estimated_roc_auc': [
+                    "key": [
+                        "[0:12499]",
+                        "[12500:24999]",
+                        "[25000:37499]",
+                        "[37500:49999]",
+                    ],
+                    "estimated_roc_auc": [
                         0.9710577647083807,
                         0.9711638319733471,
                         0.9614012753095441,
                         0.9617878072895653,
                     ],
-                    'estimated_f1': [0.9478220802546018, 0.9483683062849226, 0.9235839411719146, 0.9239534478264141],
-                    'estimated_precision': [
+                    "estimated_f1": [
+                        0.9478220802546018,
+                        0.9483683062849226,
+                        0.9235839411719146,
+                        0.9239534478264141,
+                    ],
+                    "estimated_precision": [
                         0.9432817252782693,
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
                         0.9560973858800224,
                     ],
-                    'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
-                    'estimated_specificity': [
+                    "estimated_recall": [
+                        0.9524063553647716,
+                        0.9521109162736728,
+                        0.9327863750020324,
+                        0.932843314818147,
+                    ],
+                    "estimated_specificity": [
                         0.9426505776503413,
                         0.9446298328855539,
                         0.9050174893945843,
                         0.9065202406788675,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9475319773956268,
                         0.9483565214666658,
                         0.9194997180834459,
                         0.920199809204049,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.4765459276105816,
                         0.4742923846116019,
                         0.4864734505950187,
                         0.48477977841009035,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.4709860497850451,
                         0.474064136855064,
                         0.4330262674884272,
                         0.4354200307939586,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.028654072389418375,
                         0.027787615388398145,
                         0.04544654940498134,
                         0.044900221589909646,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.023813950214954867,
                         0.023855863144936044,
                         0.03505373251157284,
                         0.03489996920604146,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -49727.81974240482,
                         -49580.07308793498,
                         -48282.472681700856,
@@ -711,71 +923,86 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'chunk_number': 4,
-                'normalize_confusion_matrix': 'true',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunk_number": 4,
+                "normalize_confusion_matrix": "true",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
-                    'estimated_roc_auc': [
+                    "key": [
+                        "[0:12499]",
+                        "[12500:24999]",
+                        "[25000:37499]",
+                        "[37500:49999]",
+                    ],
+                    "estimated_roc_auc": [
                         0.9710577647083807,
                         0.9711638319733471,
                         0.9614012753095441,
                         0.9617878072895653,
                     ],
-                    'estimated_f1': [0.9478220802546018, 0.9483683062849226, 0.9235839411719146, 0.9239534478264141],
-                    'estimated_precision': [
+                    "estimated_f1": [
+                        0.9478220802546018,
+                        0.9483683062849226,
+                        0.9235839411719146,
+                        0.9239534478264141,
+                    ],
+                    "estimated_precision": [
                         0.9432817252782693,
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
                         0.9560973858800224,
                     ],
-                    'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
-                    'estimated_specificity': [
+                    "estimated_recall": [
+                        0.9524063553647716,
+                        0.9521109162736728,
+                        0.9327863750020324,
+                        0.932843314818147,
+                    ],
+                    "estimated_specificity": [
                         0.9426505776503413,
                         0.9446298328855539,
                         0.9050174893945843,
                         0.9065202406788675,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9475319773956268,
                         0.9483565214666658,
                         0.9194997180834459,
                         0.920199809204049,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.9524063553647716,
                         0.9521109162736727,
                         0.9327863750020323,
                         0.932843314818147,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.9426505776503413,
                         0.9446298328855538,
                         0.9050174893945843,
                         0.9065202406788674,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.057349422349658695,
                         0.055370167114446193,
                         0.09498251060541579,
                         0.09347975932113255,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.04759364463522837,
                         0.047889083726327226,
                         0.06721362499796762,
                         0.06715668518185315,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -49727.81974240482,
                         -49580.07308793498,
                         -48282.472681700856,
@@ -786,71 +1013,86 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'chunk_number': 4,
-                'normalize_confusion_matrix': 'pred',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunk_number": 4,
+                "normalize_confusion_matrix": "pred",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['[0:12499]', '[12500:24999]', '[25000:37499]', '[37500:49999]'],
-                    'estimated_roc_auc': [
+                    "key": [
+                        "[0:12499]",
+                        "[12500:24999]",
+                        "[25000:37499]",
+                        "[37500:49999]",
+                    ],
+                    "estimated_roc_auc": [
                         0.9710577647083807,
                         0.9711638319733471,
                         0.9614012753095441,
                         0.9617878072895653,
                     ],
-                    'estimated_f1': [0.9478220802546018, 0.9483683062849226, 0.9235839411719146, 0.9239534478264141],
-                    'estimated_precision': [
+                    "estimated_f1": [
+                        0.9478220802546018,
+                        0.9483683062849226,
+                        0.9235839411719146,
+                        0.9239534478264141,
+                    ],
+                    "estimated_precision": [
                         0.9432817252782693,
                         0.9446550044048795,
                         0.9145613073300847,
                         0.915231419744167,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9630540175544957,
                         0.9630490923729641,
                         0.9559875174554471,
                         0.9560973858800224,
                     ],
-                    'estimated_recall': [0.9524063553647716, 0.9521109162736728, 0.9327863750020324, 0.932843314818147],
-                    'estimated_specificity': [
+                    "estimated_recall": [
+                        0.9524063553647716,
+                        0.9521109162736728,
+                        0.9327863750020324,
+                        0.932843314818147,
+                    ],
+                    "estimated_specificity": [
                         0.9426505776503413,
                         0.9446298328855539,
                         0.9050174893945843,
                         0.9065202406788675,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9475319773956268,
                         0.9483565214666658,
                         0.9194997180834459,
                         0.920199809204049,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.9432817252782693,
                         0.9446550044048793,
                         0.9145613073300847,
                         0.9152314197441669,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.9518715638339635,
                         0.9520889637995341,
                         0.925111663579788,
                         0.925795268740344,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.05671827472173075,
                         0.05534499559512058,
                         0.08543869266991529,
                         0.08476858025583303,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.048128436166036515,
                         0.04791103620046603,
                         0.074888336420212,
                         0.0742047312596561,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -49727.81974240482,
                         -49580.07308793498,
                         -48282.472681700856,
@@ -861,92 +1103,92 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'chunk_period': 'Y',
-                'normalize_confusion_matrix': None,
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunk_period": "Y",
+                "normalize_confusion_matrix": None,
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['2017', '2018', '2019', '2020', '2021'],
-                    'estimated_roc_auc': [
+                    "key": ["2017", "2018", "2019", "2020", "2021"],
+                    "estimated_roc_auc": [
                         0.9707538712541884,
                         0.9711750612246167,
                         0.9653895937595711,
                         0.9616871483313398,
                         0.898023243746043,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.9486231864324036,
                         0.9477092734637503,
                         0.9315900332119164,
                         0.9240488520044474,
                         0.7926388251111386,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425338528308135,
                         0.9440235151260787,
                         0.9244858823267199,
                         0.9151737753536913,
                         0.7100248791165871,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639886207960554,
                         0.9626268503990243,
                         0.9589551322726588,
                         0.9561267279887811,
                         0.7496848462431713,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9547917131585199,
                         0.9514239252802291,
                         0.9388042123614001,
                         0.9330977499034733,
                         0.8970090514396291,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.937163050852636,
                         0.9454556899788352,
                         0.918667486315966,
                         0.9060337870230502,
                         0.8302703490347314,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9463140395517069,
                         0.9483894898124492,
                         0.9290320609580357,
                         0.9201265813431901,
                         0.8514010785547443,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         2454.358152771438,
                         7049.967610961557,
                         7243.346888029851,
                         7275.631514061845,
                         2.8400995164663483,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         2231.7889710886143,
                         7246.055558471303,
                         6682.843705731104,
                         6502.343914971083,
                         5.673911269081095,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         149.64184722856197,
                         418.03238903844397,
                         591.6531119701493,
                         674.3684859381549,
                         1.1599004835336515,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         116.21102891138604,
                         359.944441528697,
                         472.15629426889626,
                         521.6560850289168,
                         0.32608873091890567,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20338.398573054783,
                         -59094.1113577804,
                         -58485.756007938144,
@@ -958,92 +1200,92 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'chunk_period': 'Y',
-                'normalize_confusion_matrix': 'all',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunk_period": "Y",
+                "normalize_confusion_matrix": "all",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['2017', '2018', '2019', '2020', '2021'],
-                    'estimated_roc_auc': [
+                    "key": ["2017", "2018", "2019", "2020", "2021"],
+                    "estimated_roc_auc": [
                         0.9707538712541884,
                         0.9711750612246167,
                         0.9653895937595711,
                         0.9616871483313398,
                         0.898023243746043,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.9486231864324036,
                         0.9477092734637503,
                         0.9315900332119164,
                         0.9240488520044474,
                         0.7926388251111386,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425338528308135,
                         0.9440235151260787,
                         0.9244858823267199,
                         0.9151737753536913,
                         0.7100248791165871,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639886207960554,
                         0.9626268503990243,
                         0.9589551322726588,
                         0.9561267279887811,
                         0.7496848462431713,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9547917131585199,
                         0.9514239252802291,
                         0.9388042123614001,
                         0.9330977499034733,
                         0.8970090514396291,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.937163050852636,
                         0.9454556899788352,
                         0.918667486315966,
                         0.9060337870230502,
                         0.8302703490347314,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9463140395517069,
                         0.9483894898124492,
                         0.9290320609580357,
                         0.9201265813431901,
                         0.8514010785547443,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.49562967543849723,
                         0.4676905672655935,
                         0.48321193382453975,
                         0.48588430039146824,
                         0.28400995164663484,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.45068436411320967,
                         0.4806989225468557,
                         0.44582012713349595,
                         0.43424228095172185,
                         0.5673911269081094,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.030218466726284726,
                         0.027732014663556053,
                         0.03946985403403264,
                         0.04503596139562942,
                         0.11599004835336515,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.02346749372200849,
                         0.023878495523994757,
                         0.031498085007931706,
                         0.034837457261180496,
                         0.03260887309189057,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20338.398573054783,
                         -59094.1113577804,
                         -58485.756007938144,
@@ -1055,92 +1297,92 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'chunk_period': 'Y',
-                'normalize_confusion_matrix': 'true',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunk_period": "Y",
+                "normalize_confusion_matrix": "true",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['2017', '2018', '2019', '2020', '2021'],
-                    'estimated_roc_auc': [
+                    "key": ["2017", "2018", "2019", "2020", "2021"],
+                    "estimated_roc_auc": [
                         0.9707538712541884,
                         0.9711750612246167,
                         0.9653895937595711,
                         0.9616871483313398,
                         0.898023243746043,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.9486231864324036,
                         0.9477092734637503,
                         0.9315900332119164,
                         0.9240488520044474,
                         0.7926388251111386,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425338528308135,
                         0.9440235151260787,
                         0.9244858823267199,
                         0.9151737753536913,
                         0.7100248791165871,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639886207960554,
                         0.9626268503990243,
                         0.9589551322726588,
                         0.9561267279887811,
                         0.7496848462431713,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9547917131585199,
                         0.9514239252802291,
                         0.9388042123614001,
                         0.9330977499034733,
                         0.8970090514396291,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.937163050852636,
                         0.9454556899788352,
                         0.918667486315966,
                         0.9060337870230502,
                         0.8302703490347314,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9463140395517069,
                         0.9483894898124492,
                         0.9290320609580357,
                         0.9201265813431901,
                         0.8514010785547443,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.9547917131585199,
                         0.9514239252802291,
                         0.9388042123614001,
                         0.9330977499034733,
                         0.897009051439629,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.9371630508526361,
                         0.9454556899788352,
                         0.918667486315966,
                         0.9060337870230502,
                         0.8302703490347314,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.06283694914736405,
                         0.05454431002116476,
                         0.08133251368403405,
                         0.0939662129769499,
                         0.16972965096526862,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.04520828684148016,
                         0.04857607471977082,
                         0.06119578763859995,
                         0.06690225009652676,
                         0.10299094856037092,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20338.398573054783,
                         -59094.1113577804,
                         -58485.756007938144,
@@ -1152,92 +1394,92 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'chunk_period': 'Y',
-                'normalize_confusion_matrix': 'pred',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "chunk_period": "Y",
+                "normalize_confusion_matrix": "pred",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': ['2017', '2018', '2019', '2020', '2021'],
-                    'estimated_roc_auc': [
+                    "key": ["2017", "2018", "2019", "2020", "2021"],
+                    "estimated_roc_auc": [
                         0.9707538712541884,
                         0.9711750612246167,
                         0.9653895937595711,
                         0.9616871483313398,
                         0.898023243746043,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.9486231864324036,
                         0.9477092734637503,
                         0.9315900332119164,
                         0.9240488520044474,
                         0.7926388251111386,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425338528308135,
                         0.9440235151260787,
                         0.9244858823267199,
                         0.9151737753536913,
                         0.7100248791165871,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639886207960554,
                         0.9626268503990243,
                         0.9589551322726588,
                         0.9561267279887811,
                         0.7496848462431713,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9547917131585199,
                         0.9514239252802291,
                         0.9388042123614001,
                         0.9330977499034733,
                         0.8970090514396291,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.937163050852636,
                         0.9454556899788352,
                         0.918667486315966,
                         0.9060337870230502,
                         0.8302703490347314,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9463140395517069,
                         0.9483894898124492,
                         0.9290320609580357,
                         0.9201265813431901,
                         0.8514010785547443,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.9425338528308134,
                         0.9440235151260786,
                         0.9244858823267198,
                         0.9151737753536914,
                         0.7100248791165871,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.9505063761024761,
                         0.9526762501277023,
                         0.9340103012901612,
                         0.9257323341359742,
                         0.9456518781801825,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.05746614716918662,
                         0.05597648487392125,
                         0.07551411767328006,
                         0.0848262246463088,
                         0.2899751208834129,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.04949362389752386,
                         0.04732374987229779,
                         0.06598969870983874,
                         0.07426766586402574,
                         0.054348121819817616,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20338.398573054783,
                         -59094.1113577804,
                         -58485.756007938144,
@@ -1248,22 +1490,25 @@ LOGGER = getLogger(__name__)
             ),
         ),
         (
-            {'normalize_confusion_matrix': None, 'business_value_matrix': [[-1, 4], [8, -8]]},
+            {
+                "normalize_confusion_matrix": None,
+                "business_value_matrix": [[-1, 4], [8, -8]],
+            },
             pd.DataFrame(
                 {
-                    'key': [
-                        '[0:4999]',
-                        '[5000:9999]',
-                        '[10000:14999]',
-                        '[15000:19999]',
-                        '[20000:24999]',
-                        '[25000:29999]',
-                        '[30000:34999]',
-                        '[35000:39999]',
-                        '[40000:44999]',
-                        '[45000:49999]',
+                    "key": [
+                        "[0:4999]",
+                        "[5000:9999]",
+                        "[10000:14999]",
+                        "[15000:19999]",
+                        "[20000:24999]",
+                        "[25000:29999]",
+                        "[30000:34999]",
+                        "[35000:39999]",
+                        "[40000:44999]",
+                        "[45000:49999]",
                     ],
-                    'estimated_roc_auc': [
+                    "estimated_roc_auc": [
                         0.97074363630015,
                         0.9710106327368981,
                         0.9714067155511361,
@@ -1275,7 +1520,7 @@ LOGGER = getLogger(__name__)
                         0.9625334611153133,
                         0.9613161529631752,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.948555321454138,
                         0.9465779465209089,
                         0.9488069354531159,
@@ -1287,7 +1532,7 @@ LOGGER = getLogger(__name__)
                         0.9241722368115827,
                         0.9249152193013231,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425440716307568,
                         0.9431073537123396,
                         0.9442277523749669,
@@ -1299,7 +1544,7 @@ LOGGER = getLogger(__name__)
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639571716287229,
                         0.9624355545496974,
                         0.9627637624228476,
@@ -1311,7 +1556,7 @@ LOGGER = getLogger(__name__)
                         0.9560927338703065,
                         0.9569107885377364,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9546437391537488,
                         0.95007417692678,
                         0.9534307499357034,
@@ -1323,7 +1568,7 @@ LOGGER = getLogger(__name__)
                         0.9310926704269641,
                         0.9354943725540698,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.9372742491954283,
                         0.9446319110387503,
                         0.9458015988378999,
@@ -1335,7 +1580,7 @@ LOGGER = getLogger(__name__)
                         0.9120143191041326,
                         0.9005790635739856,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9462845122805443,
                         0.947306078326665,
                         0.949543087716159,
@@ -1347,7 +1592,7 @@ LOGGER = getLogger(__name__)
                         0.9217811573797979,
                         0.9191618588441066,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         2476.063276173998,
                         2334.1907004380405,
                         2337.9079148804176,
@@ -1359,7 +1604,7 @@ LOGGER = getLogger(__name__)
                         2383.285478351263,
                         2489.4667853918354,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         2255.359285228724,
                         2402.339691195284,
                         2409.8075237003773,
@@ -1371,7 +1616,7 @@ LOGGER = getLogger(__name__)
                         2225.6203085477264,
                         2106.3425088286976,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         150.93672382600215,
                         140.80929956195956,
                         138.09208511958207,
@@ -1383,7 +1628,7 @@ LOGGER = getLogger(__name__)
                         214.71452164873693,
                         232.53321460816457,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         117.64071477127642,
                         122.66030880471597,
                         114.19247629962268,
@@ -1395,496 +1640,7 @@ LOGGER = getLogger(__name__)
                         176.37969145227322,
                         171.65749117130238,
                     ],
-                    'estimated_business_value': [
-                        -20518.99288114649,
-                        -19531.34562601404,
-                        -19647.162691868405,
-                        -19607.039050463114,
-                        -20003.352580847743,
-                        -19282.218574708404,
-                        -19266.462434034747,
-                        -19178.81937748659,
-                        -19022.008517144695,
-                        -19718.684004160303,
-                    ],
-                }
-            ),
-        ),
-        (
-            {'normalize_confusion_matrix': 'all', 'business_value_matrix': [[-1, 4], [8, -8]]},
-            pd.DataFrame(
-                {
-                    'key': [
-                        '[0:4999]',
-                        '[5000:9999]',
-                        '[10000:14999]',
-                        '[15000:19999]',
-                        '[20000:24999]',
-                        '[25000:29999]',
-                        '[30000:34999]',
-                        '[35000:39999]',
-                        '[40000:44999]',
-                        '[45000:49999]',
-                    ],
-                    'estimated_roc_auc': [
-                        0.97074363630015,
-                        0.9710106327368981,
-                        0.9714067155511361,
-                        0.9710913930740382,
-                        0.971123121124055,
-                        0.9610902734539033,
-                        0.9618247016040209,
-                        0.9610734463362078,
-                        0.9625334611153133,
-                        0.9613161529631752,
-                    ],
-                    'estimated_f1': [
-                        0.948555321454138,
-                        0.9465779465209089,
-                        0.9488069354531159,
-                        0.9476546805658866,
-                        0.9488338110572719,
-                        0.9232325655782327,
-                        0.923595783273164,
-                        0.9229020961475524,
-                        0.9241722368115827,
-                        0.9249152193013231,
-                    ],
-                    'estimated_precision': [
-                        0.9425440716307568,
-                        0.9431073537123396,
-                        0.9442277523749669,
-                        0.9446336452028188,
-                        0.9453707449594683,
-                        0.9148732952385749,
-                        0.9143489884377147,
-                        0.9133821290777778,
-                        0.9173539177641505,
-                        0.9145726617897999,
-                    ],
-                    'estimated_average_precision': [
-                        0.9639571716287229,
-                        0.9624355545496974,
-                        0.9627637624228476,
-                        0.9626175155586215,
-                        0.9633484469422674,
-                        0.9557317811530492,
-                        0.9561644458255762,
-                        0.9551889092088637,
-                        0.9560927338703065,
-                        0.9569107885377364,
-                    ],
-                    'estimated_recall': [
-                        0.9546437391537488,
-                        0.95007417692678,
-                        0.9534307499357034,
-                        0.9506951010870748,
-                        0.9523223421280594,
-                        0.9317460031975845,
-                        0.9330315141543621,
-                        0.9326226021419973,
-                        0.9310926704269641,
-                        0.9354943725540698,
-                    ],
-                    'estimated_specificity': [
-                        0.9372742491954283,
-                        0.9446319110387503,
-                        0.9458015988378999,
-                        0.9459382667254527,
-                        0.9442380077839293,
-                        0.9054074470674046,
-                        0.9054733303403276,
-                        0.905142438988179,
-                        0.9120143191041326,
-                        0.9005790635739856,
-                    ],
-                    'estimated_accuracy': [
-                        0.9462845122805443,
-                        0.947306078326665,
-                        0.949543087716159,
-                        0.9482807229338969,
-                        0.9483068458984663,
-                        0.9191503008524827,
-                        0.9197921095331023,
-                        0.9193633916092473,
-                        0.9217811573797979,
-                        0.9191618588441066,
-                    ],
-                    'estimated_true_positive': [
-                        0.4952126552347996,
-                        0.4668381400876081,
-                        0.46758158297608354,
-                        0.468160434562517,
-                        0.47930296769445047,
-                        0.4861636690897787,
-                        0.48478783366967637,
-                        0.4826311170046978,
-                        0.4766570956702526,
-                        0.49789335707836707,
-                    ],
-                    'estimated_true_negative': [
-                        0.45107185704574476,
-                        0.4804679382390568,
-                        0.48196150474007543,
-                        0.4801202883713799,
-                        0.46900387820401573,
-                        0.432986631762704,
-                        0.43500427586342594,
-                        0.43673227460454944,
-                        0.44512406170954527,
-                        0.42126850176573954,
-                    ],
-                    'estimated_false_positive': [
-                        0.03018734476520043,
-                        0.028161859912391913,
-                        0.027618417023916413,
-                        0.027439565437482962,
-                        0.02769703230554957,
-                        0.04523633091022126,
-                        0.04541216633032367,
-                        0.04576888299530224,
-                        0.042942904329747386,
-                        0.04650664292163292,
-                    ],
-                    'estimated_false_negative': [
-                        0.023528142954255284,
-                        0.024532061760943195,
-                        0.022838495259924537,
-                        0.024279711628620096,
-                        0.02399612179598416,
-                        0.03561336823729597,
-                        0.03479572413657406,
-                        0.0348677253954506,
-                        0.035275938290454646,
-                        0.034331498234260474,
-                    ],
-                    'estimated_business_value': [
-                        -20518.99288114649,
-                        -19531.34562601404,
-                        -19647.162691868405,
-                        -19607.039050463114,
-                        -20003.352580847743,
-                        -19282.218574708404,
-                        -19266.462434034747,
-                        -19178.81937748659,
-                        -19022.008517144695,
-                        -19718.684004160303,
-                    ],
-                }
-            ),
-        ),
-        (
-            {'normalize_confusion_matrix': 'true', 'business_value_matrix': [[-1, 4], [8, -8]]},
-            pd.DataFrame(
-                {
-                    'key': [
-                        '[0:4999]',
-                        '[5000:9999]',
-                        '[10000:14999]',
-                        '[15000:19999]',
-                        '[20000:24999]',
-                        '[25000:29999]',
-                        '[30000:34999]',
-                        '[35000:39999]',
-                        '[40000:44999]',
-                        '[45000:49999]',
-                    ],
-                    'estimated_roc_auc': [
-                        0.97074363630015,
-                        0.9710106327368981,
-                        0.9714067155511361,
-                        0.9710913930740382,
-                        0.971123121124055,
-                        0.9610902734539033,
-                        0.9618247016040209,
-                        0.9610734463362078,
-                        0.9625334611153133,
-                        0.9613161529631752,
-                    ],
-                    'estimated_f1': [
-                        0.948555321454138,
-                        0.9465779465209089,
-                        0.9488069354531159,
-                        0.9476546805658866,
-                        0.9488338110572719,
-                        0.9232325655782327,
-                        0.923595783273164,
-                        0.9229020961475524,
-                        0.9241722368115827,
-                        0.9249152193013231,
-                    ],
-                    'estimated_precision': [
-                        0.9425440716307568,
-                        0.9431073537123396,
-                        0.9442277523749669,
-                        0.9446336452028188,
-                        0.9453707449594683,
-                        0.9148732952385749,
-                        0.9143489884377147,
-                        0.9133821290777778,
-                        0.9173539177641505,
-                        0.9145726617897999,
-                    ],
-                    'estimated_average_precision': [
-                        0.9639571716287229,
-                        0.9624355545496974,
-                        0.9627637624228476,
-                        0.9626175155586215,
-                        0.9633484469422674,
-                        0.9557317811530492,
-                        0.9561644458255762,
-                        0.9551889092088637,
-                        0.9560927338703065,
-                        0.9569107885377364,
-                    ],
-                    'estimated_recall': [
-                        0.9546437391537488,
-                        0.95007417692678,
-                        0.9534307499357034,
-                        0.9506951010870748,
-                        0.9523223421280594,
-                        0.9317460031975845,
-                        0.9330315141543621,
-                        0.9326226021419973,
-                        0.9310926704269641,
-                        0.9354943725540698,
-                    ],
-                    'estimated_specificity': [
-                        0.9372742491954283,
-                        0.9446319110387503,
-                        0.9458015988378999,
-                        0.9459382667254527,
-                        0.9442380077839293,
-                        0.9054074470674046,
-                        0.9054733303403276,
-                        0.905142438988179,
-                        0.9120143191041326,
-                        0.9005790635739856,
-                    ],
-                    'estimated_accuracy': [
-                        0.9462845122805443,
-                        0.947306078326665,
-                        0.949543087716159,
-                        0.9482807229338969,
-                        0.9483068458984663,
-                        0.9191503008524827,
-                        0.9197921095331023,
-                        0.9193633916092473,
-                        0.9217811573797979,
-                        0.9191618588441066,
-                    ],
-                    'estimated_true_positive': [
-                        0.9546437391537488,
-                        0.9500741769267799,
-                        0.9534307499357034,
-                        0.9506951010870749,
-                        0.9523223421280593,
-                        0.9317460031975845,
-                        0.9330315141543621,
-                        0.9326226021419972,
-                        0.9310926704269642,
-                        0.9354943725540699,
-                    ],
-                    'estimated_true_negative': [
-                        0.9372742491954283,
-                        0.9446319110387503,
-                        0.9458015988378999,
-                        0.9459382667254528,
-                        0.9442380077839293,
-                        0.9054074470674046,
-                        0.9054733303403276,
-                        0.9051424389881788,
-                        0.9120143191041324,
-                        0.9005790635739858,
-                    ],
-                    'estimated_false_positive': [
-                        0.0627257508045717,
-                        0.05536808896124974,
-                        0.054198401162100104,
-                        0.0540617332745473,
-                        0.05576199221607062,
-                        0.09459255293259536,
-                        0.0945266696596724,
-                        0.09485756101182109,
-                        0.08798568089586746,
-                        0.09942093642601435,
-                    ],
-                    'estimated_false_negative': [
-                        0.04535626084625111,
-                        0.04992582307322005,
-                        0.04656925006429655,
-                        0.04930489891292515,
-                        0.0476776578719406,
-                        0.06825399680241545,
-                        0.06696848584563789,
-                        0.06737739785800262,
-                        0.06890732957303593,
-                        0.06450562744593023,
-                    ],
-                    'estimated_business_value': [
-                        -20518.99288114649,
-                        -19531.34562601404,
-                        -19647.162691868405,
-                        -19607.039050463114,
-                        -20003.352580847743,
-                        -19282.218574708404,
-                        -19266.462434034747,
-                        -19178.81937748659,
-                        -19022.008517144695,
-                        -19718.684004160303,
-                    ],
-                }
-            ),
-        ),
-        (
-            {'normalize_confusion_matrix': 'pred', 'business_value_matrix': [[-1, 4], [8, -8]]},
-            pd.DataFrame(
-                {
-                    'key': [
-                        '[0:4999]',
-                        '[5000:9999]',
-                        '[10000:14999]',
-                        '[15000:19999]',
-                        '[20000:24999]',
-                        '[25000:29999]',
-                        '[30000:34999]',
-                        '[35000:39999]',
-                        '[40000:44999]',
-                        '[45000:49999]',
-                    ],
-                    'estimated_roc_auc': [
-                        0.97074363630015,
-                        0.9710106327368981,
-                        0.9714067155511361,
-                        0.9710913930740382,
-                        0.971123121124055,
-                        0.9610902734539033,
-                        0.9618247016040209,
-                        0.9610734463362078,
-                        0.9625334611153133,
-                        0.9613161529631752,
-                    ],
-                    'estimated_f1': [
-                        0.948555321454138,
-                        0.9465779465209089,
-                        0.9488069354531159,
-                        0.9476546805658866,
-                        0.9488338110572719,
-                        0.9232325655782327,
-                        0.923595783273164,
-                        0.9229020961475524,
-                        0.9241722368115827,
-                        0.9249152193013231,
-                    ],
-                    'estimated_precision': [
-                        0.9425440716307568,
-                        0.9431073537123396,
-                        0.9442277523749669,
-                        0.9446336452028188,
-                        0.9453707449594683,
-                        0.9148732952385749,
-                        0.9143489884377147,
-                        0.9133821290777778,
-                        0.9173539177641505,
-                        0.9145726617897999,
-                    ],
-                    'estimated_average_precision': [
-                        0.9639571716287229,
-                        0.9624355545496974,
-                        0.9627637624228476,
-                        0.9626175155586215,
-                        0.9633484469422674,
-                        0.9557317811530492,
-                        0.9561644458255762,
-                        0.9551889092088637,
-                        0.9560927338703065,
-                        0.9569107885377364,
-                    ],
-                    'estimated_recall': [
-                        0.9546437391537488,
-                        0.95007417692678,
-                        0.9534307499357034,
-                        0.9506951010870748,
-                        0.9523223421280594,
-                        0.9317460031975845,
-                        0.9330315141543621,
-                        0.9326226021419973,
-                        0.9310926704269641,
-                        0.9354943725540698,
-                    ],
-                    'estimated_specificity': [
-                        0.9372742491954283,
-                        0.9446319110387503,
-                        0.9458015988378999,
-                        0.9459382667254527,
-                        0.9442380077839293,
-                        0.9054074470674046,
-                        0.9054733303403276,
-                        0.905142438988179,
-                        0.9120143191041326,
-                        0.9005790635739856,
-                    ],
-                    'estimated_accuracy': [
-                        0.9462845122805443,
-                        0.947306078326665,
-                        0.949543087716159,
-                        0.9482807229338969,
-                        0.9483068458984663,
-                        0.9191503008524827,
-                        0.9197921095331023,
-                        0.9193633916092473,
-                        0.9217811573797979,
-                        0.9191618588441066,
-                    ],
-                    'estimated_true_positive': [
-                        0.9425440716307567,
-                        0.9431073537123397,
-                        0.9442277523749669,
-                        0.9446336452028189,
-                        0.9453707449594684,
-                        0.914873295238575,
-                        0.9143489884377148,
-                        0.9133821290777778,
-                        0.9173539177641507,
-                        0.9145726617897999,
-                    ],
-                    'estimated_true_negative': [
-                        0.9504253203660866,
-                        0.9514216598793204,
-                        0.9547573390255062,
-                        0.9518641720289054,
-                        0.9513263249574359,
-                        0.9240004945853693,
-                        0.9259350273806426,
-                        0.9260650436907325,
-                        0.9265696538500111,
-                        0.9246455262636951,
-                    ],
-                    'estimated_false_positive': [
-                        0.05745592836924329,
-                        0.056892646287660435,
-                        0.055772247625033154,
-                        0.055366354797181126,
-                        0.054629255040531705,
-                        0.08512670476142503,
-                        0.0856510115622853,
-                        0.08661787092222226,
-                        0.08264608223584949,
-                        0.08542733821020007,
-                    ],
-                    'estimated_false_negative': [
-                        0.04957467963391336,
-                        0.048578340120679596,
-                        0.04524266097449394,
-                        0.04813582797109456,
-                        0.04867367504256423,
-                        0.07599950541463074,
-                        0.0740649726193573,
-                        0.0739349563092676,
-                        0.07343034614998886,
-                        0.07535447373630481,
-                    ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20518.99288114649,
                         -19531.34562601404,
                         -19647.162691868405,
@@ -1901,25 +1657,24 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'normalize_confusion_matrix': None,
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "normalize_confusion_matrix": "all",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': [
-                        '[0:4999]',
-                        '[5000:9999]',
-                        '[10000:14999]',
-                        '[15000:19999]',
-                        '[20000:24999]',
-                        '[25000:29999]',
-                        '[30000:34999]',
-                        '[35000:39999]',
-                        '[40000:44999]',
-                        '[45000:49999]',
+                    "key": [
+                        "[0:4999]",
+                        "[5000:9999]",
+                        "[10000:14999]",
+                        "[15000:19999]",
+                        "[20000:24999]",
+                        "[25000:29999]",
+                        "[30000:34999]",
+                        "[35000:39999]",
+                        "[40000:44999]",
+                        "[45000:49999]",
                     ],
-                    'estimated_roc_auc': [
+                    "estimated_roc_auc": [
                         0.97074363630015,
                         0.9710106327368981,
                         0.9714067155511361,
@@ -1931,7 +1686,7 @@ LOGGER = getLogger(__name__)
                         0.9625334611153133,
                         0.9613161529631752,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.948555321454138,
                         0.9465779465209089,
                         0.9488069354531159,
@@ -1943,7 +1698,7 @@ LOGGER = getLogger(__name__)
                         0.9241722368115827,
                         0.9249152193013231,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425440716307568,
                         0.9431073537123396,
                         0.9442277523749669,
@@ -1955,7 +1710,7 @@ LOGGER = getLogger(__name__)
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639571716287229,
                         0.9624355545496974,
                         0.9627637624228476,
@@ -1967,7 +1722,7 @@ LOGGER = getLogger(__name__)
                         0.9560927338703065,
                         0.9569107885377364,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9546437391537488,
                         0.95007417692678,
                         0.9534307499357034,
@@ -1979,7 +1734,7 @@ LOGGER = getLogger(__name__)
                         0.9310926704269641,
                         0.9354943725540698,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.9372742491954283,
                         0.9446319110387503,
                         0.9458015988378999,
@@ -1991,7 +1746,7 @@ LOGGER = getLogger(__name__)
                         0.9120143191041326,
                         0.9005790635739856,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9462845122805443,
                         0.947306078326665,
                         0.949543087716159,
@@ -2003,7 +1758,506 @@ LOGGER = getLogger(__name__)
                         0.9217811573797979,
                         0.9191618588441066,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
+                        0.4952126552347996,
+                        0.4668381400876081,
+                        0.46758158297608354,
+                        0.468160434562517,
+                        0.47930296769445047,
+                        0.4861636690897787,
+                        0.48478783366967637,
+                        0.4826311170046978,
+                        0.4766570956702526,
+                        0.49789335707836707,
+                    ],
+                    "estimated_true_negative": [
+                        0.45107185704574476,
+                        0.4804679382390568,
+                        0.48196150474007543,
+                        0.4801202883713799,
+                        0.46900387820401573,
+                        0.432986631762704,
+                        0.43500427586342594,
+                        0.43673227460454944,
+                        0.44512406170954527,
+                        0.42126850176573954,
+                    ],
+                    "estimated_false_positive": [
+                        0.03018734476520043,
+                        0.028161859912391913,
+                        0.027618417023916413,
+                        0.027439565437482962,
+                        0.02769703230554957,
+                        0.04523633091022126,
+                        0.04541216633032367,
+                        0.04576888299530224,
+                        0.042942904329747386,
+                        0.04650664292163292,
+                    ],
+                    "estimated_false_negative": [
+                        0.023528142954255284,
+                        0.024532061760943195,
+                        0.022838495259924537,
+                        0.024279711628620096,
+                        0.02399612179598416,
+                        0.03561336823729597,
+                        0.03479572413657406,
+                        0.0348677253954506,
+                        0.035275938290454646,
+                        0.034331498234260474,
+                    ],
+                    "estimated_business_value": [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
+                }
+            ),
+        ),
+        (
+            {
+                "normalize_confusion_matrix": "true",
+                "business_value_matrix": [[-1, 4], [8, -8]],
+            },
+            pd.DataFrame(
+                {
+                    "key": [
+                        "[0:4999]",
+                        "[5000:9999]",
+                        "[10000:14999]",
+                        "[15000:19999]",
+                        "[20000:24999]",
+                        "[25000:29999]",
+                        "[30000:34999]",
+                        "[35000:39999]",
+                        "[40000:44999]",
+                        "[45000:49999]",
+                    ],
+                    "estimated_roc_auc": [
+                        0.97074363630015,
+                        0.9710106327368981,
+                        0.9714067155511361,
+                        0.9710913930740382,
+                        0.971123121124055,
+                        0.9610902734539033,
+                        0.9618247016040209,
+                        0.9610734463362078,
+                        0.9625334611153133,
+                        0.9613161529631752,
+                    ],
+                    "estimated_f1": [
+                        0.948555321454138,
+                        0.9465779465209089,
+                        0.9488069354531159,
+                        0.9476546805658866,
+                        0.9488338110572719,
+                        0.9232325655782327,
+                        0.923595783273164,
+                        0.9229020961475524,
+                        0.9241722368115827,
+                        0.9249152193013231,
+                    ],
+                    "estimated_precision": [
+                        0.9425440716307568,
+                        0.9431073537123396,
+                        0.9442277523749669,
+                        0.9446336452028188,
+                        0.9453707449594683,
+                        0.9148732952385749,
+                        0.9143489884377147,
+                        0.9133821290777778,
+                        0.9173539177641505,
+                        0.9145726617897999,
+                    ],
+                    "estimated_average_precision": [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364,
+                    ],
+                    "estimated_recall": [
+                        0.9546437391537488,
+                        0.95007417692678,
+                        0.9534307499357034,
+                        0.9506951010870748,
+                        0.9523223421280594,
+                        0.9317460031975845,
+                        0.9330315141543621,
+                        0.9326226021419973,
+                        0.9310926704269641,
+                        0.9354943725540698,
+                    ],
+                    "estimated_specificity": [
+                        0.9372742491954283,
+                        0.9446319110387503,
+                        0.9458015988378999,
+                        0.9459382667254527,
+                        0.9442380077839293,
+                        0.9054074470674046,
+                        0.9054733303403276,
+                        0.905142438988179,
+                        0.9120143191041326,
+                        0.9005790635739856,
+                    ],
+                    "estimated_accuracy": [
+                        0.9462845122805443,
+                        0.947306078326665,
+                        0.949543087716159,
+                        0.9482807229338969,
+                        0.9483068458984663,
+                        0.9191503008524827,
+                        0.9197921095331023,
+                        0.9193633916092473,
+                        0.9217811573797979,
+                        0.9191618588441066,
+                    ],
+                    "estimated_true_positive": [
+                        0.9546437391537488,
+                        0.9500741769267799,
+                        0.9534307499357034,
+                        0.9506951010870749,
+                        0.9523223421280593,
+                        0.9317460031975845,
+                        0.9330315141543621,
+                        0.9326226021419972,
+                        0.9310926704269642,
+                        0.9354943725540699,
+                    ],
+                    "estimated_true_negative": [
+                        0.9372742491954283,
+                        0.9446319110387503,
+                        0.9458015988378999,
+                        0.9459382667254528,
+                        0.9442380077839293,
+                        0.9054074470674046,
+                        0.9054733303403276,
+                        0.9051424389881788,
+                        0.9120143191041324,
+                        0.9005790635739858,
+                    ],
+                    "estimated_false_positive": [
+                        0.0627257508045717,
+                        0.05536808896124974,
+                        0.054198401162100104,
+                        0.0540617332745473,
+                        0.05576199221607062,
+                        0.09459255293259536,
+                        0.0945266696596724,
+                        0.09485756101182109,
+                        0.08798568089586746,
+                        0.09942093642601435,
+                    ],
+                    "estimated_false_negative": [
+                        0.04535626084625111,
+                        0.04992582307322005,
+                        0.04656925006429655,
+                        0.04930489891292515,
+                        0.0476776578719406,
+                        0.06825399680241545,
+                        0.06696848584563789,
+                        0.06737739785800262,
+                        0.06890732957303593,
+                        0.06450562744593023,
+                    ],
+                    "estimated_business_value": [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
+                }
+            ),
+        ),
+        (
+            {
+                "normalize_confusion_matrix": "pred",
+                "business_value_matrix": [[-1, 4], [8, -8]],
+            },
+            pd.DataFrame(
+                {
+                    "key": [
+                        "[0:4999]",
+                        "[5000:9999]",
+                        "[10000:14999]",
+                        "[15000:19999]",
+                        "[20000:24999]",
+                        "[25000:29999]",
+                        "[30000:34999]",
+                        "[35000:39999]",
+                        "[40000:44999]",
+                        "[45000:49999]",
+                    ],
+                    "estimated_roc_auc": [
+                        0.97074363630015,
+                        0.9710106327368981,
+                        0.9714067155511361,
+                        0.9710913930740382,
+                        0.971123121124055,
+                        0.9610902734539033,
+                        0.9618247016040209,
+                        0.9610734463362078,
+                        0.9625334611153133,
+                        0.9613161529631752,
+                    ],
+                    "estimated_f1": [
+                        0.948555321454138,
+                        0.9465779465209089,
+                        0.9488069354531159,
+                        0.9476546805658866,
+                        0.9488338110572719,
+                        0.9232325655782327,
+                        0.923595783273164,
+                        0.9229020961475524,
+                        0.9241722368115827,
+                        0.9249152193013231,
+                    ],
+                    "estimated_precision": [
+                        0.9425440716307568,
+                        0.9431073537123396,
+                        0.9442277523749669,
+                        0.9446336452028188,
+                        0.9453707449594683,
+                        0.9148732952385749,
+                        0.9143489884377147,
+                        0.9133821290777778,
+                        0.9173539177641505,
+                        0.9145726617897999,
+                    ],
+                    "estimated_average_precision": [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364,
+                    ],
+                    "estimated_recall": [
+                        0.9546437391537488,
+                        0.95007417692678,
+                        0.9534307499357034,
+                        0.9506951010870748,
+                        0.9523223421280594,
+                        0.9317460031975845,
+                        0.9330315141543621,
+                        0.9326226021419973,
+                        0.9310926704269641,
+                        0.9354943725540698,
+                    ],
+                    "estimated_specificity": [
+                        0.9372742491954283,
+                        0.9446319110387503,
+                        0.9458015988378999,
+                        0.9459382667254527,
+                        0.9442380077839293,
+                        0.9054074470674046,
+                        0.9054733303403276,
+                        0.905142438988179,
+                        0.9120143191041326,
+                        0.9005790635739856,
+                    ],
+                    "estimated_accuracy": [
+                        0.9462845122805443,
+                        0.947306078326665,
+                        0.949543087716159,
+                        0.9482807229338969,
+                        0.9483068458984663,
+                        0.9191503008524827,
+                        0.9197921095331023,
+                        0.9193633916092473,
+                        0.9217811573797979,
+                        0.9191618588441066,
+                    ],
+                    "estimated_true_positive": [
+                        0.9425440716307567,
+                        0.9431073537123397,
+                        0.9442277523749669,
+                        0.9446336452028189,
+                        0.9453707449594684,
+                        0.914873295238575,
+                        0.9143489884377148,
+                        0.9133821290777778,
+                        0.9173539177641507,
+                        0.9145726617897999,
+                    ],
+                    "estimated_true_negative": [
+                        0.9504253203660866,
+                        0.9514216598793204,
+                        0.9547573390255062,
+                        0.9518641720289054,
+                        0.9513263249574359,
+                        0.9240004945853693,
+                        0.9259350273806426,
+                        0.9260650436907325,
+                        0.9265696538500111,
+                        0.9246455262636951,
+                    ],
+                    "estimated_false_positive": [
+                        0.05745592836924329,
+                        0.056892646287660435,
+                        0.055772247625033154,
+                        0.055366354797181126,
+                        0.054629255040531705,
+                        0.08512670476142503,
+                        0.0856510115622853,
+                        0.08661787092222226,
+                        0.08264608223584949,
+                        0.08542733821020007,
+                    ],
+                    "estimated_false_negative": [
+                        0.04957467963391336,
+                        0.048578340120679596,
+                        0.04524266097449394,
+                        0.04813582797109456,
+                        0.04867367504256423,
+                        0.07599950541463074,
+                        0.0740649726193573,
+                        0.0739349563092676,
+                        0.07343034614998886,
+                        0.07535447373630481,
+                    ],
+                    "estimated_business_value": [
+                        -20518.99288114649,
+                        -19531.34562601404,
+                        -19647.162691868405,
+                        -19607.039050463114,
+                        -20003.352580847743,
+                        -19282.218574708404,
+                        -19266.462434034747,
+                        -19178.81937748659,
+                        -19022.008517144695,
+                        -19718.684004160303,
+                    ],
+                }
+            ),
+        ),
+        (
+            {
+                "normalize_confusion_matrix": None,
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
+            },
+            pd.DataFrame(
+                {
+                    "key": [
+                        "[0:4999]",
+                        "[5000:9999]",
+                        "[10000:14999]",
+                        "[15000:19999]",
+                        "[20000:24999]",
+                        "[25000:29999]",
+                        "[30000:34999]",
+                        "[35000:39999]",
+                        "[40000:44999]",
+                        "[45000:49999]",
+                    ],
+                    "estimated_roc_auc": [
+                        0.97074363630015,
+                        0.9710106327368981,
+                        0.9714067155511361,
+                        0.9710913930740382,
+                        0.971123121124055,
+                        0.9610902734539033,
+                        0.9618247016040209,
+                        0.9610734463362078,
+                        0.9625334611153133,
+                        0.9613161529631752,
+                    ],
+                    "estimated_f1": [
+                        0.948555321454138,
+                        0.9465779465209089,
+                        0.9488069354531159,
+                        0.9476546805658866,
+                        0.9488338110572719,
+                        0.9232325655782327,
+                        0.923595783273164,
+                        0.9229020961475524,
+                        0.9241722368115827,
+                        0.9249152193013231,
+                    ],
+                    "estimated_precision": [
+                        0.9425440716307568,
+                        0.9431073537123396,
+                        0.9442277523749669,
+                        0.9446336452028188,
+                        0.9453707449594683,
+                        0.9148732952385749,
+                        0.9143489884377147,
+                        0.9133821290777778,
+                        0.9173539177641505,
+                        0.9145726617897999,
+                    ],
+                    "estimated_average_precision": [
+                        0.9639571716287229,
+                        0.9624355545496974,
+                        0.9627637624228476,
+                        0.9626175155586215,
+                        0.9633484469422674,
+                        0.9557317811530492,
+                        0.9561644458255762,
+                        0.9551889092088637,
+                        0.9560927338703065,
+                        0.9569107885377364,
+                    ],
+                    "estimated_recall": [
+                        0.9546437391537488,
+                        0.95007417692678,
+                        0.9534307499357034,
+                        0.9506951010870748,
+                        0.9523223421280594,
+                        0.9317460031975845,
+                        0.9330315141543621,
+                        0.9326226021419973,
+                        0.9310926704269641,
+                        0.9354943725540698,
+                    ],
+                    "estimated_specificity": [
+                        0.9372742491954283,
+                        0.9446319110387503,
+                        0.9458015988378999,
+                        0.9459382667254527,
+                        0.9442380077839293,
+                        0.9054074470674046,
+                        0.9054733303403276,
+                        0.905142438988179,
+                        0.9120143191041326,
+                        0.9005790635739856,
+                    ],
+                    "estimated_accuracy": [
+                        0.9462845122805443,
+                        0.947306078326665,
+                        0.949543087716159,
+                        0.9482807229338969,
+                        0.9483068458984663,
+                        0.9191503008524827,
+                        0.9197921095331023,
+                        0.9193633916092473,
+                        0.9217811573797979,
+                        0.9191618588441066,
+                    ],
+                    "estimated_true_positive": [
                         2476.063276173998,
                         2334.1907004380405,
                         2337.9079148804176,
@@ -2015,7 +2269,7 @@ LOGGER = getLogger(__name__)
                         2383.285478351263,
                         2489.4667853918354,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         2255.359285228724,
                         2402.339691195284,
                         2409.8075237003773,
@@ -2027,7 +2281,7 @@ LOGGER = getLogger(__name__)
                         2225.6203085477264,
                         2106.3425088286976,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         150.93672382600215,
                         140.80929956195956,
                         138.09208511958207,
@@ -2039,7 +2293,7 @@ LOGGER = getLogger(__name__)
                         214.71452164873693,
                         232.53321460816457,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         117.64071477127642,
                         122.66030880471597,
                         114.19247629962268,
@@ -2051,7 +2305,7 @@ LOGGER = getLogger(__name__)
                         176.37969145227322,
                         171.65749117130238,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20518.99288114649,
                         -19531.34562601404,
                         -19647.162691868405,
@@ -2068,25 +2322,25 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'normalize_confusion_matrix': 'all',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "normalize_confusion_matrix": "all",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': [
-                        '[0:4999]',
-                        '[5000:9999]',
-                        '[10000:14999]',
-                        '[15000:19999]',
-                        '[20000:24999]',
-                        '[25000:29999]',
-                        '[30000:34999]',
-                        '[35000:39999]',
-                        '[40000:44999]',
-                        '[45000:49999]',
+                    "key": [
+                        "[0:4999]",
+                        "[5000:9999]",
+                        "[10000:14999]",
+                        "[15000:19999]",
+                        "[20000:24999]",
+                        "[25000:29999]",
+                        "[30000:34999]",
+                        "[35000:39999]",
+                        "[40000:44999]",
+                        "[45000:49999]",
                     ],
-                    'estimated_roc_auc': [
+                    "estimated_roc_auc": [
                         0.97074363630015,
                         0.9710106327368981,
                         0.9714067155511361,
@@ -2098,7 +2352,7 @@ LOGGER = getLogger(__name__)
                         0.9625334611153133,
                         0.9613161529631752,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.948555321454138,
                         0.9465779465209089,
                         0.9488069354531159,
@@ -2110,7 +2364,7 @@ LOGGER = getLogger(__name__)
                         0.9241722368115827,
                         0.9249152193013231,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425440716307568,
                         0.9431073537123396,
                         0.9442277523749669,
@@ -2122,7 +2376,7 @@ LOGGER = getLogger(__name__)
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639571716287229,
                         0.9624355545496974,
                         0.9627637624228476,
@@ -2134,7 +2388,7 @@ LOGGER = getLogger(__name__)
                         0.9560927338703065,
                         0.9569107885377364,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9546437391537488,
                         0.95007417692678,
                         0.9534307499357034,
@@ -2146,7 +2400,7 @@ LOGGER = getLogger(__name__)
                         0.9310926704269641,
                         0.9354943725540698,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.9372742491954283,
                         0.9446319110387503,
                         0.9458015988378999,
@@ -2158,7 +2412,7 @@ LOGGER = getLogger(__name__)
                         0.9120143191041326,
                         0.9005790635739856,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9462845122805443,
                         0.947306078326665,
                         0.949543087716159,
@@ -2170,7 +2424,7 @@ LOGGER = getLogger(__name__)
                         0.9217811573797979,
                         0.9191618588441066,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.4952126552347996,
                         0.4668381400876081,
                         0.46758158297608354,
@@ -2182,7 +2436,7 @@ LOGGER = getLogger(__name__)
                         0.4766570956702526,
                         0.49789335707836707,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.45107185704574476,
                         0.4804679382390568,
                         0.48196150474007543,
@@ -2194,7 +2448,7 @@ LOGGER = getLogger(__name__)
                         0.44512406170954527,
                         0.42126850176573954,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.03018734476520043,
                         0.028161859912391913,
                         0.027618417023916413,
@@ -2206,7 +2460,7 @@ LOGGER = getLogger(__name__)
                         0.042942904329747386,
                         0.04650664292163292,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.023528142954255284,
                         0.024532061760943195,
                         0.022838495259924537,
@@ -2218,7 +2472,7 @@ LOGGER = getLogger(__name__)
                         0.035275938290454646,
                         0.034331498234260474,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20518.99288114649,
                         -19531.34562601404,
                         -19647.162691868405,
@@ -2235,25 +2489,25 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'normalize_confusion_matrix': 'true',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "normalize_confusion_matrix": "true",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': [
-                        '[0:4999]',
-                        '[5000:9999]',
-                        '[10000:14999]',
-                        '[15000:19999]',
-                        '[20000:24999]',
-                        '[25000:29999]',
-                        '[30000:34999]',
-                        '[35000:39999]',
-                        '[40000:44999]',
-                        '[45000:49999]',
+                    "key": [
+                        "[0:4999]",
+                        "[5000:9999]",
+                        "[10000:14999]",
+                        "[15000:19999]",
+                        "[20000:24999]",
+                        "[25000:29999]",
+                        "[30000:34999]",
+                        "[35000:39999]",
+                        "[40000:44999]",
+                        "[45000:49999]",
                     ],
-                    'estimated_roc_auc': [
+                    "estimated_roc_auc": [
                         0.97074363630015,
                         0.9710106327368981,
                         0.9714067155511361,
@@ -2265,7 +2519,7 @@ LOGGER = getLogger(__name__)
                         0.9625334611153133,
                         0.9613161529631752,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.948555321454138,
                         0.9465779465209089,
                         0.9488069354531159,
@@ -2277,7 +2531,7 @@ LOGGER = getLogger(__name__)
                         0.9241722368115827,
                         0.9249152193013231,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425440716307568,
                         0.9431073537123396,
                         0.9442277523749669,
@@ -2289,7 +2543,7 @@ LOGGER = getLogger(__name__)
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639571716287229,
                         0.9624355545496974,
                         0.9627637624228476,
@@ -2301,7 +2555,7 @@ LOGGER = getLogger(__name__)
                         0.9560927338703065,
                         0.9569107885377364,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9546437391537488,
                         0.95007417692678,
                         0.9534307499357034,
@@ -2313,7 +2567,7 @@ LOGGER = getLogger(__name__)
                         0.9310926704269641,
                         0.9354943725540698,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.9372742491954283,
                         0.9446319110387503,
                         0.9458015988378999,
@@ -2325,7 +2579,7 @@ LOGGER = getLogger(__name__)
                         0.9120143191041326,
                         0.9005790635739856,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9462845122805443,
                         0.947306078326665,
                         0.949543087716159,
@@ -2337,7 +2591,7 @@ LOGGER = getLogger(__name__)
                         0.9217811573797979,
                         0.9191618588441066,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.9546437391537488,
                         0.9500741769267799,
                         0.9534307499357034,
@@ -2349,7 +2603,7 @@ LOGGER = getLogger(__name__)
                         0.9310926704269642,
                         0.9354943725540699,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.9372742491954283,
                         0.9446319110387503,
                         0.9458015988378999,
@@ -2361,7 +2615,7 @@ LOGGER = getLogger(__name__)
                         0.9120143191041324,
                         0.9005790635739858,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.0627257508045717,
                         0.05536808896124974,
                         0.054198401162100104,
@@ -2373,7 +2627,7 @@ LOGGER = getLogger(__name__)
                         0.08798568089586746,
                         0.09942093642601435,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.04535626084625111,
                         0.04992582307322005,
                         0.04656925006429655,
@@ -2385,7 +2639,7 @@ LOGGER = getLogger(__name__)
                         0.06890732957303593,
                         0.06450562744593023,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20518.99288114649,
                         -19531.34562601404,
                         -19647.162691868405,
@@ -2402,25 +2656,25 @@ LOGGER = getLogger(__name__)
         ),
         (
             {
-                'normalize_confusion_matrix': 'pred',
-                'timestamp_column_name': 'timestamp',
-                'business_value_matrix': [[-1, 4], [8, -8]],
+                "normalize_confusion_matrix": "pred",
+                "timestamp_column_name": "timestamp",
+                "business_value_matrix": [[-1, 4], [8, -8]],
             },
             pd.DataFrame(
                 {
-                    'key': [
-                        '[0:4999]',
-                        '[5000:9999]',
-                        '[10000:14999]',
-                        '[15000:19999]',
-                        '[20000:24999]',
-                        '[25000:29999]',
-                        '[30000:34999]',
-                        '[35000:39999]',
-                        '[40000:44999]',
-                        '[45000:49999]',
+                    "key": [
+                        "[0:4999]",
+                        "[5000:9999]",
+                        "[10000:14999]",
+                        "[15000:19999]",
+                        "[20000:24999]",
+                        "[25000:29999]",
+                        "[30000:34999]",
+                        "[35000:39999]",
+                        "[40000:44999]",
+                        "[45000:49999]",
                     ],
-                    'estimated_roc_auc': [
+                    "estimated_roc_auc": [
                         0.97074363630015,
                         0.9710106327368981,
                         0.9714067155511361,
@@ -2432,7 +2686,7 @@ LOGGER = getLogger(__name__)
                         0.9625334611153133,
                         0.9613161529631752,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.948555321454138,
                         0.9465779465209089,
                         0.9488069354531159,
@@ -2444,7 +2698,7 @@ LOGGER = getLogger(__name__)
                         0.9241722368115827,
                         0.9249152193013231,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.9425440716307568,
                         0.9431073537123396,
                         0.9442277523749669,
@@ -2456,7 +2710,7 @@ LOGGER = getLogger(__name__)
                         0.9173539177641505,
                         0.9145726617897999,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.9639571716287229,
                         0.9624355545496974,
                         0.9627637624228476,
@@ -2468,7 +2722,7 @@ LOGGER = getLogger(__name__)
                         0.9560927338703065,
                         0.9569107885377364,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.9546437391537488,
                         0.95007417692678,
                         0.9534307499357034,
@@ -2480,7 +2734,7 @@ LOGGER = getLogger(__name__)
                         0.9310926704269641,
                         0.9354943725540698,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.9372742491954283,
                         0.9446319110387503,
                         0.9458015988378999,
@@ -2492,7 +2746,7 @@ LOGGER = getLogger(__name__)
                         0.9120143191041326,
                         0.9005790635739856,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.9462845122805443,
                         0.947306078326665,
                         0.949543087716159,
@@ -2504,7 +2758,7 @@ LOGGER = getLogger(__name__)
                         0.9217811573797979,
                         0.9191618588441066,
                     ],
-                    'estimated_true_positive': [
+                    "estimated_true_positive": [
                         0.9425440716307567,
                         0.9431073537123397,
                         0.9442277523749669,
@@ -2516,7 +2770,7 @@ LOGGER = getLogger(__name__)
                         0.9173539177641507,
                         0.9145726617897999,
                     ],
-                    'estimated_true_negative': [
+                    "estimated_true_negative": [
                         0.9504253203660866,
                         0.9514216598793204,
                         0.9547573390255062,
@@ -2528,7 +2782,7 @@ LOGGER = getLogger(__name__)
                         0.9265696538500111,
                         0.9246455262636951,
                     ],
-                    'estimated_false_positive': [
+                    "estimated_false_positive": [
                         0.05745592836924329,
                         0.056892646287660435,
                         0.055772247625033154,
@@ -2540,7 +2794,7 @@ LOGGER = getLogger(__name__)
                         0.08264608223584949,
                         0.08542733821020007,
                     ],
-                    'estimated_false_negative': [
+                    "estimated_false_negative": [
                         0.04957467963391336,
                         0.048578340120679596,
                         0.04524266097449394,
@@ -2552,7 +2806,7 @@ LOGGER = getLogger(__name__)
                         0.07343034614998886,
                         0.07535447373630481,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         -20518.99288114649,
                         -19531.34562601404,
                         -19647.162691868405,
@@ -2569,138 +2823,174 @@ LOGGER = getLogger(__name__)
         ),
     ],
     ids=[
-        'size_based_without_timestamp_cm_normalization_none_business_norm_none',
-        'size_based_without_timestamp_cm_normalization_none_business_norm_per_pred',
-        'size_based_without_timestamp_normalization_all_business_norm_none',
-        'size_based_without_timestamp_normalization_true_business_norm_none',
-        'size_based_without_timestamp_normalization_pred_business_norm_none',
-        'sized_based_with_timestamp_cm_normalization_none_business_norm_none',
-        'sized_based_with_timestamp_cm_normalization_all_business_norm_none',
-        'sized_based_with_timestamp_cm_normalization_all_business_norm_per_pred',
-        'sized_based_with_timestamp_normalization_true_business_norm_none',
-        'sized_based_with_timestamp_normalization_pred_business_norm_none',
-        'count_based_without_timestamp_normalization_none_business_norm_none',
-        'count_based_without_timestamp_normalization_all_business_norm_none',
-        'count_based_without_timestamp_normalization_true_business_norm_none',
-        'count_based_without_timestamp_normalization_pred_business_norm_none',
-        'count_based_with_timestamp_normalization_none_business_norm_none',
-        'count_based_with_timestamp_normalization_all_business_norm_none',
-        'count_based_with_timestamp_normalization_true_business_norm_none',
-        'count_based_with_timestamp_normalization_pred_business_norm_none',
-        'period_based_with_timestamp_normalization_none_business_norm_none',
-        'period_based_with_timestamp_normalization_all_business_norm_none',
-        'period_based_with_timestamp_normalization_true_business_norm_none',
-        'period_based_with_timestamp_normalization_pred_business_norm_none',
-        'default_without_timestamp_normalization_none_business_norm_none',
-        'default_without_timestamp_normalization_all_business_norm_none',
-        'default_without_timestamp_normalization_true_business_norm_none',
-        'default_without_timestamp_normalization_pred_business_norm_none',
-        'default_with_timestamp_normalization_none_business_norm_none',
-        'default_with_timestamp_normalization_all_business_norm_none',
-        'default_with_timestamp_normalization_true_business_norm_none',
-        'default_with_timestamp_normalization_pred_business_norm_none',
+        "size_based_without_timestamp_cm_normalization_none_business_norm_none",
+        "size_based_without_timestamp_cm_normalization_none_business_norm_per_pred",
+        "size_based_without_timestamp_normalization_all_business_norm_none",
+        "size_based_without_timestamp_normalization_true_business_norm_none",
+        "size_based_without_timestamp_normalization_pred_business_norm_none",
+        "sized_based_with_timestamp_cm_normalization_none_business_norm_none",
+        "sized_based_with_timestamp_cm_normalization_all_business_norm_none",
+        "sized_based_with_timestamp_cm_normalization_all_business_norm_per_pred",
+        "sized_based_with_timestamp_normalization_true_business_norm_none",
+        "sized_based_with_timestamp_normalization_pred_business_norm_none",
+        "count_based_without_timestamp_normalization_none_business_norm_none",
+        "count_based_without_timestamp_normalization_all_business_norm_none",
+        "count_based_without_timestamp_normalization_true_business_norm_none",
+        "count_based_without_timestamp_normalization_pred_business_norm_none",
+        "count_based_with_timestamp_normalization_none_business_norm_none",
+        "count_based_with_timestamp_normalization_all_business_norm_none",
+        "count_based_with_timestamp_normalization_true_business_norm_none",
+        "count_based_with_timestamp_normalization_pred_business_norm_none",
+        "period_based_with_timestamp_normalization_none_business_norm_none",
+        "period_based_with_timestamp_normalization_all_business_norm_none",
+        "period_based_with_timestamp_normalization_true_business_norm_none",
+        "period_based_with_timestamp_normalization_pred_business_norm_none",
+        "default_without_timestamp_normalization_none_business_norm_none",
+        "default_without_timestamp_normalization_all_business_norm_none",
+        "default_without_timestamp_normalization_true_business_norm_none",
+        "default_without_timestamp_normalization_pred_business_norm_none",
+        "default_with_timestamp_normalization_none_business_norm_none",
+        "default_with_timestamp_normalization_all_business_norm_none",
+        "default_with_timestamp_normalization_true_business_norm_none",
+        "default_with_timestamp_normalization_pred_business_norm_none",
     ],
 )
 def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expected):  # noqa: D103
     ref_df, ana_df, _ = load_synthetic_binary_classification_dataset()
     cbpe = CBPE(
-        y_pred_proba='y_pred_proba',
-        y_pred='y_pred',
-        y_true='work_home_actual',
-        problem_type='classification_binary',
+        y_pred_proba="y_pred_proba",
+        y_pred="y_pred",
+        y_true="work_home_actual",
+        problem_type="classification_binary",
         metrics=[
-            'roc_auc',
-            'f1',
-            'precision',
-            'average_precision',
-            'recall',
-            'specificity',
-            'accuracy',
-            'confusion_matrix',
-            'business_value',
+            "roc_auc",
+            "f1",
+            "precision",
+            "average_precision",
+            "recall",
+            "specificity",
+            "accuracy",
+            "confusion_matrix",
+            "business_value",
         ],
         **calculator_opts,
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
 
-    metric_column_names = [name for metric in result.metrics for name in metric.column_names]
-    sut = result.filter(period='analysis').to_df()[[('chunk', 'key')] + [(c, 'value') for c in metric_column_names]]
+    metric_column_names = [
+        name for metric in result.metrics for name in metric.column_names
+    ]
+    sut = result.filter(period="analysis").to_df()[
+        [("chunk", "key")] + [(c, "value") for c in metric_column_names]
+    ]
     sut.columns = [
-        'key',
-        'estimated_roc_auc',
-        'estimated_f1',
-        'estimated_precision',
-        'estimated_average_precision',
-        'estimated_recall',
-        'estimated_specificity',
-        'estimated_accuracy',
-        'estimated_true_positive',
-        'estimated_true_negative',
-        'estimated_false_positive',
-        'estimated_false_negative',
-        'estimated_business_value',
+        "key",
+        "estimated_roc_auc",
+        "estimated_f1",
+        "estimated_precision",
+        "estimated_average_precision",
+        "estimated_recall",
+        "estimated_specificity",
+        "estimated_accuracy",
+        "estimated_true_positive",
+        "estimated_true_negative",
+        "estimated_false_positive",
+        "estimated_false_negative",
+        "estimated_business_value",
     ]
 
     pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
-    'calculator_opts, expected',
+    "calculator_opts, expected",
     [
         (
-            {'chunk_size': 20000},
+            {"chunk_size": 20000},
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:39999]', '[40000:59999]'],
-                    'estimated_roc_auc': [0.909165141524145, 0.8682789924547322, 0.8203173643497594],
-                    'estimated_f1': [0.756401608336434, 0.6937135623882767, 0.632386421613214],
-                    'estimated_precision': [0.7564437378390059, 0.694174192229447, 0.6336288859123612],
-                    'estimated_recall': [0.7564129287764665, 0.6934788458355289, 0.6319310599943714],
-                    'estimated_specificity': [0.8782068281303994, 0.8469556750949159, 0.8172644220189141],
-                    'estimated_accuracy': [0.7564451493123628, 0.6946947603445697, 0.6378557309960986],
-                    'estimated_average_precision': [0.8418535417603635, 0.7785618577588246, 0.6985785036188713],
-                    'estimated_business_value': [2.0193901626043056, 1.7875283323693987, 1.570045452479401],
-                    'estimated_true_highstreet_card_pred_highstreet_card': [
+                    "key": ["[0:19999]", "[20000:39999]", "[40000:59999]"],
+                    "estimated_roc_auc": [
+                        0.909165141524145,
+                        0.8682789924547322,
+                        0.8203173643497594,
+                    ],
+                    "estimated_f1": [
+                        0.756401608336434,
+                        0.6937135623882767,
+                        0.632386421613214,
+                    ],
+                    "estimated_precision": [
+                        0.7564437378390059,
+                        0.694174192229447,
+                        0.6336288859123612,
+                    ],
+                    "estimated_recall": [
+                        0.7564129287764665,
+                        0.6934788458355289,
+                        0.6319310599943714,
+                    ],
+                    "estimated_specificity": [
+                        0.8782068281303994,
+                        0.8469556750949159,
+                        0.8172644220189141,
+                    ],
+                    "estimated_accuracy": [
+                        0.7564451493123628,
+                        0.6946947603445697,
+                        0.6378557309960986,
+                    ],
+                    "estimated_average_precision": [
+                        0.8418535417603635,
+                        0.7785618577588246,
+                        0.6985785036188713,
+                    ],
+                    "estimated_business_value": [
+                        2.0193901626043056,
+                        1.7875283323693987,
+                        1.570045452479401,
+                    ],
+                    "estimated_true_highstreet_card_pred_highstreet_card": [
                         4976.829215997277,
                         5148.649186425118,
                         5412.348045797111,
                     ],
-                    'estimated_true_highstreet_card_pred_prepaid_card': [
+                    "estimated_true_highstreet_card_pred_prepaid_card": [
                         878.1877379091701,
                         1038.3533241561252,
                         1250.9260097761653,
                     ],
-                    'estimated_true_highstreet_card_pred_upmarket_card': [
+                    "estimated_true_highstreet_card_pred_upmarket_card": [
                         831.7702766018707,
                         993.7691398029524,
                         1109.9706655490413,
                     ],
-                    'estimated_true_prepaid_card_pred_highstreet_card': [
+                    "estimated_true_prepaid_card_pred_highstreet_card": [
                         806.1451187447954,
                         1140.1932616586546,
                         1451.431964364007,
                     ],
-                    'estimated_true_prepaid_card_pred_prepaid_card': [
+                    "estimated_true_prepaid_card_pred_prepaid_card": [
                         5180.838942632071,
                         4134.524656135082,
                         3326.8467648553315,
                     ],
-                    'estimated_true_prepaid_card_pred_upmarket_card': [
+                    "estimated_true_prepaid_card_pred_upmarket_card": [
                         755.9948957802203,
                         998.509495865855,
                         1200.1095251814281,
                     ],
-                    'estimated_true_upmarket_card_pred_highstreet_card': [
+                    "estimated_true_upmarket_card_pred_highstreet_card": [
                         812.0256652579275,
                         1062.1575519162266,
                         1263.219989838882,
                     ],
-                    'estimated_true_upmarket_card_pred_prepaid_card': [
+                    "estimated_true_upmarket_card_pred_prepaid_card": [
                         786.9733194587595,
                         873.1220197087925,
                         967.2272253685034,
                     ],
-                    'estimated_true_upmarket_card_pred_upmarket_card': [
+                    "estimated_true_upmarket_card_pred_upmarket_card": [
                         4971.234827617909,
                         4610.7213643311925,
                         4017.9198092695306,
@@ -2709,59 +2999,95 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             ),
         ),
         (
-            {'chunk_size': 20000, 'timestamp_column_name': 'timestamp', 'normalize_confusion_matrix': 'true'},
+            {
+                "chunk_size": 20000,
+                "timestamp_column_name": "timestamp",
+                "normalize_confusion_matrix": "true",
+            },
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:39999]', '[40000:59999]'],
-                    'estimated_roc_auc': [0.909165141524145, 0.8682789924547322, 0.8203173643497594],
-                    'estimated_f1': [0.756401608336434, 0.6937135623882767, 0.632386421613214],
-                    'estimated_precision': [0.7564437378390059, 0.694174192229447, 0.6336288859123612],
-                    'estimated_recall': [0.7564129287764665, 0.6934788458355289, 0.6319310599943714],
-                    'estimated_specificity': [0.8782068281303994, 0.8469556750949159, 0.8172644220189141],
-                    'estimated_accuracy': [0.7564451493123628, 0.6946947603445697, 0.6378557309960986],
-                    'estimated_average_precision': [0.8418535417603635, 0.7785618577588246, 0.6985785036188713],
-                    'estimated_business_value': [2.0193901626043056, 1.7875283323693987, 1.570045452479401],
-                    'estimated_true_highstreet_card_pred_highstreet_card': [
+                    "key": ["[0:19999]", "[20000:39999]", "[40000:59999]"],
+                    "estimated_roc_auc": [
+                        0.909165141524145,
+                        0.8682789924547322,
+                        0.8203173643497594,
+                    ],
+                    "estimated_f1": [
+                        0.756401608336434,
+                        0.6937135623882767,
+                        0.632386421613214,
+                    ],
+                    "estimated_precision": [
+                        0.7564437378390059,
+                        0.694174192229447,
+                        0.6336288859123612,
+                    ],
+                    "estimated_recall": [
+                        0.7564129287764665,
+                        0.6934788458355289,
+                        0.6319310599943714,
+                    ],
+                    "estimated_specificity": [
+                        0.8782068281303994,
+                        0.8469556750949159,
+                        0.8172644220189141,
+                    ],
+                    "estimated_accuracy": [
+                        0.7564451493123628,
+                        0.6946947603445697,
+                        0.6378557309960986,
+                    ],
+                    "estimated_average_precision": [
+                        0.8418535417603635,
+                        0.7785618577588246,
+                        0.6985785036188713,
+                    ],
+                    "estimated_business_value": [
+                        2.0193901626043056,
+                        1.7875283323693987,
+                        1.570045452479401,
+                    ],
+                    "estimated_true_highstreet_card_pred_highstreet_card": [
                         0.7442780881812128,
                         0.7170050012869645,
                         0.6962791266676683,
                     ],
-                    'estimated_true_highstreet_card_pred_prepaid_card': [
+                    "estimated_true_highstreet_card_pred_prepaid_card": [
                         0.1313317902358936,
                         0.14460191393226796,
                         0.16092713592008898,
                     ],
-                    'estimated_true_highstreet_card_pred_upmarket_card': [
+                    "estimated_true_highstreet_card_pred_upmarket_card": [
                         0.12439012158289371,
                         0.1383930847807676,
                         0.1427937374122426,
                     ],
-                    'estimated_true_prepaid_card_pred_highstreet_card': [
+                    "estimated_true_prepaid_card_pred_highstreet_card": [
                         0.11955326034187638,
                         0.18175544842770236,
                         0.24277980997563847,
                     ],
-                    'estimated_true_prepaid_card_pred_prepaid_card': [
+                    "estimated_true_prepaid_card_pred_prepaid_card": [
                         0.7683308780213619,
                         0.6590745693568182,
                         0.5564788741190233,
                     ],
-                    'estimated_true_prepaid_card_pred_upmarket_card': [
+                    "estimated_true_prepaid_card_pred_upmarket_card": [
                         0.1121158616367618,
                         0.15916998221547937,
                         0.20074131590533828,
                     ],
-                    'estimated_true_upmarket_card_pred_highstreet_card': [
+                    "estimated_true_upmarket_card_pred_highstreet_card": [
                         0.1235915933057778,
                         0.16226052551901615,
                         0.20216802004274595,
                     ],
-                    'estimated_true_upmarket_card_pred_prepaid_card': [
+                    "estimated_true_upmarket_card_pred_prepaid_card": [
                         0.1197785865673972,
                         0.13338250761817996,
                         0.15479680076083163,
                     ],
-                    'estimated_true_upmarket_card_pred_upmarket_card': [
+                    "estimated_true_upmarket_card_pred_upmarket_card": [
                         0.756629820126825,
                         0.7043569668628038,
                         0.6430351791964225,
@@ -2770,102 +3096,112 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             ),
         ),
         (
-            {'chunk_number': 4, 'normalize_confusion_matrix': 'pred'},
+            {"chunk_number": 4, "normalize_confusion_matrix": "pred"},
             pd.DataFrame(
                 {
-                    'key': ['[0:14999]', '[15000:29999]', '[30000:44999]', '[45000:59999]'],
-                    'estimated_roc_auc': [
+                    "key": [
+                        "[0:14999]",
+                        "[15000:29999]",
+                        "[30000:44999]",
+                        "[45000:59999]",
+                    ],
+                    "estimated_roc_auc": [
                         0.9084352218383378,
                         0.9087633795549603,
                         0.8195268555812215,
                         0.8201623718659414,
                     ],
-                    'estimated_f1': [0.7550059244451006, 0.7562711250144366, 0.63091155676697, 0.6324244687112559],
-                    'estimated_precision': [
+                    "estimated_f1": [
+                        0.7550059244451006,
+                        0.7562711250144366,
+                        0.63091155676697,
+                        0.6324244687112559,
+                    ],
+                    "estimated_precision": [
                         0.755038246904623,
                         0.7562647262876293,
                         0.6323547131368327,
                         0.6335323150520741,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.7550277340784216,
                         0.7562926950204228,
                         0.6304009454574501,
                         0.6320155112489632,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.8775094795233379,
                         0.8781429133214084,
                         0.8165537125162895,
                         0.8172408983542975,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.7550428613792668,
                         0.7562888217426292,
                         0.6364205304514962,
                         0.6375753072973162,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.8406535565924922,
                         0.8410572134298334,
                         0.697327636452664,
                         0.6984330753389926,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         2.0134445826512186,
                         2.0170794978486395,
                         1.5673705142973104,
                         1.5671595942359196,
                     ],
-                    'estimated_true_highstreet_card_pred_highstreet_card': [
+                    "estimated_true_highstreet_card_pred_highstreet_card": [
                         0.7546260682147157,
                         0.7511343683695074,
                         0.6628383225865804,
                         0.6651814251770874,
                     ],
-                    'estimated_true_highstreet_card_pred_prepaid_card': [
+                    "estimated_true_highstreet_card_pred_prepaid_card": [
                         0.12922483020709813,
                         0.12720280190168412,
                         0.22365956156664257,
                         0.22578913179209303,
                     ],
-                    'estimated_true_highstreet_card_pred_upmarket_card': [
+                    "estimated_true_highstreet_card_pred_upmarket_card": [
                         0.12747696595643684,
                         0.12776612448252053,
                         0.17277613353669485,
                         0.17660735301820177,
                     ],
-                    'estimated_true_prepaid_card_pred_highstreet_card': [
+                    "estimated_true_prepaid_card_pred_highstreet_card": [
                         0.12118073967907128,
                         0.1249170750987652,
                         0.18024418583692642,
                         0.17798857692081155,
                     ],
-                    'estimated_true_prepaid_card_pred_prepaid_card': [
+                    "estimated_true_prepaid_card_pred_prepaid_card": [
                         0.7554502796336932,
                         0.7576402255283115,
                         0.5994574163887797,
                         0.5998622938235557,
                     ],
-                    'estimated_true_prepaid_card_pred_upmarket_card': [
+                    "estimated_true_prepaid_card_pred_upmarket_card": [
                         0.11748464117810321,
                         0.11221429055241054,
                         0.1924554660281669,
                         0.18783942082621902,
                     ],
-                    'estimated_true_upmarket_card_pred_highstreet_card': [
+                    "estimated_true_upmarket_card_pred_highstreet_card": [
                         0.12419319210621305,
                         0.12394855653172744,
                         0.15691749157649315,
                         0.15682999790210106,
                     ],
-                    'estimated_true_upmarket_card_pred_prepaid_card': [
+                    "estimated_true_upmarket_card_pred_prepaid_card": [
                         0.11532489015920869,
                         0.1151569725700045,
                         0.17688302204457784,
                         0.17434857438435108,
                     ],
-                    'estimated_true_upmarket_card_pred_upmarket_card': [
+                    "estimated_true_upmarket_card_pred_upmarket_card": [
                         0.7550383928654599,
                         0.7600195849650688,
                         0.6347684004351383,
@@ -2875,102 +3211,116 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             ),
         ),
         (
-            {'chunk_number': 4, 'timestamp_column_name': 'timestamp', 'normalize_confusion_matrix': 'all'},
+            {
+                "chunk_number": 4,
+                "timestamp_column_name": "timestamp",
+                "normalize_confusion_matrix": "all",
+            },
             pd.DataFrame(
                 {
-                    'key': ['[0:14999]', '[15000:29999]', '[30000:44999]', '[45000:59999]'],
-                    'estimated_roc_auc': [
+                    "key": [
+                        "[0:14999]",
+                        "[15000:29999]",
+                        "[30000:44999]",
+                        "[45000:59999]",
+                    ],
+                    "estimated_roc_auc": [
                         0.9084352218383378,
                         0.9087633795549603,
                         0.8195268555812215,
                         0.8201623718659414,
                     ],
-                    'estimated_f1': [0.7550059244451006, 0.7562711250144366, 0.63091155676697, 0.6324244687112559],
-                    'estimated_precision': [
+                    "estimated_f1": [
+                        0.7550059244451006,
+                        0.7562711250144366,
+                        0.63091155676697,
+                        0.6324244687112559,
+                    ],
+                    "estimated_precision": [
                         0.755038246904623,
                         0.7562647262876293,
                         0.6323547131368327,
                         0.6335323150520741,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.7550277340784216,
                         0.7562926950204228,
                         0.6304009454574501,
                         0.6320155112489632,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.8775094795233379,
                         0.8781429133214084,
                         0.8165537125162895,
                         0.8172408983542975,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.7550428613792668,
                         0.7562888217426292,
                         0.6364205304514962,
                         0.6375753072973162,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.8406535565924922,
                         0.8410572134298334,
                         0.697327636452664,
                         0.6984330753389926,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         2.0134445826512186,
                         2.0170794978486395,
                         1.5673705142973104,
                         1.5671595942359196,
                     ],
-                    'estimated_true_highstreet_card_pred_highstreet_card': [
+                    "estimated_true_highstreet_card_pred_highstreet_card": [
                         0.24922783612904678,
                         0.24847524905663304,
                         0.2702612787293017,
                         0.2678907326329857,
                     ],
-                    'estimated_true_highstreet_card_pred_prepaid_card': [
+                    "estimated_true_highstreet_card_pred_prepaid_card": [
                         0.044125972021383776,
                         0.04231613209929359,
                         0.06202825174114887,
                         0.06269411559427118,
                     ],
-                    'estimated_true_highstreet_card_pred_upmarket_card': [
+                    "estimated_true_highstreet_card_pred_upmarket_card": [
                         0.04184643869129968,
                         0.04299755975918424,
                         0.05441296365515643,
                         0.05644371002461729,
                     ],
-                    'estimated_true_prepaid_card_pred_highstreet_card': [
+                    "estimated_true_prepaid_card_pred_highstreet_card": [
                         0.04002195895800795,
                         0.04132256844267153,
                         0.0734915627052428,
                         0.07168193287857484,
                     ],
-                    'estimated_true_prepaid_card_pred_prepaid_card': [
+                    "estimated_true_prepaid_card_pred_prepaid_card": [
                         0.25796108881891844,
                         0.25204164835908494,
                         0.16624952347848823,
                         0.16656176358500735,
                     ],
-                    'estimated_true_prepaid_card_pred_upmarket_card': [
+                    "estimated_true_prepaid_card_pred_upmarket_card": [
                         0.03856629154406535,
                         0.03776384924723789,
                         0.0606106414344707,
                         0.060033478896059596,
                     ],
-                    'estimated_true_upmarket_card_pred_highstreet_card': [
+                    "estimated_true_upmarket_card_pred_highstreet_card": [
                         0.041016871579611966,
                         0.041002182500695435,
                         0.06398049189878882,
                         0.06316066782177283,
                     ],
-                    'estimated_true_upmarket_card_pred_prepaid_card': [
+                    "estimated_true_upmarket_card_pred_prepaid_card": [
                         0.03937960582636446,
                         0.038308886208288165,
                         0.04905555811369625,
                         0.04841078748738816,
                     ],
-                    'estimated_true_upmarket_card_pred_upmarket_card': [
+                    "estimated_true_upmarket_card_pred_upmarket_card": [
                         0.24785393643130169,
                         0.25577192432691115,
                         0.1999097282437062,
@@ -2980,27 +3330,60 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             ),
         ),
         (
-            {'chunk_period': 'Y', 'timestamp_column_name': 'timestamp'},
+            {"chunk_period": "Y", "timestamp_column_name": "timestamp"},
             pd.DataFrame(
                 {
-                    'key': ['2020', '2021'],
-                    'estimated_roc_auc': [0.8697900039493401, 0.8160313122805869],
-                    'estimated_f1': [0.6959459683194374, 0.6271637037915178],
-                    'estimated_precision': [0.696279612597813, 0.6275707355339551],
-                    'estimated_recall': [0.6957620347508907, 0.6272720458900231],
-                    'estimated_specificity': [0.8480220572478717, 0.8145095377877009],
-                    'estimated_accuracy': [0.6967957612985849, 0.6305270354546132],
-                    'estimated_average_precision': [0.7812296449871846, 0.690772335696266],
-                    'estimated_business_value': [1.7964098918968543, 1.5447162372665988],
-                    'estimated_true_highstreet_card_pred_highstreet_card': [15431.207920621628, 106.61852759787631],
-                    'estimated_true_highstreet_card_pred_prepaid_card': [3140.1950482057946, 27.27202363566655],
-                    'estimated_true_highstreet_card_pred_upmarket_card': [2911.0243109194275, 24.485771034437157],
-                    'estimated_true_prepaid_card_pred_highstreet_card': [3369.0309742564546, 28.73937051100256],
-                    'estimated_true_prepaid_card_pred_prepaid_card': [12568.980575116106, 73.22978850637857],
-                    'estimated_true_prepaid_card_pred_upmarket_card': [2927.072726648623, 27.541190178880235],
-                    'estimated_true_upmarket_card_pred_highstreet_card': [3111.761105121915, 25.642101891121143],
-                    'estimated_true_upmarket_card_pred_prepaid_card': [2605.8243766781006, 21.49818785795489],
-                    'estimated_true_upmarket_card_pred_upmarket_card': [13514.90296243195, 84.97303878668261],
+                    "key": ["2020", "2021"],
+                    "estimated_roc_auc": [0.8697900039493401, 0.8160313122805869],
+                    "estimated_f1": [0.6959459683194374, 0.6271637037915178],
+                    "estimated_precision": [0.696279612597813, 0.6275707355339551],
+                    "estimated_recall": [0.6957620347508907, 0.6272720458900231],
+                    "estimated_specificity": [0.8480220572478717, 0.8145095377877009],
+                    "estimated_accuracy": [0.6967957612985849, 0.6305270354546132],
+                    "estimated_average_precision": [
+                        0.7812296449871846,
+                        0.6907845497417768,
+                    ],
+                    "estimated_business_value": [
+                        1.7964098918968543,
+                        1.5447162372665988,
+                    ],
+                    "estimated_true_highstreet_card_pred_highstreet_card": [
+                        15431.207920621628,
+                        106.61852759787631,
+                    ],
+                    "estimated_true_highstreet_card_pred_prepaid_card": [
+                        3140.1950482057946,
+                        27.27202363566655,
+                    ],
+                    "estimated_true_highstreet_card_pred_upmarket_card": [
+                        2911.0243109194275,
+                        24.485771034437157,
+                    ],
+                    "estimated_true_prepaid_card_pred_highstreet_card": [
+                        3369.0309742564546,
+                        28.73937051100256,
+                    ],
+                    "estimated_true_prepaid_card_pred_prepaid_card": [
+                        12568.980575116106,
+                        73.22978850637857,
+                    ],
+                    "estimated_true_prepaid_card_pred_upmarket_card": [
+                        2927.072726648623,
+                        27.541190178880235,
+                    ],
+                    "estimated_true_upmarket_card_pred_highstreet_card": [
+                        3111.761105121915,
+                        25.642101891121143,
+                    ],
+                    "estimated_true_upmarket_card_pred_prepaid_card": [
+                        2605.8243766781006,
+                        21.49818785795489,
+                    ],
+                    "estimated_true_upmarket_card_pred_upmarket_card": [
+                        13514.90296243195,
+                        84.97303878668261,
+                    ],
                 }
             ),
         ),
@@ -3008,19 +3391,19 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             {},
             pd.DataFrame(
                 {
-                    'key': [
-                        '[0:5999]',
-                        '[6000:11999]',
-                        '[12000:17999]',
-                        '[18000:23999]',
-                        '[24000:29999]',
-                        '[30000:35999]',
-                        '[36000:41999]',
-                        '[42000:47999]',
-                        '[48000:53999]',
-                        '[54000:59999]',
+                    "key": [
+                        "[0:5999]",
+                        "[6000:11999]",
+                        "[12000:17999]",
+                        "[18000:23999]",
+                        "[24000:29999]",
+                        "[30000:35999]",
+                        "[36000:41999]",
+                        "[42000:47999]",
+                        "[48000:53999]",
+                        "[54000:59999]",
                     ],
-                    'estimated_roc_auc': [
+                    "estimated_roc_auc": [
                         0.9069623299465119,
                         0.9098768294609071,
                         0.9098874875649706,
@@ -3032,7 +3415,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.8192448359184578,
                         0.8214293833125543,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.7533014808638749,
                         0.7564216285126095,
                         0.7581655498090148,
@@ -3044,7 +3427,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.6317356567785939,
                         0.6334434546737131,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.7533705392643878,
                         0.7564117249294325,
                         0.758189598004742,
@@ -3056,7 +3439,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.6327414423931249,
                         0.6349486020523588,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.7532927299604006,
                         0.756484874870973,
                         0.7581945446990431,
@@ -3068,7 +3451,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.6315005643336115,
                         0.6328910840233342,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.876648985916452,
                         0.8781935469456502,
                         0.87910164279675,
@@ -3080,7 +3463,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.8167795549189886,
                         0.8180293638991758,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.7533903547412437,
                         0.7564140260171383,
                         0.7582062911442542,
@@ -3092,7 +3475,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.6365172577468735,
                         0.6393273094601863,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.838071,
                         0.843094,
                         0.842962,
@@ -3104,7 +3487,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.696305,
                         0.701142,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         2.0086174744097525,
                         2.0167085528014574,
                         2.025151984316981,
@@ -3116,7 +3499,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         1.5668663365944273,
                         1.574249644290713,
                     ],
-                    'estimated_true_highstreet_card_pred_highstreet_card': [
+                    "estimated_true_highstreet_card_pred_highstreet_card": [
                         1483.745037516118,
                         1536.2546154566053,
                         1486.1512390473335,
@@ -3128,7 +3511,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         1596.0668735461204,
                         1621.3736981076686,
                     ],
-                    'estimated_true_highstreet_card_pred_prepaid_card': [
+                    "estimated_true_highstreet_card_pred_prepaid_card": [
                         271.9744616336458,
                         263.3288788018858,
                         255.36687592730394,
@@ -3140,7 +3523,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         383.2996831232405,
                         357.9152833417768,
                     ],
-                    'estimated_true_highstreet_card_pred_upmarket_card': [
+                    "estimated_true_highstreet_card_pred_upmarket_card": [
                         249.77244098451774,
                         249.25341402994002,
                         256.5894445268087,
@@ -3152,7 +3535,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         338.73618885526093,
                         336.8384100540352,
                     ],
-                    'estimated_true_prepaid_card_pred_highstreet_card': [
+                    "estimated_true_prepaid_card_pred_highstreet_card": [
                         249.18645665281267,
                         234.635939041771,
                         241.34496258349301,
@@ -3164,7 +3547,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         436.76196316220245,
                         432.5014066529442,
                     ],
-                    'estimated_true_prepaid_card_pred_prepaid_card': [
+                    "estimated_true_prepaid_card_pred_prepaid_card": [
                         1570.046457210577,
                         1517.6502407889316,
                         1541.0740605507428,
@@ -3176,7 +3559,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         1008.1898500978498,
                         977.1648111020529,
                     ],
-                    'estimated_true_prepaid_card_pred_upmarket_card': [
+                    "estimated_true_prepaid_card_pred_upmarket_card": [
                         227.67692529471515,
                         228.16728611276778,
                         224.39810820574257,
@@ -3188,7 +3571,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         364.41698830746793,
                         360.7362423945684,
                     ],
-                    'estimated_true_upmarket_card_pred_highstreet_card': [
+                    "estimated_true_upmarket_card_pred_highstreet_card": [
                         243.06850583106933,
                         254.1094455016238,
                         238.50379836917327,
@@ -3200,7 +3583,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         372.1711632916771,
                         381.12489523938723,
                     ],
-                    'estimated_true_upmarket_card_pred_prepaid_card': [
+                    "estimated_true_upmarket_card_pred_prepaid_card": [
                         237.97908115577718,
                         232.0208804091826,
                         234.55906352195305,
@@ -3212,7 +3595,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         285.5104667789098,
                         294.91990555617025,
                     ],
-                    'estimated_true_upmarket_card_pred_upmarket_card': [
+                    "estimated_true_upmarket_card_pred_upmarket_card": [
                         1466.550633720767,
                         1484.5792998572922,
                         1522.0124472674486,
@@ -3228,22 +3611,22 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
             ),
         ),
         (
-            {'timestamp_column_name': 'timestamp'},
+            {"timestamp_column_name": "timestamp"},
             pd.DataFrame(
                 {
-                    'key': [
-                        '[0:5999]',
-                        '[6000:11999]',
-                        '[12000:17999]',
-                        '[18000:23999]',
-                        '[24000:29999]',
-                        '[30000:35999]',
-                        '[36000:41999]',
-                        '[42000:47999]',
-                        '[48000:53999]',
-                        '[54000:59999]',
+                    "key": [
+                        "[0:5999]",
+                        "[6000:11999]",
+                        "[12000:17999]",
+                        "[18000:23999]",
+                        "[24000:29999]",
+                        "[30000:35999]",
+                        "[36000:41999]",
+                        "[42000:47999]",
+                        "[48000:53999]",
+                        "[54000:59999]",
                     ],
-                    'estimated_roc_auc': [
+                    "estimated_roc_auc": [
                         0.9069623299465119,
                         0.9098768294609071,
                         0.9098874875649706,
@@ -3255,7 +3638,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.8192448359184578,
                         0.8214293833125543,
                     ],
-                    'estimated_f1': [
+                    "estimated_f1": [
                         0.7533014808638749,
                         0.7564216285126095,
                         0.7581655498090148,
@@ -3267,7 +3650,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.6317356567785939,
                         0.6334434546737131,
                     ],
-                    'estimated_precision': [
+                    "estimated_precision": [
                         0.7533705392643878,
                         0.7564117249294325,
                         0.758189598004742,
@@ -3279,7 +3662,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.6327414423931249,
                         0.6349486020523588,
                     ],
-                    'estimated_recall': [
+                    "estimated_recall": [
                         0.7532927299604006,
                         0.756484874870973,
                         0.7581945446990431,
@@ -3291,7 +3674,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.6315005643336115,
                         0.6328910840233342,
                     ],
-                    'estimated_specificity': [
+                    "estimated_specificity": [
                         0.876648985916452,
                         0.8781935469456502,
                         0.87910164279675,
@@ -3303,7 +3686,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.8167795549189886,
                         0.8180293638991758,
                     ],
-                    'estimated_accuracy': [
+                    "estimated_accuracy": [
                         0.7533903547412437,
                         0.7564140260171383,
                         0.7582062911442542,
@@ -3315,7 +3698,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.6365172577468735,
                         0.6393273094601863,
                     ],
-                    'estimated_average_precision': [
+                    "estimated_average_precision": [
                         0.838071,
                         0.843094,
                         0.842962,
@@ -3327,7 +3710,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         0.696305,
                         0.701142,
                     ],
-                    'estimated_business_value': [
+                    "estimated_business_value": [
                         2.0086174744097525,
                         2.0167085528014574,
                         2.025151984316981,
@@ -3339,7 +3722,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         1.5668663365944273,
                         1.574249644290713,
                     ],
-                    'estimated_true_highstreet_card_pred_highstreet_card': [
+                    "estimated_true_highstreet_card_pred_highstreet_card": [
                         1483.745037516118,
                         1536.2546154566053,
                         1486.1512390473335,
@@ -3351,7 +3734,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         1596.0668735461204,
                         1621.3736981076686,
                     ],
-                    'estimated_true_highstreet_card_pred_prepaid_card': [
+                    "estimated_true_highstreet_card_pred_prepaid_card": [
                         271.9744616336458,
                         263.3288788018858,
                         255.36687592730394,
@@ -3363,7 +3746,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         383.2996831232405,
                         357.9152833417768,
                     ],
-                    'estimated_true_highstreet_card_pred_upmarket_card': [
+                    "estimated_true_highstreet_card_pred_upmarket_card": [
                         249.77244098451774,
                         249.25341402994002,
                         256.5894445268087,
@@ -3375,7 +3758,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         338.73618885526093,
                         336.8384100540352,
                     ],
-                    'estimated_true_prepaid_card_pred_highstreet_card': [
+                    "estimated_true_prepaid_card_pred_highstreet_card": [
                         249.18645665281267,
                         234.635939041771,
                         241.34496258349301,
@@ -3387,7 +3770,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         436.76196316220245,
                         432.5014066529442,
                     ],
-                    'estimated_true_prepaid_card_pred_prepaid_card': [
+                    "estimated_true_prepaid_card_pred_prepaid_card": [
                         1570.046457210577,
                         1517.6502407889316,
                         1541.0740605507428,
@@ -3399,7 +3782,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         1008.1898500978498,
                         977.1648111020529,
                     ],
-                    'estimated_true_prepaid_card_pred_upmarket_card': [
+                    "estimated_true_prepaid_card_pred_upmarket_card": [
                         227.67692529471515,
                         228.16728611276778,
                         224.39810820574257,
@@ -3411,7 +3794,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         364.41698830746793,
                         360.7362423945684,
                     ],
-                    'estimated_true_upmarket_card_pred_highstreet_card': [
+                    "estimated_true_upmarket_card_pred_highstreet_card": [
                         243.06850583106933,
                         254.1094455016238,
                         238.50379836917327,
@@ -3423,7 +3806,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         372.1711632916771,
                         381.12489523938723,
                     ],
-                    'estimated_true_upmarket_card_pred_prepaid_card': [
+                    "estimated_true_upmarket_card_pred_prepaid_card": [
                         237.97908115577718,
                         232.0208804091826,
                         234.55906352195305,
@@ -3435,7 +3818,7 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
                         285.5104667789098,
                         294.91990555617025,
                     ],
-                    'estimated_true_upmarket_card_pred_upmarket_card': [
+                    "estimated_true_upmarket_card_pred_upmarket_card": [
                         1466.550633720767,
                         1484.5792998572922,
                         1522.0124472674486,
@@ -3452,13 +3835,13 @@ def test_cbpe_for_binary_classification_with_timestamps(calculator_opts, expecte
         ),
     ],
     ids=[
-        'size_based_without_timestamp',
-        'size_based_with_timestamp',
-        'count_based_without_timestamp',
-        'count_based_with_timestamp',
-        'period_based_with_timestamp',
-        'default_without_timestamp',
-        'default_with_timestamp',
+        "size_based_without_timestamp",
+        "size_based_with_timestamp",
+        "count_based_without_timestamp",
+        "count_based_with_timestamp",
+        "period_based_with_timestamp",
+        "default_without_timestamp",
+        "default_with_timestamp",
     ],
 )
 def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, expected):  # noqa: D103
@@ -3466,69 +3849,69 @@ def test_cbpe_for_multiclass_classification_with_timestamps(calculator_opts, exp
     business_value_matrix = np.array([[1, 0, -1], [0, 1, 0], [-1, 0, 1]])
     cbpe = CBPE(
         y_pred_proba={
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card',
-            'prepaid_card': 'y_pred_proba_prepaid_card',
+            "upmarket_card": "y_pred_proba_upmarket_card",
+            "highstreet_card": "y_pred_proba_highstreet_card",
+            "prepaid_card": "y_pred_proba_prepaid_card",
         },
-        y_pred='y_pred',
-        y_true='y_true',
-        problem_type='classification_multiclass',
+        y_pred="y_pred",
+        y_true="y_true",
+        problem_type="classification_multiclass",
         metrics=[
-            'roc_auc',
-            'f1',
-            'precision',
-            'recall',
-            'specificity',
-            'accuracy',
-            'average_precision',
-            'confusion_matrix',
-            'business_value',
+            "roc_auc",
+            "f1",
+            "precision",
+            "recall",
+            "specificity",
+            "accuracy",
+            "average_precision",
+            "confusion_matrix",
+            "business_value",
         ],
         business_value_matrix=business_value_matrix,
-        normalize_business_value='per_prediction',
+        normalize_business_value="per_prediction",
         **calculator_opts,
     ).fit(ref_df)
     result = cbpe.estimate(ana_df)
-    column_names = [(m.name, 'value') for m in result.metrics]
-    column_names = [c for c in column_names if c[0] != 'confusion_matrix']
+    column_names = [(m.name, "value") for m in result.metrics]
+    column_names = [c for c in column_names if c[0] != "confusion_matrix"]
     column_names += [
-        ('true_highstreet_card_pred_highstreet_card', 'value'),
-        ('true_highstreet_card_pred_prepaid_card', 'value'),
-        ('true_highstreet_card_pred_upmarket_card', 'value'),
-        ('true_prepaid_card_pred_highstreet_card', 'value'),
-        ('true_prepaid_card_pred_prepaid_card', 'value'),
-        ('true_prepaid_card_pred_upmarket_card', 'value'),
-        ('true_upmarket_card_pred_highstreet_card', 'value'),
-        ('true_upmarket_card_pred_prepaid_card', 'value'),
-        ('true_upmarket_card_pred_upmarket_card', 'value'),
+        ("true_highstreet_card_pred_highstreet_card", "value"),
+        ("true_highstreet_card_pred_prepaid_card", "value"),
+        ("true_highstreet_card_pred_upmarket_card", "value"),
+        ("true_prepaid_card_pred_highstreet_card", "value"),
+        ("true_prepaid_card_pred_prepaid_card", "value"),
+        ("true_prepaid_card_pred_upmarket_card", "value"),
+        ("true_upmarket_card_pred_highstreet_card", "value"),
+        ("true_upmarket_card_pred_prepaid_card", "value"),
+        ("true_upmarket_card_pred_upmarket_card", "value"),
     ]
-    sut = result.filter(period='analysis').to_df()[[('chunk', 'key')] + column_names]
+    sut = result.filter(period="analysis").to_df()[[("chunk", "key")] + column_names]
     sut.columns = [
-        'key',
-        'estimated_roc_auc',
-        'estimated_f1',
-        'estimated_precision',
-        'estimated_recall',
-        'estimated_specificity',
-        'estimated_accuracy',
-        'estimated_average_precision',
-        'estimated_business_value',
-        'estimated_true_highstreet_card_pred_highstreet_card',
-        'estimated_true_highstreet_card_pred_prepaid_card',
-        'estimated_true_highstreet_card_pred_upmarket_card',
-        'estimated_true_prepaid_card_pred_highstreet_card',
-        'estimated_true_prepaid_card_pred_prepaid_card',
-        'estimated_true_prepaid_card_pred_upmarket_card',
-        'estimated_true_upmarket_card_pred_highstreet_card',
-        'estimated_true_upmarket_card_pred_prepaid_card',
-        'estimated_true_upmarket_card_pred_upmarket_card',
+        "key",
+        "estimated_roc_auc",
+        "estimated_f1",
+        "estimated_precision",
+        "estimated_recall",
+        "estimated_specificity",
+        "estimated_accuracy",
+        "estimated_average_precision",
+        "estimated_business_value",
+        "estimated_true_highstreet_card_pred_highstreet_card",
+        "estimated_true_highstreet_card_pred_prepaid_card",
+        "estimated_true_highstreet_card_pred_upmarket_card",
+        "estimated_true_prepaid_card_pred_highstreet_card",
+        "estimated_true_prepaid_card_pred_prepaid_card",
+        "estimated_true_prepaid_card_pred_upmarket_card",
+        "estimated_true_upmarket_card_pred_highstreet_card",
+        "estimated_true_upmarket_card_pred_prepaid_card",
+        "estimated_true_upmarket_card_pred_upmarket_card",
     ]
 
     pd.testing.assert_frame_equal(expected, sut)
 
 
 @pytest.mark.parametrize(
-    'metric_cls',
+    "metric_cls",
     [
         BinaryClassificationAUROC,
         BinaryClassificationAP,
@@ -3547,81 +3930,86 @@ def test_method_logs_warning_when_lower_threshold_is_overridden_by_metric_limits
 
     # TODO: move this from CBPE to metrics
     # workaround to deal with functionality outside of Metrics classes
-    reference['uncalibrated_y_pred_proba'] = reference['y_pred_proba']
+    reference["uncalibrated_y_pred_proba"] = reference["y_pred_proba"]
 
     metric = metric_cls(
-        y_pred_proba='y_pred_proba',
-        y_pred='y_pred',
-        y_true='work_home_actual',
-        problem_type='classification_binary',
+        y_pred_proba="y_pred_proba",
+        y_pred="y_pred",
+        y_true="work_home_actual",
+        problem_type="classification_binary",
         chunker=DefaultChunker(),
         threshold=ConstantThreshold(lower=-1),
     )
     metric.fit(reference)
 
     assert (
-        f'{metric.display_name} lower threshold value -1 overridden by '
-        f'lower threshold value limit {metric.lower_threshold_value_limit}' in caplog.messages
+        f"{metric.display_name} lower threshold value -1 overridden by "
+        f"lower threshold value limit {metric.lower_threshold_value_limit}"
+        in caplog.messages
     )
 
 
 @pytest.mark.parametrize(
-    'calculator_opts, realized',
+    "calculator_opts, realized",
     [
         (
-            {'chunk_size': 20000},
+            {"chunk_size": 20000},
             pd.DataFrame(
                 {
-                    'key': ['[0:19999]', '[20000:39999]', '[40000:59999]'],
-                    'realized_roc_auc': [0.909805, 0.840071, np.nan],
-                    'realized_f1': [0.759170, 0.658896, np.nan],
-                    'realized_precision': [0.759265, 0.660188, np.nan],
-                    'realized_recall': [0.759149, 0.658760, np.nan],
-                    'realized_specificity': [0.879632, 0.829581, np.nan],
-                    'realized_accuracy': [0.75925, 0.65950, np.nan],
-                    'realized_average_precision': [0.841830, 0.738332, np.nan],
-                    'realized_business_value': [2.029064521843538, 1.6533562273847497, np.nan],
-                    'realized_true_highstreet_card_pred_highstreet_card': [
+                    "key": ["[0:19999]", "[20000:39999]", "[40000:59999]"],
+                    "realized_roc_auc": [0.909805, 0.840071, np.nan],
+                    "realized_f1": [0.759170, 0.658896, np.nan],
+                    "realized_precision": [0.759265, 0.660188, np.nan],
+                    "realized_recall": [0.759149, 0.658760, np.nan],
+                    "realized_specificity": [0.879632, 0.829581, np.nan],
+                    "realized_accuracy": [0.75925, 0.65950, np.nan],
+                    "realized_average_precision": [0.841830, 0.738332, np.nan],
+                    "realized_business_value": [
+                        2.029064521843538,
+                        1.6533562273847497,
+                        np.nan,
+                    ],
+                    "realized_true_highstreet_card_pred_highstreet_card": [
                         4912.0,
                         4702.0,
                         np.nan,
                     ],
-                    'realized_true_highstreet_card_pred_prepaid_card': [
+                    "realized_true_highstreet_card_pred_prepaid_card": [
                         870.0,
                         1083.0,
                         np.nan,
                     ],
-                    'realized_true_highstreet_card_pred_upmarket_card': [
+                    "realized_true_highstreet_card_pred_upmarket_card": [
                         799.0,
                         1009.0,
                         np.nan,
                     ],
-                    'realized_true_prepaid_card_pred_highstreet_card': [
+                    "realized_true_prepaid_card_pred_highstreet_card": [
                         846.0,
                         1367.0,
                         np.nan,
                     ],
-                    'realized_true_prepaid_card_pred_prepaid_card': [
+                    "realized_true_prepaid_card_pred_prepaid_card": [
                         5203.0,
                         3974.0,
                         np.nan,
                     ],
-                    'realized_true_prepaid_card_pred_upmarket_card': [
+                    "realized_true_prepaid_card_pred_upmarket_card": [
                         690.0,
                         1080.0,
                         np.nan,
                     ],
-                    'realized_true_upmarket_card_pred_highstreet_card': [
+                    "realized_true_upmarket_card_pred_highstreet_card": [
                         837.0,
                         1282.0,
                         np.nan,
                     ],
-                    'realized_true_upmarket_card_pred_prepaid_card': [
+                    "realized_true_upmarket_card_pred_prepaid_card": [
                         773.0,
                         989.0,
                         np.nan,
                     ],
-                    'realized_true_upmarket_card_pred_upmarket_card': [
+                    "realized_true_upmarket_card_pred_upmarket_card": [
                         5070.0,
                         4514.0,
                         np.nan,
@@ -3639,80 +4027,80 @@ def test_cbpe_for_multiclass_classification_cm_with_nans(calculator_opts, realiz
     business_value_matrix = np.array([[1, 0, -1], [0, 1, 0], [-1, 0, 1]])
     cbpe = CBPE(
         y_pred_proba={
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card',
-            'prepaid_card': 'y_pred_proba_prepaid_card',
+            "upmarket_card": "y_pred_proba_upmarket_card",
+            "highstreet_card": "y_pred_proba_highstreet_card",
+            "prepaid_card": "y_pred_proba_prepaid_card",
         },
-        y_pred='y_pred',
-        y_true='y_true',
-        problem_type='classification_multiclass',
+        y_pred="y_pred",
+        y_true="y_true",
+        problem_type="classification_multiclass",
         metrics=[
-            'roc_auc',
-            'f1',
-            'precision',
-            'recall',
-            'specificity',
-            'accuracy',
-            'average_precision',
-            'confusion_matrix',
-            'business_value',
+            "roc_auc",
+            "f1",
+            "precision",
+            "recall",
+            "specificity",
+            "accuracy",
+            "average_precision",
+            "confusion_matrix",
+            "business_value",
         ],
         business_value_matrix=business_value_matrix,
-        normalize_business_value='per_prediction',
+        normalize_business_value="per_prediction",
         **calculator_opts,
     ).fit(reference)
     result = cbpe.estimate(analysis)
-    column_names = [(m.name, 'realized') for m in result.metrics]
-    column_names = [c for c in column_names if c[0] != 'confusion_matrix']
+    column_names = [(m.name, "realized") for m in result.metrics]
+    column_names = [c for c in column_names if c[0] != "confusion_matrix"]
     column_names += [
-        ('true_highstreet_card_pred_highstreet_card', 'realized'),
-        ('true_highstreet_card_pred_prepaid_card', 'realized'),
-        ('true_highstreet_card_pred_upmarket_card', 'realized'),
-        ('true_prepaid_card_pred_highstreet_card', 'realized'),
-        ('true_prepaid_card_pred_prepaid_card', 'realized'),
-        ('true_prepaid_card_pred_upmarket_card', 'realized'),
-        ('true_upmarket_card_pred_highstreet_card', 'realized'),
-        ('true_upmarket_card_pred_prepaid_card', 'realized'),
-        ('true_upmarket_card_pred_upmarket_card', 'realized'),
+        ("true_highstreet_card_pred_highstreet_card", "realized"),
+        ("true_highstreet_card_pred_prepaid_card", "realized"),
+        ("true_highstreet_card_pred_upmarket_card", "realized"),
+        ("true_prepaid_card_pred_highstreet_card", "realized"),
+        ("true_prepaid_card_pred_prepaid_card", "realized"),
+        ("true_prepaid_card_pred_upmarket_card", "realized"),
+        ("true_upmarket_card_pred_highstreet_card", "realized"),
+        ("true_upmarket_card_pred_prepaid_card", "realized"),
+        ("true_upmarket_card_pred_upmarket_card", "realized"),
     ]
-    sut = result.filter(period='analysis').to_df()[[('chunk', 'key')] + column_names]
+    sut = result.filter(period="analysis").to_df()[[("chunk", "key")] + column_names]
     sut.columns = [
-        'key',
-        'realized_roc_auc',
-        'realized_f1',
-        'realized_precision',
-        'realized_recall',
-        'realized_specificity',
-        'realized_accuracy',
-        'realized_average_precision',
-        'realized_business_value',
-        'realized_true_highstreet_card_pred_highstreet_card',
-        'realized_true_highstreet_card_pred_prepaid_card',
-        'realized_true_highstreet_card_pred_upmarket_card',
-        'realized_true_prepaid_card_pred_highstreet_card',
-        'realized_true_prepaid_card_pred_prepaid_card',
-        'realized_true_prepaid_card_pred_upmarket_card',
-        'realized_true_upmarket_card_pred_highstreet_card',
-        'realized_true_upmarket_card_pred_prepaid_card',
-        'realized_true_upmarket_card_pred_upmarket_card',
+        "key",
+        "realized_roc_auc",
+        "realized_f1",
+        "realized_precision",
+        "realized_recall",
+        "realized_specificity",
+        "realized_accuracy",
+        "realized_average_precision",
+        "realized_business_value",
+        "realized_true_highstreet_card_pred_highstreet_card",
+        "realized_true_highstreet_card_pred_prepaid_card",
+        "realized_true_highstreet_card_pred_upmarket_card",
+        "realized_true_prepaid_card_pred_highstreet_card",
+        "realized_true_prepaid_card_pred_prepaid_card",
+        "realized_true_prepaid_card_pred_upmarket_card",
+        "realized_true_upmarket_card_pred_highstreet_card",
+        "realized_true_upmarket_card_pred_prepaid_card",
+        "realized_true_upmarket_card_pred_upmarket_card",
     ]
     pd.testing.assert_frame_equal(realized, sut)
 
 
 def test_auroc_errors_out_when_not_all_classes_are_represented_reference():
     reference, _, _ = load_synthetic_multiclass_classification_dataset()
-    reference['y_pred_proba_clazz'] = reference['y_pred_proba_upmarket_card']
+    reference["y_pred_proba_clazz"] = reference["y_pred_proba_upmarket_card"]
     calc = CBPE(
         y_pred_proba={
-            'prepaid_card': 'y_pred_proba_prepaid_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card',
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'clazz': 'y_pred_proba_clazz',
+            "prepaid_card": "y_pred_proba_prepaid_card",
+            "highstreet_card": "y_pred_proba_highstreet_card",
+            "upmarket_card": "y_pred_proba_upmarket_card",
+            "clazz": "y_pred_proba_clazz",
         },
-        y_pred='y_pred',
-        y_true='y_true',
-        metrics=['roc_auc'],
-        problem_type='classification_multiclass',
+        y_pred="y_pred",
+        y_true="y_true",
+        metrics=["roc_auc"],
+        problem_type="classification_multiclass",
     )
     expected_exc_test = "y_pred_proba class and class probabilities dictionary does not match reference data."
     with pytest.raises(InvalidArgumentsException, match=expected_exc_test):
@@ -3720,30 +4108,44 @@ def test_auroc_errors_out_when_not_all_classes_are_represented_reference():
 
 
 def test_auroc_errors_out_when_not_all_classes_are_represented_chunk(caplog):
-    LOGGER.info("testing test_auroc_errors_out_when_not_all_classes_are_represented_chunk")
+    LOGGER.info(
+        "testing test_auroc_errors_out_when_not_all_classes_are_represented_chunk"
+    )
     reference, monitored, targets = load_synthetic_multiclass_classification_dataset()
     monitored = monitored.merge(targets)
     # Uncalibrated probabilities need to sum up to 1 per row.
-    reference['y_pred_proba_clazz'] = 0.1
-    reference['y_pred_proba_prepaid_card'] = 0.9 * reference['y_pred_proba_prepaid_card']
-    reference['y_pred_proba_highstreet_card'] = 0.9 * reference['y_pred_proba_highstreet_card']
-    reference['y_pred_proba_upmarket_card'] = 0.9 * reference['y_pred_proba_upmarket_card']
-    monitored['y_pred_proba_clazz'] = 0.1
-    monitored['y_pred_proba_prepaid_card'] = 0.9 * monitored['y_pred_proba_prepaid_card']
-    monitored['y_pred_proba_highstreet_card'] = 0.9 * monitored['y_pred_proba_highstreet_card']
-    monitored['y_pred_proba_upmarket_card'] = 0.9 * monitored['y_pred_proba_upmarket_card']
-    reference['y_true'].iloc[-1000:] = 'clazz'
+    reference["y_pred_proba_clazz"] = 0.1
+    reference["y_pred_proba_prepaid_card"] = (
+        0.9 * reference["y_pred_proba_prepaid_card"]
+    )
+    reference["y_pred_proba_highstreet_card"] = (
+        0.9 * reference["y_pred_proba_highstreet_card"]
+    )
+    reference["y_pred_proba_upmarket_card"] = (
+        0.9 * reference["y_pred_proba_upmarket_card"]
+    )
+    monitored["y_pred_proba_clazz"] = 0.1
+    monitored["y_pred_proba_prepaid_card"] = (
+        0.9 * monitored["y_pred_proba_prepaid_card"]
+    )
+    monitored["y_pred_proba_highstreet_card"] = (
+        0.9 * monitored["y_pred_proba_highstreet_card"]
+    )
+    monitored["y_pred_proba_upmarket_card"] = (
+        0.9 * monitored["y_pred_proba_upmarket_card"]
+    )
+    reference["y_true"].iloc[-1000:] = "clazz"
     calc = CBPE(
         y_pred_proba={
-            'prepaid_card': 'y_pred_proba_prepaid_card',
-            'highstreet_card': 'y_pred_proba_highstreet_card',
-            'upmarket_card': 'y_pred_proba_upmarket_card',
-            'clazz': 'y_pred_proba_clazz',
+            "prepaid_card": "y_pred_proba_prepaid_card",
+            "highstreet_card": "y_pred_proba_highstreet_card",
+            "upmarket_card": "y_pred_proba_upmarket_card",
+            "clazz": "y_pred_proba_clazz",
         },
-        y_pred='y_pred',
-        y_true='y_true',
-        metrics=['roc_auc'],
-        problem_type='classification_multiclass',
+        y_pred="y_pred",
+        y_true="y_true",
+        metrics=["roc_auc"],
+        problem_type="classification_multiclass",
     )
     calc.fit(reference)
     _ = calc.estimate(monitored)
@@ -3761,19 +4163,22 @@ def test_cbpe_multiclass_business_value_matrix_square_requirement():  # noqa: D1
             [0, 1, 0],
         ]
     )
-    with pytest.raises(InvalidArgumentsException, match="business_value_matrix is not a square matrix but has shape:"):
+    with pytest.raises(
+        InvalidArgumentsException,
+        match="business_value_matrix is not a square matrix but has shape:",
+    ):
         _ = CBPE(
             y_pred_proba={
-                'upmarket_card': 'y_pred_proba_upmarket_card',
-                'highstreet_card': 'y_pred_proba_highstreet_card',
-                'prepaid_card': 'y_pred_proba_prepaid_card',
+                "upmarket_card": "y_pred_proba_upmarket_card",
+                "highstreet_card": "y_pred_proba_highstreet_card",
+                "prepaid_card": "y_pred_proba_prepaid_card",
             },
-            y_pred='y_pred',
-            y_true='y_true',
-            problem_type='classification_multiclass',
-            metrics=['business_value'],
+            y_pred="y_pred",
+            y_true="y_true",
+            problem_type="classification_multiclass",
+            metrics=["business_value"],
             business_value_matrix=business_value_matrix,
-            normalize_business_value='per_prediction',
+            normalize_business_value="per_prediction",
             chunk_number=1,
         )
 
@@ -3790,19 +4195,22 @@ def test_cbpe_multiclass_business_value_matrix_classes_and_bvm_shape():  # noqa:
         ]
     )
     with pytest.raises(
-        InvalidArgumentsException, match=re.escape("business_value_matrix has shape (4, 4) but we have 3 classes!")
+        InvalidArgumentsException,
+        match=re.escape(
+            "business_value_matrix has shape (4, 4) but we have 3 classes!"
+        ),
     ):
         _ = CBPE(
             y_pred_proba={
-                'upmarket_card': 'y_pred_proba_upmarket_card',
-                'highstreet_card': 'y_pred_proba_highstreet_card',
-                'prepaid_card': 'y_pred_proba_prepaid_card',
+                "upmarket_card": "y_pred_proba_upmarket_card",
+                "highstreet_card": "y_pred_proba_highstreet_card",
+                "prepaid_card": "y_pred_proba_prepaid_card",
             },
-            y_pred='y_pred',
-            y_true='y_true',
-            problem_type='classification_multiclass',
-            metrics=['business_value'],
+            y_pred="y_pred",
+            y_true="y_true",
+            problem_type="classification_multiclass",
+            metrics=["business_value"],
             business_value_matrix=business_value_matrix,
-            normalize_business_value='per_prediction',
+            normalize_business_value="per_prediction",
             chunk_number=1,
         ).fit(reference)
