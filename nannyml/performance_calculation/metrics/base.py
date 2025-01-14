@@ -197,11 +197,11 @@ class Metric(abc.ABC):
                 self._logger.error(
                     f"an unexpected exception occurred during calculation of method '{self.display_name}': " f"{exc}"
                 )
-            chunk_record[f'{column_name}_sampling_error'] = np.NaN
-            chunk_record[f'{column_name}'] = np.NaN
+            chunk_record[f'{column_name}_sampling_error'] = np.nan
+            chunk_record[f'{column_name}'] = np.nan
             chunk_record[f'{column_name}_upper_threshold'] = self.upper_threshold_value
             chunk_record[f'{column_name}_lower_threshold'] = self.lower_threshold_value
-            chunk_record[f'{column_name}_alert'] = np.NaN
+            chunk_record[f'{column_name}_alert'] = np.nan
         finally:
             return chunk_record
 

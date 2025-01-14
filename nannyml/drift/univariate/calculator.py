@@ -441,10 +441,10 @@ def _calculate_for_column(
             logger.error(
                 f"an unexpected exception occurred during calculation of method '{method.display_name}': " f"{exc}"
             )
-        result['value'] = np.NaN
+        result['value'] = np.nan
         result['upper_threshold'] = method.upper_threshold_value
         result['lower_threshold'] = method.lower_threshold_value
-        result['alert'] = np.NaN
+        result['alert'] = np.nan
     finally:
         return result
 

@@ -12,6 +12,7 @@ The :class:`~nannyml.performance_estimation.direct_loss_estimation.dle.DLE` esti
 :class:`~nannyml.performance_estimation.confidence_based.metrics.Metric` instances to fit them on reference data
 and run the estimation on analysis data.
 """
+
 import abc
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
@@ -169,7 +170,9 @@ class Metric(abc.ABC):
 
         # Calculate alert thresholds
         reference_chunks = self.chunker.split(reference_data)
-        self.lower_threshold_value, self.upper_threshold_value = self._alert_thresholds(reference_chunks)
+        self.lower_threshold_value, self.upper_threshold_value = self._alert_thresholds(
+            reference_chunks
+        )
 
         # Delegate to subclass
         self._fit(reference_data)
@@ -222,8 +225,12 @@ class Metric(abc.ABC):
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _sampling_error method"
         )
 
-    def _alert_thresholds(self, reference_chunks: List[Chunk]) -> Tuple[Optional[float], Optional[float]]:
-        realized_chunk_performance = np.asarray([self.realized_performance(chunk.data) for chunk in reference_chunks])
+    def _alert_thresholds(
+        self, reference_chunks: List[Chunk]
+    ) -> Tuple[Optional[float], Optional[float]]:
+        realized_chunk_performance = np.asarray(
+            [self.realized_performance(chunk.data) for chunk in reference_chunks]
+        )
         lower_threshold_value, upper_threshold_value = calculate_threshold_values(
             threshold=self.threshold,
             data=realized_chunk_performance,
@@ -247,8 +254,12 @@ class Metric(abc.ABC):
         -------
         bool: bool
         """
-        return (self.lower_threshold_value is not None and value < self.lower_threshold_value) or (
-            self.upper_threshold_value is not None and value > self.upper_threshold_value
+        return (
+            self.lower_threshold_value is not None
+            and value < self.lower_threshold_value
+        ) or (
+            self.upper_threshold_value is not None
+            and value > self.upper_threshold_value
         )
 
     @abc.abstractmethod
@@ -268,7 +279,10 @@ class Metric(abc.ABC):
 
     def __eq__(self, other):
         """Establishes equality by comparing all properties."""
-        return self.display_name == other.display_name and self.column_name == other.column_name
+        return (
+            self.display_name == other.display_name
+            and self.column_name == other.column_name
+        )
 
     def _train_direct_error_estimation_model(
         self,
@@ -287,14 +301,24 @@ class Metric(abc.ABC):
             model.fit(X_train, y_train, categorical_feature=categorical_column_names)
         elif tune_hyperparameters:
             self._logger.debug(
-                f"'tune_hyperparameters' set to '{tune_hyperparameters}': " f"performing hyperparameter tuning"
+                f"'tune_hyperparameters' set to '{tune_hyperparameters}': "
+                f"performing hyperparameter tuning"
             )
-            self._logger.debug("'hyperparameters' not set: using default hyperparameters")
-            self._logger.debug(f'hyperparameter tuning configuration: {hyperparameter_tuning_config}')
+            self._logger.debug(
+                "'hyperparameters' not set: using default hyperparameters"
+            )
+            self._logger.debug(
+                f"hyperparameter tuning configuration: {hyperparameter_tuning_config}"
+            )
 
             automl = AutoML()
             # TODO: is this correct? // categorical_feature
-            automl.fit(X_train, y_train, **hyperparameter_tuning_config, categorical_feature=categorical_column_names)
+            automl.fit(
+                X_train,
+                y_train,
+                **hyperparameter_tuning_config,
+                categorical_feature=categorical_column_names,
+            )
             self.hyperparameters = {**automl.model.estimator.get_params()}
             model = LGBMRegressor(**automl.model.estimator.get_params())
             model.fit(X_train, y_train, categorical_feature=categorical_column_names)
@@ -330,7 +354,8 @@ class MetricFactory:
         """
         if not isinstance(key, str):
             raise InvalidArgumentsException(
-                f"cannot create metric given a '{type(key)}'" "Please provide a string, function or Metric"
+                f"cannot create metric given a '{type(key)}'"
+                "Please provide a string, function or Metric"
             )
 
         if key not in cls.registry:
@@ -356,7 +381,8 @@ class MetricFactory:
             if metric in cls.registry:
                 if problem_type in cls.registry[metric]:
                     cls._logger().warning(
-                        f"re-registering Metric for metric='{metric}' " f"and problem_type='{problem_type}'"
+                        f"re-registering Metric for metric='{metric}' "
+                        f"and problem_type='{problem_type}'"
                     )
                 cls.registry[metric][problem_type] = wrapped_class
             else:
@@ -366,7 +392,7 @@ class MetricFactory:
         return inner_wrapper
 
 
-@MetricFactory.register('mae', ProblemType.REGRESSION)
+@MetricFactory.register("mae", ProblemType.REGRESSION)
 class MAE(Metric):
     """Estimate regression performance using Mean Absolute Error metric."""
 
@@ -425,8 +451,8 @@ class MAE(Metric):
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         """
         super().__init__(
-            display_name='MAE',
-            column_name='mae',
+            display_name="MAE",
+            column_name="mae",
             feature_column_names=feature_column_names,
             y_true=y_true,
             y_pred=y_pred,
@@ -439,7 +465,9 @@ class MAE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        reference_data, empty = common_nan_removal(
+            reference_data, [self.y_true, self.y_pred]
+        )
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -464,7 +492,9 @@ class MAE(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        observation_level_estimates = self._dee_model.predict(
+            X=data[self.feature_column_names + [self.y_pred]]
+        )
         # clip negative predictions to 0
         observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.mean(observation_level_estimates)
@@ -474,7 +504,7 @@ class MAE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return mae_sampling_error(self._sampling_error_components, data)
 
@@ -494,17 +524,19 @@ class MAE(Metric):
             Mean Absolute Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
-        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+            return np.nan
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
+        )
         if empty:
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
         return mean_absolute_error(y_true, y_pred)
 
 
-@MetricFactory.register('mape', ProblemType.REGRESSION)
+@MetricFactory.register("mape", ProblemType.REGRESSION)
 class MAPE(Metric):
     """Estimate regression performance using Mean Absolute Percentage Error metric."""
 
@@ -563,8 +595,8 @@ class MAPE(Metric):
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         """
         super().__init__(
-            display_name='MAPE',
-            column_name='mape',
+            display_name="MAPE",
+            column_name="mape",
             feature_column_names=feature_column_names,
             y_true=y_true,
             y_pred=y_pred,
@@ -577,7 +609,9 @@ class MAPE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        reference_data, empty = common_nan_removal(
+            reference_data, [self.y_true, self.y_pred]
+        )
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -591,7 +625,9 @@ class MAPE(Metric):
         )
 
         epsilon = np.finfo(np.float64).eps
-        observation_level_metric = abs(y_true - y_pred) / (np.maximum(epsilon, abs(y_true)))
+        observation_level_metric = abs(y_true - y_pred) / (
+            np.maximum(epsilon, abs(y_true))
+        )
 
         self._dee_model = self._train_direct_error_estimation_model(
             X_train=reference_data[self.feature_column_names + [self.y_pred]],
@@ -603,7 +639,9 @@ class MAPE(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        observation_level_estimates = self._dee_model.predict(
+            X=data[self.feature_column_names + [self.y_pred]]
+        )
         # clip negative predictions to 0
         observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.mean(observation_level_estimates)
@@ -613,7 +651,7 @@ class MAPE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return mape_sampling_error(self._sampling_error_components, data)
 
@@ -633,17 +671,19 @@ class MAPE(Metric):
             Mean Absolute Percentage Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
-        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+            return np.nan
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
+        )
         if empty:
-            return np.NaN
+            return np.nan
 
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
         return mean_absolute_percentage_error(y_true, y_pred)
 
 
-@MetricFactory.register('mse', ProblemType.REGRESSION)
+@MetricFactory.register("mse", ProblemType.REGRESSION)
 class MSE(Metric):
     """Estimate regression performance using Mean Squared Error metric."""
 
@@ -702,8 +742,8 @@ class MSE(Metric):
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         """
         super().__init__(
-            display_name='MSE',
-            column_name='mse',
+            display_name="MSE",
+            column_name="mse",
             feature_column_names=feature_column_names,
             y_true=y_true,
             y_pred=y_pred,
@@ -716,7 +756,9 @@ class MSE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        reference_data, empty = common_nan_removal(
+            reference_data, [self.y_true, self.y_pred]
+        )
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -741,7 +783,9 @@ class MSE(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        observation_level_estimates = self._dee_model.predict(
+            X=data[self.feature_column_names + [self.y_pred]]
+        )
         # clip negative predictions to 0
         observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.mean(observation_level_estimates)
@@ -751,7 +795,7 @@ class MSE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return mse_sampling_error(self._sampling_error_components, data)
 
@@ -771,16 +815,18 @@ class MSE(Metric):
             Mean Squared Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
-        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+            return np.nan
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
+        )
         if empty:
-            return np.NaN
+            return np.nan
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
         return mean_squared_error(y_true, y_pred)
 
 
-@MetricFactory.register('msle', ProblemType.REGRESSION)
+@MetricFactory.register("msle", ProblemType.REGRESSION)
 class MSLE(Metric):
     """Estimate regression performance using Mean Squared Logarithmic Error metric."""
 
@@ -839,8 +885,8 @@ class MSLE(Metric):
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         """
         super().__init__(
-            display_name='MSLE',
-            column_name='msle',
+            display_name="MSLE",
+            column_name="msle",
             feature_column_names=feature_column_names,
             y_true=y_true,
             y_pred=y_pred,
@@ -853,7 +899,9 @@ class MSLE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        reference_data, empty = common_nan_removal(
+            reference_data, [self.y_true, self.y_pred]
+        )
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -880,7 +928,9 @@ class MSLE(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        observation_level_estimates = self._dee_model.predict(
+            X=data[self.feature_column_names + [self.y_pred]]
+        )
         # clip negative predictions to 0
         observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.mean(observation_level_estimates)
@@ -890,7 +940,7 @@ class MSLE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return msle_sampling_error(self._sampling_error_components, data)
 
@@ -914,16 +964,18 @@ class MSLE(Metric):
             Mean Squared Log Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
-        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+            return np.nan
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
+        )
         if empty:
-            return np.NaN
+            return np.nan
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
         return mean_squared_log_error(y_true, y_pred)
 
 
-@MetricFactory.register('rmse', ProblemType.REGRESSION)
+@MetricFactory.register("rmse", ProblemType.REGRESSION)
 class RMSE(Metric):
     """Estimate regression performance using Root Mean Squared Error metric."""
 
@@ -982,8 +1034,8 @@ class RMSE(Metric):
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         """
         super().__init__(
-            display_name='RMSE',
-            column_name='rmse',
+            display_name="RMSE",
+            column_name="rmse",
             feature_column_names=feature_column_names,
             y_true=y_true,
             y_pred=y_pred,
@@ -996,7 +1048,9 @@ class RMSE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        reference_data, empty = common_nan_removal(
+            reference_data, [self.y_true, self.y_pred]
+        )
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -1021,7 +1075,9 @@ class RMSE(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        observation_level_estimates = self._dee_model.predict(
+            X=data[self.feature_column_names + [self.y_pred]]
+        )
         # clip negative predictions to 0
         observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.sqrt(np.mean(observation_level_estimates))
@@ -1031,7 +1087,7 @@ class RMSE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return rmse_sampling_error(self._sampling_error_components, data)
 
@@ -1051,16 +1107,28 @@ class RMSE(Metric):
             Root Mean Squared Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
-        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+            return np.nan
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
+        )
         if empty:
-            return np.NaN
+            return np.nan
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
-        return mean_squared_error(y_true, y_pred, squared=False)
+
+        # Deal with breaking API change in sklearn 1.4
+        # https://scikit-learn.org/1.5/modules/generated/sklearn.metrics.root_mean_squared_error.html
+        try:
+            from sklearn.metrics import root_mean_squared_error
+
+            return root_mean_squared_error(y_true, y_pred)
+        except ImportError:
+            from sklearn.metrics import mean_squared_error
+
+            return np.sqrt(mean_squared_error(y_true, y_pred, squared=False))
 
 
-@MetricFactory.register('rmsle', ProblemType.REGRESSION)
+@MetricFactory.register("rmsle", ProblemType.REGRESSION)
 class RMSLE(Metric):
     """Estimate regression performance using Root Mean Squared Logarithmic Error metric."""
 
@@ -1119,8 +1187,8 @@ class RMSLE(Metric):
             The Threshold instance that determines how the lower and upper threshold values will be calculated.
         """
         super().__init__(
-            display_name='RMSLE',
-            column_name='rmsle',
+            display_name="RMSLE",
+            column_name="rmsle",
             feature_column_names=feature_column_names,
             y_true=y_true,
             y_pred=y_pred,
@@ -1133,7 +1201,9 @@ class RMSLE(Metric):
 
     def _fit(self, reference_data: pd.DataFrame):
         # filter nans here
-        reference_data, empty = common_nan_removal(reference_data, [self.y_true, self.y_pred])
+        reference_data, empty = common_nan_removal(
+            reference_data, [self.y_true, self.y_pred]
+        )
         if empty:
             raise InvalidReferenceDataException(
                 f"Cannot fit DLE for {self.display_name}, too many missing values for predictions and targets."
@@ -1161,7 +1231,9 @@ class RMSLE(Metric):
         )
 
     def _estimate(self, data: pd.DataFrame):
-        observation_level_estimates = self._dee_model.predict(X=data[self.feature_column_names + [self.y_pred]])
+        observation_level_estimates = self._dee_model.predict(
+            X=data[self.feature_column_names + [self.y_pred]]
+        )
         # clip negative predictions to 0
         observation_level_estimates = np.maximum(0, observation_level_estimates)
         chunk_level_estimate = np.sqrt(np.mean(observation_level_estimates))
@@ -1171,7 +1243,7 @@ class RMSLE(Metric):
         # we only expect predictions to be present and estimate sampling error based on them
         data, empty = common_nan_removal(data[[self.y_pred]], [self.y_pred])
         if empty:
-            return np.NaN
+            return np.nan
         else:
             return rmsle_sampling_error(self._sampling_error_components, data)
 
@@ -1195,14 +1267,25 @@ class RMSLE(Metric):
             Root Mean Squared Log Error
         """
         if self.y_true not in data.columns:
-            return np.NaN
-        data, empty = common_nan_removal(data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred])
+            return np.nan
+        data, empty = common_nan_removal(
+            data[[self.y_true, self.y_pred]], [self.y_true, self.y_pred]
+        )
         if empty:
-            return np.NaN
+            return np.nan
         y_true = data[self.y_true]
         y_pred = data[self.y_pred]
 
         _raise_exception_for_negative_values(y_true)
         _raise_exception_for_negative_values(y_pred)
 
-        return mean_squared_log_error(y_true, y_pred, squared=False)
+        # Deal with breaking API change in sklearn 1.4
+        # https://scikit-learn.org/1.5/modules/generated/sklearn.metrics.root_mean_squared_log_error.html
+        try:
+            from sklearn.metrics import root_mean_squared_log_error
+
+            return root_mean_squared_log_error(y_true, y_pred)
+        except ImportError:
+            from sklearn.metrics import mean_squared_log_error
+
+            return np.sqrt(mean_squared_log_error(y_true, y_pred, squared=False))

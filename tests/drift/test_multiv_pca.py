@@ -108,8 +108,8 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     data['id'] = data.index
     nan_pick1 = set(data.id.sample(frac=0.11, random_state=13))
     nan_pick2 = set(data.id.sample(frac=0.11, random_state=14))
-    data.loc[data.id.isin(nan_pick1), 'f1'] = np.NaN
-    data.loc[data.id.isin(nan_pick2), 'f4'] = np.NaN
+    data.loc[data.id.isin(nan_pick1), 'f1'] = np.nan
+    data.loc[data.id.isin(nan_pick2), 'f4'] = np.nan
     data.drop(columns=['id'], inplace=True)
     return data
 

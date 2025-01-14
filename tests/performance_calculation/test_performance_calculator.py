@@ -214,10 +214,10 @@ def test_calculator_calculate_should_include_target_completeness_rate(data):  # 
     data = data[1].merge(data[2], on='id')
 
     # Drop 10% of the target values in the first chunk
-    data.loc[0:499, 'work_home_actual'] = np.NAN
+    data.loc[0:499, 'work_home_actual'] = np.nan
 
     # Drop 90% of the target values in the second chunk
-    data.loc[5000:9499, 'work_home_actual'] = np.NAN
+    data.loc[5000:9499, 'work_home_actual'] = np.nan
 
     calc = PerformanceCalculator(
         timestamp_column_name='timestamp',
@@ -248,7 +248,7 @@ def test_calculator_calculate_should_support_partial_bool_targets(data, performa
     analysis_data = analysis_data.astype({'work_home_actual': 'bool'})
 
     # Drop 10% of the target values in the first chunk
-    analysis_data.loc[0:499, 'work_home_actual'] = np.NAN
+    analysis_data.loc[0:499, 'work_home_actual'] = np.nan
 
     performance_calculator.fit(reference_data=ref_data)
     performance_calculator.calculate(analysis_data)

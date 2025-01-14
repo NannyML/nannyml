@@ -372,7 +372,11 @@ class CorrelationRanker:
             filtered_values = values[~(feature_nan | perf_nan)]
             filtered_perf_change = abs_perf_change[~(feature_nan | perf_nan)]
 
-            tmp1 = pearsonr(filtered_values.ravel(), filtered_perf_change)
+            tmp1 = (
+                pearsonr(filtered_values.ravel(), filtered_perf_change)
+                if len(filtered_values) > 1
+                else (np.nan, np.nan)
+            )
             spearmanr1.append(tmp1[0])
             spearmanr2.append(tmp1[1])
 

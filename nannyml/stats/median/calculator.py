@@ -199,10 +199,10 @@ class SummaryStatsMedianCalculator(AbstractCalculator):
                 self._logger.error(
                     f"an unexpected exception occurred during calculation of column '{column_name}': " f"{exc}"
                 )
-            result['value'] = np.NaN
-            result['sampling_error'] = np.NaN
-            result['upper_confidence_boundary'] = np.NaN
-            result['lower_confidence_boundary'] = np.NaN
+            result['value'] = np.nan
+            result['sampling_error'] = np.nan
+            result['upper_confidence_boundary'] = np.nan
+            result['lower_confidence_boundary'] = np.nan
         finally:
             return result
 

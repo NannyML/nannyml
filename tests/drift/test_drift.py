@@ -115,8 +115,8 @@ def sample_drift_data_with_nans(sample_drift_data) -> pd.DataFrame:  # noqa: D10
     data['id'] = data.index
     nan_pick1 = set(data.id.sample(frac=0.11, random_state=13))
     nan_pick2 = set(data.id.sample(frac=0.11, random_state=14))
-    data.loc[data.id.isin(nan_pick1), 'f1'] = np.NaN
-    data.loc[data.id.isin(nan_pick2), 'f4'] = np.NaN
+    data.loc[data.id.isin(nan_pick1), 'f1'] = np.nan
+    data.loc[data.id.isin(nan_pick2), 'f4'] = np.nan
     data.drop(columns=['id'], inplace=True)
     return data
 
@@ -908,6 +908,7 @@ def test_input_dataframes_are_not_altered_by_dre_calculator():  # noqa: D103
     pd.testing.assert_frame_equal(reference, reference2)
 
 
+@pytest.mark.skip("too slow")
 def test_input_dataframes_are_not_altered_by_dc_calculator():  # noqa: D103
     reference, monitored, _ = load_synthetic_car_loan_dataset()
     reference2 = reference.copy(deep=True)

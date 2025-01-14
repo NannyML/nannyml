@@ -28,7 +28,7 @@ def test_auroc_sampling_error_nan():  # noqa: D103
     sample_size = 50
     chunk = np.random.random(sample_size)
 
-    components = np.NaN, np.NaN
+    components = np.nan, np.nan
     sampling_error = bse.auroc_sampling_error(components, chunk)
     assert np.isnan(sampling_error)
 
@@ -99,7 +99,7 @@ def test_accuracy_sampling_error():  # noqa: D103
 
 
 def test_ap_sampling_error_when_nan():  # noqa: D103
-    comp1 = np.NaN
+    comp1 = np.nan
     comp2 = 0
     data = pd.DataFrame({'y_true': [0, 1, 1], 'y_pred_proba': [0.4, 0.6, 0.7]})
 

@@ -294,10 +294,10 @@ class DLE(AbstractEstimator):
             reference_data[categorical_feature_column] = reference_data[categorical_feature_column].astype("object")
             reference_data[categorical_feature_column] = self._categorical_imputer.fit_transform(
                 reference_data[categorical_feature_column].values.reshape(-1, 1)
-            )
+            ).ravel()
             reference_data[categorical_feature_column] = self._categorical_encoders[
                 categorical_feature_column
-            ].fit_transform(reference_data[categorical_feature_column].values.reshape(-1, 1))
+            ].fit_transform(reference_data[categorical_feature_column].values.reshape(-1, 1)).ravel()
             # LGBM treats -1 for categorical features as missing
             # https://lightgbm.readthedocs.io/en/latest/Advanced-Topics.html#categorical-feature-support
             # Ordinal encoder encodes from 0 to n-1.
@@ -329,10 +329,10 @@ class DLE(AbstractEstimator):
             data[categorical_feature_column] = data[categorical_feature_column].astype("object")
             data[categorical_feature_column] = self._categorical_imputer.transform(
                 data[categorical_feature_column].values.reshape(-1, 1)
-            )
+            ).ravel()
             data[categorical_feature_column] = self._categorical_encoders[categorical_feature_column].transform(
                 data[categorical_feature_column].values.reshape(-1, 1)
-            )
+            ).ravel()
             # LGBM treats -1 for categorical features as missing
             # https://lightgbm.readthedocs.io/en/latest/Advanced-Topics.html#categorical-feature-support
             # Ordinal encoder encodes from 0 to n-1.
@@ -406,14 +406,14 @@ class DLE(AbstractEstimator):
                 self._logger.error(
                     f"an unexpected error occurred while calculating metric {metric.display_name}: {exc}"
                 )
-                estimates[f'sampling_error_{metric.column_name}'] = np.NaN
-                estimates[f'realized_{metric.column_name}'] = np.NaN
-                estimates[f'estimated_{metric.column_name}'] = np.NaN
-                estimates[f'upper_confidence_{metric.column_name}'] = np.NaN
-                estimates[f'lower_confidence_{metric.column_name}'] = np.NaN
+                estimates[f'sampling_error_{metric.column_name}'] = np.nan
+                estimates[f'realized_{metric.column_name}'] = np.nan
+                estimates[f'estimated_{metric.column_name}'] = np.nan
+                estimates[f'upper_confidence_{metric.column_name}'] = np.nan
+                estimates[f'lower_confidence_{metric.column_name}'] = np.nan
                 estimates[f'upper_threshold_{metric.column_name}'] = metric.upper_threshold_value
                 estimates[f'lower_threshold_{metric.column_name}'] = metric.lower_threshold_value
-                estimates[f'alert_{metric.column_name}'] = np.NaN
+                estimates[f'alert_{metric.column_name}'] = np.nan
         return estimates
 
 
