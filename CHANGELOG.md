@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2025-01-14
+
+### Fixed
+
+- Fixed incorrect default thresholds in the docstrings for the univariate drift calculator. Thanks for the eagle-eyed reading [@josecaloca](https://github.com/josecaloca)! [(#425)]((https://github.com/NannyML/nannyml/issues/425))
+
+### Changed
+
+- Thorough revamp of our dependency version specifications. Dependencies are now less strict, making it easier to use NannyML as a dependency. Big credits to [@davisthomas-aily](https://github.com/davisthomas-aily) and [@canoadri](https://github.com/canoadri) for their contributions, thoughts and patience on this one. Much appreciated! [(#433)]((https://github.com/NannyML/nannyml/issues/433))
+- Added support for Python 3.12
+- Dropped support for Python 3.8
+
 ## [0.12.1] - 2024-09-06
 
 ### Fixed
