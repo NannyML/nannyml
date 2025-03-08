@@ -81,6 +81,7 @@ def stacked_bar(
     figure: Figure,
     stacked_bar_table: pd.DataFrame,
     color: str,
+    categories: Optional[list[Any]] = None,
     chunk_start_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     chunk_indices: Optional[Union[np.ndarray, pd.Series]] = None,
@@ -95,7 +96,8 @@ def stacked_bar(
     column_name = [
         col for col in stacked_bar_table.columns if col not in ('chunk_key', 'chunk_indices', 'value_counts')
     ][0]
-    categories = stacked_bar_table[column_name].cat.categories
+    if categories is None:
+        categories = stacked_bar_table[column_name].cat.categories
     category_colors = list(
         sns.blend_palette(
             [Colors.INDIGO_PERSIAN, Colors.GRAY, Colors.BLUE_SKY_CRAYOLA], n_colors=len(categories)
