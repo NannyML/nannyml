@@ -279,7 +279,8 @@ def _plot_stacked_bar(
     timestamps = analysis_data_timestamps
     if has_reference_results:
         data = pd.concat([reference_data, analysis_data]).reset_index(drop=True)
-        timestamps = pd.concat([reference_data_timestamps, analysis_data_timestamps]).reset_index(drop=True)
+        if reference_data_timestamps is not None:
+            timestamps = pd.concat([reference_data_timestamps, analysis_data_timestamps]).reset_index(drop=True)
         analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
         # TODO: split proportionally.
         if isinstance(chunker, DefaultChunker):
