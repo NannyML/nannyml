@@ -26,6 +26,7 @@ packages = [
 [tool.poetry.scripts]
 nml = "nannyml.cli.cli:cli"
 nannyml = "nannyml.cli.cli:cli"
+categorical-plot-example = "nannyml.categorical_plot_example:main"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
