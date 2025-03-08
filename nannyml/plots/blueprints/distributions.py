@@ -305,8 +305,6 @@ def _plot_stacked_bar(
             chunk_end_dates=reference_chunk_end_dates,
             annotation='Reference',
             showlegend=True,
-            legendgrouptitle_text=f'<b>{column_name}</b>',
-            legendgroup=column_name,
             subplot_args=subplot_args,
         )
 
@@ -322,7 +320,6 @@ def _plot_stacked_bar(
         chunk_end_dates=analysis_chunk_end_dates,
         annotation='Analysis',
         showlegend=False,
-        legendgroup=column_name,
         subplot_args=subplot_args,
     )
 
@@ -334,9 +331,14 @@ def _plot_stacked_bar(
         chunk_indices=analysis_chunk_indices,
         chunk_start_dates=analysis_chunk_start_dates,
         chunk_end_dates=analysis_chunk_end_dates,
-        showlegend=True,
-        legendgroup=column_name,
+        showlegend=False,
         subplot_args=subplot_args,
     )
+
+    # https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
+    legend_name = f"legend{row}"
+    yaxis = list(figure.select_yaxes())[row - 1]
+    figure.update_layout({legend_name: dict(y=yaxis.domain[1], yanchor="top")})
+    figure.update_traces(row=row, legend=legend_name)
 
     return figure
