@@ -84,6 +84,7 @@ def plot_distributions(
                 figure=figure,
                 row=row,
                 col=col,
+                idx=idx,
                 chunker=chunker,
                 column_name=column_name,
                 metric_display_name=method,
@@ -251,6 +252,7 @@ def _plot_stacked_bar(
     analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     row: Optional[int] = None,
     col: Optional[int] = None,
+    idx: Optional[int] = None,
     hover: Optional[Hover] = None,
 ) -> Figure:
     is_subplot = row is not None and col is not None
@@ -335,10 +337,12 @@ def _plot_stacked_bar(
         subplot_args=subplot_args,
     )
 
-    # https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
-    legend_name = f"legend{row}"
-    yaxis = list(figure.select_yaxes())[row - 1]
-    figure.update_layout({legend_name: dict(y=yaxis.domain[1], yanchor="top")})
-    figure.update_traces(row=row, legend=legend_name)
+    if is_subplot:
+        # https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
+        legend_name = f"legend{idx + 1}"
+        xaxis = list(figure.select_xaxes())[idx]
+        yaxis = list(figure.select_yaxes())[idx]
+        figure.update_layout({legend_name: dict(x=xaxis.domain[1], y=yaxis.domain[1], yanchor="top")})
+        figure.update_traces(row=row, col=col, legend=legend_name)
 
     return figure
