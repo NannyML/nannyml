@@ -300,7 +300,7 @@ def _plot_stacked_bar(
             annotation='Reference',
             showlegend=True,
             subplot_args=subplot_args,
-        )      
+        )
 
         assert reference_chunk_indices is not None
         analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
