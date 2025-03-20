@@ -6,8 +6,8 @@ homepage = "https://github.com/nannyml/nannyml"
 description = "NannyML, Your library for monitoring model performance."
 authors = ["Niels Nuyttens <niels@nannyml.com>"]
 readme = "README.md"
-license = "Apache-2.0"
-classifiers = [
+license =  "Apache-2.0"
+classifiers=[
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: Apache Software License',
@@ -20,7 +20,7 @@ classifiers = [
 ]
 packages = [
     { include = "nannyml" },
-    #    { include = "tests", format = "sdist" },
+#    { include = "tests", format = "sdist" },
 ]
 
 [tool.poetry.scripts]
@@ -57,11 +57,11 @@ PyYAML = "^6.0"
 Jinja2 = "<3.1"
 pyfiglet = "^0.8.post1"
 lightgbm = ">=3.3,<4.6"
-FLAML = { extras = ["automl"], version = "^2.3.3" }
+FLAML = {extras = ["automl"], version = "^2.3.3"}
 s3fs = ">=2022.8"
-sqlmodel = { version = "^0.0", optional = true }
+sqlmodel = {version = "^0.0", optional = true}
 APScheduler = "^3.9"
-psycopg2-binary = { version = "^2.9", optional = true }
+psycopg2-binary = {version = "^2.9", optional = true}
 segment-analytics-python = "^2.3"
 python-dotenv = ">=1.0,<2.0"
 
