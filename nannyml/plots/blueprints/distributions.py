@@ -7,14 +7,14 @@ from typing import Any, Dict, Optional, Union
 import numpy as np
 import pandas as pd
 
-from nannyml.chunk import Chunker, CountBasedChunker, DefaultChunker
+from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
 from nannyml.plots import Colors
 from nannyml.plots.components import Figure, Hover
 from nannyml.plots.components.joy_plot import alert as joy_alert
 from nannyml.plots.components.joy_plot import calculate_chunk_distributions, joy
 from nannyml.plots.components.stacked_bar_plot import alert as stacked_bar_alert
-from nannyml.plots.components.stacked_bar_plot import calculate_value_counts, stacked_bar
+from nannyml.plots.components.stacked_bar_plot import calculate_value_counts, categorize_data, stacked_bar
 from nannyml.plots.util import is_time_based_x_axis
 
 
@@ -275,28 +275,19 @@ def _plot_stacked_bar(
         dict(mirror=False, showline=False), overwrite=True, title=figure.layout.yaxis.title, row=row, col=col
     )
 
-    data = analysis_data
-    timestamps = analysis_data_timestamps
+    data_to_categorize = analysis_data
     if has_reference_results:
-        data = pd.concat([reference_data, analysis_data]).reset_index(drop=True)
-        if reference_data_timestamps is not None:
-            timestamps = pd.concat([reference_data_timestamps, analysis_data_timestamps]).reset_index(drop=True)
-        analysis_chunk_indices = analysis_chunk_indices + (max(reference_chunk_indices) + 1)
-        # TODO: split proportionally.
-        if isinstance(chunker, DefaultChunker):
-            chunker = CountBasedChunker(2 * DefaultChunker.DEFAULT_CHUNK_COUNT)
-
-    value_counts = calculate_value_counts(
-        data=data,
-        chunker=chunker,
-        timestamps=timestamps,
-        max_number_of_categories=5,
-        missing_category_label='Missing',
-    )
-    categories = value_counts[column_name].cat.categories
+        data_to_categorize = pd.concat([reference_data, analysis_data])
+    categories = categorize_data(data_to_categorize, max_number_of_categories=5)
 
     if has_reference_results:
-        reference_value_counts = value_counts.loc[value_counts["chunk_indices"].isin(reference_chunk_indices)]
+        reference_value_counts = calculate_value_counts(
+            data=reference_data,
+            categories=categories,
+            chunker=chunker,
+            timestamps=reference_data_timestamps,
+            missing_category_label='Missing',
+        )
 
         figure = stacked_bar(
             figure=figure,
@@ -311,7 +302,13 @@ def _plot_stacked_bar(
             subplot_args=subplot_args,
         )
 
-    analysis_value_counts = value_counts.loc[value_counts["chunk_indices"].isin(analysis_chunk_indices)]
+    analysis_value_counts = calculate_value_counts(
+        data=analysis_data,
+        categories=categories,
+        chunker=chunker,
+        timestamps=analysis_data_timestamps,
+        missing_category_label='Missing',
+    )
 
     figure = stacked_bar(
         figure=figure,

@@ -20,9 +20,10 @@ def calculate_value_counts(
     data: Union[np.ndarray, pd.Series],
     chunker: Chunker,
     missing_category_label,
-    max_number_of_categories,
+    max_number_of_categories: Optional[int] = None,
     timestamps: Optional[Union[np.ndarray, pd.Series]] = None,
     column_name: Optional[str] = None,
+    categories: Optional[list] = None,
 ):
     if isinstance(data, np.ndarray):
         if column_name is None:
@@ -31,21 +32,10 @@ def calculate_value_counts(
     else:
         column_name = data.name
 
-    data = data.astype("category")
-    cat_str = [str(value) for value in data.cat.categories.values]
-    data = data.cat.rename_categories(cat_str)
-    data = data.cat.add_categories([missing_category_label, 'Other'])
-    data = data.fillna(missing_category_label)
+    if categories is None:
+        categories = categorize_data(data, max_number_of_categories)
 
-    if max_number_of_categories:
-        top_categories = data.value_counts().index.tolist()[:max_number_of_categories]
-        if data.nunique() > max_number_of_categories + 1:
-            data.loc[~data.isin(top_categories)] = 'Other'
-
-    data = data.cat.remove_unused_categories()
-
-    categories_ordered = data.value_counts().index.tolist()
-    categorical_data = pd.Categorical(data, categories_ordered)
+    categorical_data = _apply_categorization(data, categories, missing_category_label)
 
     # TODO: deal with None timestamps
     if isinstance(timestamps, pd.Series):
@@ -75,6 +65,31 @@ def calculate_value_counts(
     )
 
     return value_counts_table
+
+
+def categorize_data(data: Union[np.ndarray, pd.Series], max_number_of_categories: int):
+    data = pd.Series(data).astype("category")
+    categories_ordered = data.value_counts().index.tolist()
+    if max_number_of_categories:
+        categories_ordered = categories_ordered[:max_number_of_categories]
+    return categories_ordered
+
+
+def _apply_categorization(
+    data: pd.Series,
+    categories: list,
+    missing_category_label: str
+):
+    data = data.astype("category")
+    old_categories = [str(category) for category in data.cat.categories.values]
+    new_categories = [str(category) for category in categories]
+    renaming_dict = {c: (c if c in new_categories else "Other") for c in old_categories}
+    data = data.cat.rename_categories(renaming_dict)
+    data = data.cat.add_categories([missing_category_label, "Other"])
+    data = data.fillna(missing_category_label)
+    data = data.cat.remove_unused_categories()
+    categories_ordered = data.value_counts().index.tolist()
+    return pd.Categorical(data, categories_ordered)
 
 
 def stacked_bar(
