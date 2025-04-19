@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.0/.schema/devbox.schema.json",
+  "packages": [
+    "python@3.10",
+    "poetry@latest"
+  ],
+  "env": {
+    "VENV_DIR": ".devbox/virtenv/python/.venv"
+  },
+  "shell": {
+    "init_hook": [
+      "source ${VENV_DIR}/bin/activate"
+    ]
+  }
+}
