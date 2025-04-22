@@ -14,7 +14,7 @@ from nannyml.plots.components import Figure, Hover
 from nannyml.plots.components.joy_plot import alert as joy_alert
 from nannyml.plots.components.joy_plot import calculate_chunk_distributions, joy
 from nannyml.plots.components.stacked_bar_plot import alert as stacked_bar_alert
-from nannyml.plots.components.stacked_bar_plot import calculate_value_counts, stacked_bar
+from nannyml.plots.components.stacked_bar_plot import calculate_value_counts, categorize_data, stacked_bar
 from nannyml.plots.util import is_time_based_x_axis
 
 
@@ -84,6 +84,7 @@ def plot_distributions(
                 figure=figure,
                 row=row,
                 col=col,
+                idx=idx,
                 chunker=chunker,
                 column_name=column_name,
                 metric_display_name=method,
@@ -251,6 +252,7 @@ def _plot_stacked_bar(
     analysis_chunk_end_dates: Optional[Union[np.ndarray, pd.Series]] = None,
     row: Optional[int] = None,
     col: Optional[int] = None,
+    idx: Optional[int] = None,
     hover: Optional[Hover] = None,
 ) -> Figure:
     is_subplot = row is not None and col is not None
@@ -273,12 +275,17 @@ def _plot_stacked_bar(
         dict(mirror=False, showline=False), overwrite=True, title=figure.layout.yaxis.title, row=row, col=col
     )
 
+    data_to_categorize = analysis_data
+    if has_reference_results:
+        data_to_categorize = pd.concat([reference_data, analysis_data])
+    categories = categorize_data(data_to_categorize, max_number_of_categories=5)
+
     if has_reference_results:
         reference_value_counts = calculate_value_counts(
             data=reference_data,
+            categories=categories,
             chunker=chunker,
             timestamps=reference_data_timestamps,
-            max_number_of_categories=5,
             missing_category_label='Missing',
         )
 
@@ -286,13 +293,12 @@ def _plot_stacked_bar(
             figure=figure,
             stacked_bar_table=reference_value_counts,
             color=Colors.BLUE_SKY_CRAYOLA,
+            categories=categories,
             chunk_indices=reference_chunk_indices,
             chunk_start_dates=reference_chunk_start_dates,
             chunk_end_dates=reference_chunk_end_dates,
             annotation='Reference',
             showlegend=True,
-            legendgrouptitle_text=f'<b>{column_name}</b>',
-            legendgroup=column_name,
             subplot_args=subplot_args,
         )
 
@@ -301,9 +307,9 @@ def _plot_stacked_bar(
 
     analysis_value_counts = calculate_value_counts(
         data=analysis_data,
+        categories=categories,
         chunker=chunker,
         timestamps=analysis_data_timestamps,
-        max_number_of_categories=5,
         missing_category_label='Missing',
     )
 
@@ -311,12 +317,12 @@ def _plot_stacked_bar(
         figure=figure,
         stacked_bar_table=analysis_value_counts,
         color=Colors.INDIGO_PERSIAN,
+        categories=categories,
         chunk_indices=analysis_chunk_indices,
         chunk_start_dates=analysis_chunk_start_dates,
         chunk_end_dates=analysis_chunk_end_dates,
         annotation='Analysis',
         showlegend=False,
-        legendgroup=column_name,
         subplot_args=subplot_args,
     )
 
@@ -328,9 +334,16 @@ def _plot_stacked_bar(
         chunk_indices=analysis_chunk_indices,
         chunk_start_dates=analysis_chunk_start_dates,
         chunk_end_dates=analysis_chunk_end_dates,
-        showlegend=True,
-        legendgroup=column_name,
+        showlegend=False,
         subplot_args=subplot_args,
     )
+
+    if is_subplot:
+        # https://community.plotly.com/t/plotly-subplots-with-individual-legends/1754/25
+        legend_name = f"legend{idx + 1}"
+        xaxis = list(figure.select_xaxes())[idx]
+        yaxis = list(figure.select_yaxes())[idx]
+        figure.update_layout({legend_name: dict(x=xaxis.domain[1], y=yaxis.domain[1], yanchor="top")})
+        figure.update_traces(row=row, col=col, legend=legend_name)
 
     return figure
