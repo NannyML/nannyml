@@ -1,102 +1,103 @@
-[tool]
-[tool.poetry]
+[project]
 name = "nannyml"
 version = "0.13.0"
-homepage = "https://github.com/nannyml/nannyml"
 description = "NannyML, Your library for monitoring model performance."
-authors = ["Niels Nuyttens <niels@nannyml.com>"]
+authors = [{ name = "Niels Nuyttens", email = "niels@nannyml.com" }]
+requires-python = ">=3.9,<3.13"
 readme = "README.md"
-license =  "Apache-2.0"
-classifiers=[
-    'Development Status :: 4 - Beta',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved :: Apache Software License',
-    'Natural Language :: English',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: 3.9',
-    'Programming Language :: Python :: 3.10',
-    'Programming Language :: Python :: 3.11',
+license = "Apache-2.0"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
-packages = [
-    { include = "nannyml" },
-#    { include = "tests", format = "sdist" },
+dependencies = [
+    "numpy>=1.23",
+    "scipy>=1.9.2",
+    "pandas>=1.4",
+    "scikit-learn>=1.3",
+    "pyarrow>=13.0",
+    "python-dateutil~=2.8",
+    "joblib~=1.1",
+    "category-encoders~=2.3",
+    "matplotlib~=3.7",
+    "plotly~=5.6",
+    "seaborn>=0.13,<0.14",
+    "gcsfs>=2022.5",
+    "pydantic>=2.7",
+    "rich>=12.5",
+    "click~=8.1",
+    "PyYAML~=6.0",
+    "Jinja2>=3.1",
+    "pyfiglet>=0.8.post1,<0.9",
+    "lightgbm>=3.3,<5.0",
+    "FLAML[automl]>=2.3.3,<3",
+    "s3fs>=2022.8",
+    "APScheduler~=3.9",
+    "segment-analytics-python~=2.3",
+    "python-dotenv>=1.0,<2.0",
 ]
 
-[tool.poetry.scripts]
+[project.optional-dependencies]
+db = [
+    "sqlmodel>=0.0,<0.1",
+    "psycopg2-binary~=2.9",
+]
+
+[project.urls]
+Homepage = "https://github.com/nannyml/nannyml"
+
+[project.scripts]
 nml = "nannyml.cli.cli:cli"
 nannyml = "nannyml.cli.cli:cli"
 
-[tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+[dependency-groups]
+dev = [
+    "black>=22.3.0,<23",
+    "isort>=5.8.0,<6",
+    "flake8>=3.9.2,<4",
+    "flake8-docstrings>=1.6.0,<2",
+    "flake8-typing-imports>=1.12.0,<2",
+    "mypy~=1.0",
+    "pytest>=6.2.4,<7",
+    "pytest-cov>=2.12.0,<3",
+    "pytest-mock>=3.7.0,<4",
+    "tox>=3.20.1,<4",
+    "virtualenv>=20.2.2,<21",
+    "pip>=20.3.1,<22.0.0",
+    "twine>=3.3.0,<4",
+    "pre-commit>=2.12.0,<3",
+    "toml>=0.10.2,<0.11",
+    "bump2version>=1.0.1,<2",
+    # "jupyterlab>=3.2.9,<4",
+    "sphinx>=5.0.2,<6",
+    "sphinx-rtd-theme>=1.0.0,<2",
+    "sphinx-toggleprompt>=0.6.0",
+    "sphinx-copybutton>=0.5.0,<0.6",
+    "typing-extensions>=4.4.0,<5",
+    "sphinx-toolbox>=3.2.0,<4",
+    "pytest-lazy-fixture>=0.6.3,<0.7",
+    "types-click>=7.1.8,<8",
+    "types-requests>=2.31.0.3,<3",
+    "types-pyyaml>=6.0.12.8,<7",
+    "types-python-dateutil>=2.8.19.10,<3",
+]
 
-numpy = ">=1.23"
+[tool.hatch.build.targets.sdist]
+include = ["nannyml"]
 
-scipy = ">=1.9.2"
+[tool.hatch.build.targets.wheel]
+include = ["nannyml"]
 
-pandas = ">=1.4"
-
-scikit-learn = ">=1.3"
-
-pyarrow = ">=13.0"
-
-python-dateutil = "^2.8"
-joblib = "^1.1"
-category-encoders = "^2.3"
-matplotlib = "^3.7"
-plotly = "^5.6"
-seaborn = "^0.13"
-kaleido = "^0.2"
-
-gcsfs = ">=2022.5"
-pydantic = ">=2.7"
-rich = ">=12.5"
-click = "^8.1"
-PyYAML = "^6.0"
-Jinja2 = ">=3.1"
-pyfiglet = "^0.8.post1"
-lightgbm = ">=3.3,<4.6"
-FLAML = {extras = ["automl"], version = "^2.3.3"}
-s3fs = ">=2022.8"
-sqlmodel = {version = "^0.0", optional = true}
-APScheduler = "^3.9"
-psycopg2-binary = {version = "^2.9", optional = true}
-segment-analytics-python = "^2.3"
-python-dotenv = ">=1.0,<2.0"
-
-[tool.poetry.extras]
-db = ["sqlmodel", "psycopg2-binary"]
-
-[tool.poetry.group.dev.dependencies]
-black = "^22.3.0"
-isort = "^5.8.0"
-flake8 = "^3.9.2"
-flake8-docstrings = "^1.6.0"
-flake8-typing-imports = "^1.12.0"
-mypy = "^1.0"
-pytest = "^6.2.4"
-pytest-cov = "^2.12.0"
-pytest-mock = "^3.7.0"
-tox = "^3.20.1"
-virtualenv = "^20.2.2"
-pip = ">=20.3.1,<22.0.0"
-twine = "^3.3.0"
-pre-commit = "^2.12.0"
-toml = "^0.10.2"
-bump2version = "^1.0.1"
-jupyterlab = "^3.2.9"
-sphinx = "^5.0.2"
-sphinx-rtd-theme = "^1.0.0"
-sphinx-toggleprompt = ">=0.6.0"
-sphinx-copybutton = "^0.5.0"
-typing-extensions = "^4.4.0"
-sphinx-toolbox = "^3.2.0"
-pytest-lazy-fixture = "^0.6.3"
-types-click = "^7.1.8"
-types-requests = "^2.31.0.3"
-types-pyyaml = "^6.0.12.8"
-types-python-dateutil = "^2.8.19.10"
-
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.black]
 line-length = 120
@@ -126,9 +127,3 @@ use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 120
 skip_gitignore = true
-# you can skip files as below
-#skip_glob = docs/conf.py
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
