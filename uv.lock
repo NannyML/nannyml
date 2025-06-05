@@ -2016,7 +2016,7 @@ requires-dist = [
     { name = "gcsfs", specifier = ">=2022.5" },
     { name = "jinja2", specifier = ">=3.1" },
     { name = "joblib", specifier = "~=1.1" },
-    { name = "lightgbm", specifier = ">=3.3,<4.6" },
+    { name = "lightgbm", specifier = ">=3.3,<5.0" },
     { name = "matplotlib", specifier = "~=3.7" },
     { name = "numpy", specifier = ">=1.23" },
     { name = "pandas", specifier = ">=1.4" },
