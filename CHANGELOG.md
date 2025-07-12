@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2025-07-12
+
+### Changed
+
+- Major review of dependency versions addressing [(#383)](https://github.com/NannyML/nannyml/issues/383), [(#424)](https://github.com/NannyML/nannyml/issues/424), [(#427)](https://github.com/NannyML/nannyml/issues/427), [(#428)](https://github.com/NannyML/nannyml/issues/428), [(#431)](https://github.com/NannyML/nannyml/issues/431) and [(#436)](https://github.com/NannyML/nannyml/issues/436).
+  Thank to [@alex47ST3](https://github.com/alex47ST3), [@davisthomas-aily](https://github.com/davisthomas-aily), [@christiansegercrantz](https://github.com/christiansegercrantz) and [@inigohidalgo](https://github.com/inigohidalgo) for the input, tips, patience and persistence.
+
 ## [0.13.0] - 2025-01-14
 
 ### Fixed
