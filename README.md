@@ -71,7 +71,7 @@ Allowing you to have the following benefits:
 | 🔬 **[Technical reference]**                                                                                    | Monitor the performance of your ML models.                                             |
 | 🔎 **[Blog]**                                                                                                   | Thoughts on post-deployment data science from the NannyML team.                        |
 | 📬 **[Newsletter]**                                                                                             | All things post-deployment data science. Subscribe to see the latest papers and blogs. |
-| 💎 **[New in v0.13.0]**                                                                                          | New features, bug fixes.                                                               |
+| 💎 **[New in v0.13.1]**                                                                                          | New features, bug fixes.                                                               |
 | 🧑‍💻 **[Contribute]**                                                                                             | How to contribute to the NannyML project and codebase.                                 |
 | <img src="https://raw.githubusercontent.com/NannyML/nannyml/main/media/slack.png" height='15'> **[Join slack]** | Need help with your specific use case? Say hi on slack!                                |
 
@@ -79,7 +79,7 @@ Allowing you to have the following benefits:
 [performance estimation]: https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html
 [key concepts]: https://nannyml.readthedocs.io/en/stable/glossary.html
 [technical reference]: https://nannyml.readthedocs.io/en/stable/nannyml/modules.html
-[new in v0.13.0]: https://github.com/NannyML/nannyml/releases/latest/
+[new in v0.13.1]: https://github.com/NannyML/nannyml/releases/latest/
 [real world example]: https://nannyml.readthedocs.io/en/stable/examples/california_housing.html
 [blog]: https://www.nannyml.com/blog
 [newsletter]: https://mailchi.mp/022c62281d13/postdeploymentnewsletter
@@ -294,11 +294,11 @@ Curious what we are working on next? Have a look at our [roadmap](https://bit.ly
 
 To cite NannyML in academic papers, please use the following BibTeX entry.
 
-### Version 0.13.0
+### Version 0.13.1
 
 ```
     @misc{nannyml,
-        title = {{N}anny{ML} (release 0.13.0)},
+        title = {{N}anny{ML} (release 0.13.1)},
         howpublished = {\url{https://github.com/NannyML/nannyml}},
         month = mar,
         year = 2023,
