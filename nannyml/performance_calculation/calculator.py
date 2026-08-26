@@ -50,6 +50,13 @@ from nannyml._typing import ModelOutputsType, ProblemType
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import CalculatorNotFittedException, InvalidArgumentsException
+from nannyml.instance_metrics import (
+    InstanceMetricSelection,
+    build_instance_chunk_record,
+    combine_instance_chunk_records,
+    prepare_data_for_instance_metrics,
+    resolve_instance_metric_selection,
+)
 from nannyml.performance_calculation import SUPPORTED_METRIC_VALUES
 from nannyml.performance_calculation.metrics.base import Metric, MetricFactory
 from nannyml.performance_calculation.result import Result
@@ -79,6 +86,8 @@ DEFAULT_THRESHOLDS: Dict[str, Threshold] = {
 
 class PerformanceCalculator(AbstractCalculator):
     """Calculates realized performance metrics when target data is available."""
+
+    _supports_instance_metrics = True
 
     def __init__(
         self,
@@ -293,7 +302,14 @@ class PerformanceCalculator(AbstractCalculator):
         return self
 
     @log_usage(UsageEvent.PERFORMANCE_CALC_RUN, metadata_from_self=['metrics', 'problem_type'])
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _calculate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: InstanceMetricSelection = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
         """Calculates performance on the analysis data, using the metrics specified on calculator creation."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
@@ -301,7 +317,14 @@ class PerformanceCalculator(AbstractCalculator):
         if self.y_true not in data.columns:
             raise InvalidArgumentsException(f"data does not contain target data column '{self.y_true}'.")
 
-        data = data.copy(deep=True)
+        selected_instance_metrics = resolve_instance_metric_selection(
+            include_instance_metrics, [metric.name for metric in self.metrics]
+        )
+        instance_identifier_column_name: Optional[str] = None
+        if selected_instance_metrics:
+            data, instance_identifier_column_name = prepare_data_for_instance_metrics(data, identifier_column_name)
+        else:
+            data = data.copy(deep=True)
 
         # Setup for target completeness rate
         data[TARGET_COMPLETENESS_RATE_COLUMN_NAME] = data[self.y_true].isna().astype(np.int16)
@@ -339,6 +362,45 @@ class PerformanceCalculator(AbstractCalculator):
         res.columns = multilevel_index
         res = res.reset_index(drop=True)
 
+        instance_data = None
+        if selected_instance_metrics and instance_identifier_column_name is not None:
+            instance_records = []
+            for chunk in chunks:
+                contributions: Dict[str, Any] = {}
+                for metric in self.metrics:
+                    if metric.name not in selected_instance_metrics:
+                        continue
+                    try:
+                        value, metric_contributions = metric.calculate_with_contributions(chunk.data, self.problem_type)
+                        if value is not None:
+                            value_array = np.asarray(value)
+                            if value_array.size == 0 or np.all(pd.isna(value_array)):
+                                metric_contributions = {
+                                    column_name: np.full(len(chunk.data), np.nan)
+                                    for column_name in metric_contributions
+                                }
+                        contributions.update(metric_contributions)
+                    except Exception as exc:
+                        self._logger.error(
+                            f"an unexpected exception occurred during instance calculation of metric "
+                            f"'{metric.display_name}': {exc}"
+                        )
+                        contributions.update(
+                            {
+                                f'{column_name}_contribution': np.full(len(chunk.data), np.nan)
+                                for column_name in metric.column_names
+                            }
+                        )
+                instance_records.append(
+                    build_instance_chunk_record(
+                        chunk,
+                        identifier_column_name=instance_identifier_column_name,
+                        period='analysis',
+                        contributions=contributions,
+                    )
+                )
+            instance_data = combine_instance_chunk_records(instance_records)
+
         if self.result is None:
             self.result = Result(
                 results_data=res,
@@ -348,10 +410,12 @@ class PerformanceCalculator(AbstractCalculator):
                 y_pred_proba=self.y_pred_proba,
                 timestamp_column_name=self.timestamp_column_name,
                 problem_type=self.problem_type,
+                instance_data=instance_data,
             )
         else:
             self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
+            self.result.instance_data = instance_data
 
         return self.result
 

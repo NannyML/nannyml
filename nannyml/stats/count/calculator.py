@@ -6,12 +6,20 @@
 
 from typing import Any, Dict, Optional
 
+import numpy as np
 import pandas as pd
 from pandas import MultiIndex
 
 from nannyml.base import AbstractCalculator
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.instance_metrics import (
+    InstanceMetricSelection,
+    build_instance_chunk_record,
+    combine_instance_chunk_records,
+    prepare_data_for_instance_metrics,
+    resolve_instance_metric_selection,
+)
 from nannyml.stats.count.result import Result
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -19,6 +27,8 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 class SummaryStatsRowCountCalculator(AbstractCalculator):
     """SummaryStatsRowCountCalculator implementation."""
+
+    _supports_instance_metrics = True
 
     def __init__(
         self,
@@ -93,10 +103,22 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         return self
 
     @log_usage(UsageEvent.STATS_COUNT_RUN)
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _calculate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: InstanceMetricSelection = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
         """Calculates methods for both categorical and continuous columns."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
+
+        selected_metrics = resolve_instance_metric_selection(include_instance_metrics, [self.simple_stats_metric])
+        instance_identifier_column_name = None
+        if selected_metrics:
+            data, instance_identifier_column_name = prepare_data_for_instance_metrics(data, identifier_column_name)
 
         chunks = self.chunker.split(data)
 
@@ -124,6 +146,20 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
         res.columns = result_index
         res = res.reset_index(drop=True)
 
+        instance_data = None
+        if selected_metrics and instance_identifier_column_name is not None:
+            instance_data = combine_instance_chunk_records(
+                [
+                    build_instance_chunk_record(
+                        chunk,
+                        identifier_column_name=instance_identifier_column_name,
+                        period='analysis',
+                        contributions={f'{self.simple_stats_metric}_contribution': np.ones(len(chunk.data))},
+                    )
+                    for chunk in chunks
+                ]
+            )
+
         if self.result is None:
             self._set_thresholds(results=res)
             res = self._populate_thresholds(results=res)
@@ -141,6 +177,8 @@ class SummaryStatsRowCountCalculator(AbstractCalculator):
             self.result = self.result.filter(period='reference')
             res = self._populate_thresholds(results=res)
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
+
+        self.result.instance_data = instance_data
 
         return self.result
 

@@ -37,6 +37,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         timestamp_column_name: Optional[str] = None,
         reference_data: Optional[pd.DataFrame] = None,
         analysis_data: Optional[pd.DataFrame] = None,
+        instance_data: Optional[pd.DataFrame] = None,
     ):
         """Creates a new Result instance.
 
@@ -71,7 +72,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
             The data on which NannyML calculates the perfomance.
 
         """
-        super().__init__(results_data, metrics)
+        super().__init__(results_data, metrics, instance_data=instance_data)
 
         self.problem_type = problem_type
 

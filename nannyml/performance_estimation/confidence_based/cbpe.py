@@ -34,6 +34,13 @@ from nannyml.base import AbstractEstimator, _list_missing
 from nannyml.calibration import Calibrator, CalibratorFactory, NoopCalibrator, needs_calibration
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.instance_metrics import (
+    InstanceMetricSelection,
+    build_instance_chunk_record,
+    combine_instance_chunk_records,
+    prepare_data_for_instance_metrics,
+    resolve_instance_metric_selection,
+)
 from nannyml.performance_estimation.confidence_based import SUPPORTED_METRIC_VALUES
 from nannyml.performance_estimation.confidence_based.metrics import MetricFactory
 from nannyml.performance_estimation.confidence_based.results import Result
@@ -71,6 +78,8 @@ class CBPE(AbstractEstimator):
     .. _deep dive:
         https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#confidence-based-performance-estimation-cbpe
     """
+
+    _supports_instance_metrics = True
 
     def __init__(
         self,
@@ -337,7 +346,14 @@ class CBPE(AbstractEstimator):
             raise InvalidArgumentsException('CBPE can only be used for binary or multiclass classification problems.')
 
     @log_usage(UsageEvent.CBPE_ESTIMATOR_RUN, metadata_from_self=['metrics', 'problem_type'])
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _estimate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: InstanceMetricSelection = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
         """Calculates the data reconstruction drift for a given data set.
 
         Parameters
@@ -356,7 +372,14 @@ class CBPE(AbstractEstimator):
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        data = data.copy(deep=True)
+        selected_instance_metrics = resolve_instance_metric_selection(
+            include_instance_metrics, [metric.name for metric in self.metrics]
+        )
+        instance_identifier_column_name: Optional[str] = None
+        if selected_instance_metrics:
+            data, instance_identifier_column_name = prepare_data_for_instance_metrics(data, identifier_column_name)
+        else:
+            data = data.copy(deep=True)
 
         if self.problem_type == ProblemType.CLASSIFICATION_BINARY:
             assert isinstance(self.y_pred_proba, str)
@@ -406,6 +429,45 @@ class CBPE(AbstractEstimator):
         res.columns = multilevel_index
         res = res.reset_index(drop=True)
 
+        instance_data = None
+        if selected_instance_metrics and instance_identifier_column_name is not None:
+            instance_records = []
+            for chunk in chunks:
+                contributions = {}
+                for metric in self.metrics:
+                    if metric.name not in selected_instance_metrics:
+                        continue
+                    try:
+                        value, metric_contributions = metric.estimate_with_contributions(chunk.data, self.problem_type)
+                        if value is not None:
+                            value_array = np.asarray(value)
+                            if value_array.size == 0 or np.all(pd.isna(value_array)):
+                                metric_contributions = {
+                                    column_name: np.full(len(chunk.data), np.nan)
+                                    for column_name in metric_contributions
+                                }
+                        contributions.update(metric_contributions)
+                    except Exception as exc:
+                        self._logger.error(
+                            f"an unexpected exception occurred during instance estimation of metric "
+                            f"'{metric.display_name}': {exc}"
+                        )
+                        contributions.update(
+                            {
+                                f'{column_name}_contribution': np.full(len(chunk.data), np.nan)
+                                for column_name in metric.column_names
+                            }
+                        )
+                instance_records.append(
+                    build_instance_chunk_record(
+                        chunk,
+                        identifier_column_name=instance_identifier_column_name,
+                        period='analysis',
+                        contributions=contributions,
+                    )
+                )
+            instance_data = combine_instance_chunk_records(instance_records)
+
         if self.result is None:
             self.result = Result(
                 results_data=res,
@@ -416,10 +478,12 @@ class CBPE(AbstractEstimator):
                 metrics=self.metrics,
                 chunker=self.chunker,
                 problem_type=self.problem_type,
+                instance_data=instance_data,
             )
         else:
             self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
+            self.result.instance_data = instance_data
 
         return self.result
 

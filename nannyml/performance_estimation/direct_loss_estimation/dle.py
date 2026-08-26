@@ -18,6 +18,13 @@ from nannyml._typing import ProblemType, Self
 from nannyml.base import AbstractEstimator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunk, Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.instance_metrics import (
+    InstanceMetricSelection,
+    build_instance_chunk_record,
+    combine_instance_chunk_records,
+    prepare_data_for_instance_metrics,
+    resolve_instance_metric_selection,
+)
 from nannyml.performance_estimation.direct_loss_estimation import SUPPORTED_METRIC_VALUES
 from nannyml.performance_estimation.direct_loss_estimation.metrics import Metric, MetricFactory
 from nannyml.performance_estimation.direct_loss_estimation.result import Result
@@ -70,6 +77,8 @@ class DLE(AbstractEstimator):
     .. _deep dive:
         https://nannyml.readthedocs.io/en/stable/how_it_works/performance_estimation.html#direct-loss-estimation-dle
     """
+
+    _supports_instance_metrics = True
 
     def __init__(
         self,
@@ -316,11 +325,25 @@ class DLE(AbstractEstimator):
         return self
 
     @log_usage(UsageEvent.DLE_ESTIMATOR_RUN, metadata_from_self=['metrics'])
-    def _estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _estimate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: InstanceMetricSelection = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
-        data = data.copy(deep=True)
+        selected_instance_metrics = resolve_instance_metric_selection(
+            include_instance_metrics, [metric.column_name for metric in self.metrics]
+        )
+        instance_identifier_column_name: Optional[str] = None
+        if selected_instance_metrics:
+            data, instance_identifier_column_name = prepare_data_for_instance_metrics(data, identifier_column_name)
+        else:
+            data = data.copy(deep=True)
 
         _list_missing([self.y_pred], list(data.columns))
 
@@ -363,6 +386,33 @@ class DLE(AbstractEstimator):
         res.columns = multilevel_index
         res = res.reset_index(drop=True)
 
+        instance_data = None
+        if selected_instance_metrics and instance_identifier_column_name is not None:
+            instance_records = []
+            for chunk in chunks:
+                contributions = {}
+                for metric in self.metrics:
+                    if metric.column_name not in selected_instance_metrics:
+                        continue
+                    try:
+                        _, values = metric.estimate_with_contributions(chunk.data)
+                    except Exception as exc:
+                        self._logger.error(
+                            f"an unexpected error occurred while calculating instance metric "
+                            f"{metric.display_name}: {exc}"
+                        )
+                        values = np.full(len(chunk.data), np.nan)
+                    contributions[f'{metric.column_name}_contribution'] = values
+                instance_records.append(
+                    build_instance_chunk_record(
+                        chunk,
+                        identifier_column_name=instance_identifier_column_name,
+                        period='analysis',
+                        contributions=contributions,
+                    )
+                )
+            instance_data = combine_instance_chunk_records(instance_records)
+
         if self.result is None:
             self.result = Result(
                 results_data=res,
@@ -375,10 +425,12 @@ class DLE(AbstractEstimator):
                 tune_hyperparameters=self.tune_hyperparameters,
                 hyperparameter_tuning_config=self.hyperparameter_tuning_config,
                 hyperparameters=self.hyperparameters,
+                instance_data=instance_data,
             )
         else:
             self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
+            self.result.instance_data = instance_data
 
         return self.result
 

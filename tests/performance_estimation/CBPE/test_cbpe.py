@@ -179,6 +179,116 @@ def test_cbpe_will_not_fail_on_work_from_home_sample(binary_classification_data)
         pytest.fail(f"unexpected exception was raised: {exc}")
 
 
+def test_cbpe_exposes_selected_instance_contributions(binary_classification_data):
+    reference, analysis = binary_classification_data
+    analysis = analysis.iloc[:100].copy()
+    analysis['row_id'] = [f'row-{index}' for index in range(len(analysis))]
+    estimator = CBPE(
+        y_true='work_home_actual',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['accuracy', 'precision', 'recall', 'roc_auc', 'average_precision'],
+        problem_type='classification_binary',
+        chunk_size=100,
+    ).fit(reference)
+
+    ordinary = estimator.estimate(analysis).to_df()
+    result = estimator.estimate(
+        analysis,
+        include_instance_metrics=['accuracy', 'precision', 'roc_auc', 'average_precision'],
+        identifier_column_name='row_id',
+    )
+    instance = result.to_instance_df()
+
+    pd.testing.assert_frame_equal(result.to_df(), ordinary)
+    assert instance['row_id'].tolist() == analysis['row_id'].tolist()
+    assert 'accuracy_contribution' in instance
+    assert 'precision_contribution' in instance
+    assert 'roc_auc_contribution' in instance
+    assert 'average_precision_contribution' in instance
+    assert 'recall_contribution' not in instance
+    analysis_chunk = result.filter(period='analysis').to_df().iloc[0]
+    assert instance['accuracy_contribution'].mean() == pytest.approx(analysis_chunk[('accuracy', 'value')])
+    assert instance['precision_contribution'].mean() == pytest.approx(analysis_chunk[('precision', 'value')])
+    assert instance['roc_auc_contribution'].mean() == pytest.approx(analysis_chunk[('roc_auc', 'value')])
+    assert instance['average_precision_contribution'].sum() == pytest.approx(
+        analysis_chunk[('average_precision', 'value')], abs=1e-5
+    )
+
+
+def test_cbpe_precision_contributions_are_zero_when_there_are_no_predicted_positives():
+    block = pd.DataFrame(
+        {
+            'y_true': [0, 1, 0, 1],
+            'y_pred': [0, 1, 0, 1],
+            'y_pred_proba': [0.1, 0.8, 0.2, 0.9],
+        }
+    )
+    reference = pd.concat([block] * 6, ignore_index=True)
+    analysis = block.copy()
+    analysis['y_pred'] = 0
+    estimator = CBPE(
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba='y_pred_proba',
+        metrics=['precision'],
+        problem_type='classification_binary',
+        chunk_size=4,
+        calibrator=NoopCalibrator(),
+    ).fit(reference)
+
+    result = estimator.estimate(analysis, include_instance_metrics=True)
+    instance = result.to_instance_df()
+    chunk_value = result.filter(period='analysis').to_df()[('precision', 'value')].iloc[0]
+
+    assert chunk_value == 0.0
+    assert instance['precision_contribution'].tolist() == [0.0, 0.0, 0.0, 0.0]
+
+
+def test_multiclass_cbpe_exposes_macro_instance_contributions():
+    block = pd.DataFrame(
+        {
+            'y_true': ['a', 'b', 'c', 'a', 'b', 'c'],
+            'y_pred': ['a', 'c', 'c', 'b', 'b', 'a'],
+            'proba_a': [0.8, 0.1, 0.1, 0.3, 0.2, 0.6],
+            'proba_b': [0.1, 0.2, 0.1, 0.6, 0.7, 0.2],
+            'proba_c': [0.1, 0.7, 0.8, 0.1, 0.1, 0.2],
+        }
+    )
+    reference = pd.concat([block] * 6, ignore_index=True)
+    estimator = CBPE(
+        y_true='y_true',
+        y_pred='y_pred',
+        y_pred_proba={'a': 'proba_a', 'b': 'proba_b', 'c': 'proba_c'},
+        metrics=[
+            'accuracy',
+            'precision',
+            'recall',
+            'specificity',
+            'f1',
+            'roc_auc',
+            'average_precision',
+            'confusion_matrix',
+        ],
+        problem_type='classification_multiclass',
+        chunk_size=6,
+        calibrator=NoopCalibrator(),
+    ).fit(reference)
+
+    result = estimator.estimate(block, include_instance_metrics=True)
+    instance = result.to_instance_df()
+    chunk = result.filter(period='analysis').to_df().iloc[0]
+
+    assert instance['accuracy_contribution'].mean() == pytest.approx(chunk[('accuracy', 'value')])
+    assert instance['roc_auc_contribution'].mean() == pytest.approx(chunk[('roc_auc', 'value')])
+    for metric in ['precision', 'recall', 'specificity', 'f1', 'average_precision']:
+        assert instance[f'{metric}_contribution'].sum() == pytest.approx(chunk[(metric, 'value')], abs=1e-5)
+    for true_class in ['a', 'b', 'c']:
+        for predicted_class in ['a', 'b', 'c']:
+            component = f'true_{true_class}_pred_{predicted_class}'
+            assert instance[f'{component}_contribution'].sum() == pytest.approx(chunk[(component, 'value')])
+
+
 def test_cbpe_raises_invalid_arguments_exception_when_giving_invalid_metric_value():  # noqa: D103
     with pytest.raises(
         InvalidArgumentsException, match="unknown metric key 'foo' given."

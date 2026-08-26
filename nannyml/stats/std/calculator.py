@@ -13,6 +13,13 @@ from pandas import MultiIndex
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.instance_metrics import (
+    InstanceMetricSelection,
+    build_instance_chunk_record,
+    combine_instance_chunk_records,
+    prepare_data_for_instance_metrics,
+    resolve_instance_metric_selection,
+)
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.sampling_error.summary_stats import (
     summary_stats_std_sampling_error,
@@ -25,6 +32,8 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 class SummaryStatsStdCalculator(AbstractCalculator):
     """Simple Statistics Standard Deviation Calculator."""
+
+    _supports_instance_metrics = True
 
     def __init__(
         self,
@@ -128,12 +137,23 @@ class SummaryStatsStdCalculator(AbstractCalculator):
         return self
 
     @log_usage(UsageEvent.STATS_STD_RUN)
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _calculate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: InstanceMetricSelection = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
         """Calculates methods for both categorical and continuous columns."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing(self.column_names, data)
+        selected_columns = resolve_instance_metric_selection(include_instance_metrics, self.column_names)
+        instance_identifier_column_name = None
+        if selected_columns:
+            data, instance_identifier_column_name = prepare_data_for_instance_metrics(data, identifier_column_name)
 
         chunks = self.chunker.split(data)
 
@@ -162,6 +182,25 @@ class SummaryStatsStdCalculator(AbstractCalculator):
         res.columns = result_index
         res = res.reset_index(drop=True)
 
+        instance_data = None
+        if selected_columns and instance_identifier_column_name is not None:
+            instance_data = combine_instance_chunk_records(
+                [
+                    build_instance_chunk_record(
+                        chunk,
+                        identifier_column_name=instance_identifier_column_name,
+                        period='analysis',
+                        contributions={
+                            f'{column_name}_contribution': self._calculate_instance_contributions(
+                                chunk.data, column_name
+                            )
+                            for column_name in selected_columns
+                        },
+                    )
+                    for chunk in chunks
+                ]
+            )
+
         if self.result is None:
             self._set_thresholds(results=res)
             res = self._populate_thresholds(results=res)
@@ -180,6 +219,8 @@ class SummaryStatsStdCalculator(AbstractCalculator):
             self.result = self.result.filter(period='reference')
             res = self._populate_thresholds(results=res)
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
+
+        self.result.instance_data = instance_data
 
         return self.result
 
@@ -207,6 +248,19 @@ class SummaryStatsStdCalculator(AbstractCalculator):
             result['lower_confidence_boundary'] = np.nan
         finally:
             return result
+
+    def _calculate_instance_contributions(self, data: pd.DataFrame, column_name: str) -> np.ndarray:
+        """Calculate squared deviations while retaining the chunk calculation's failure behavior."""
+        calculation = self._calculate_for_column(data, column_name)
+        if pd.isna(calculation['value']):
+            return np.full(len(data), np.nan)
+        try:
+            return np.square(data[column_name] - data[column_name].mean()).to_numpy()
+        except Exception as exc:
+            self._logger.error(
+                f"an unexpected exception occurred during instance calculation of column '{column_name}': {exc}"
+            )
+            return np.full(len(data), np.nan)
 
     def _set_thresholds(self, results: pd.DataFrame):
         for column in self.column_names:

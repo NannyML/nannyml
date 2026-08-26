@@ -36,6 +36,7 @@ class Result(Protocol):
     """The data that was calculated or estimated."""
 
     data: pd.DataFrame
+    instance_data: Optional[pd.DataFrame]
 
     @property
     def empty(self) -> bool:
@@ -97,6 +98,9 @@ class Result(Protocol):
         ...
 
     def to_df(self, multilevel: bool = True) -> pd.DataFrame:
+        ...
+
+    def to_instance_df(self) -> pd.DataFrame:
         ...
 
     def plot(self, *args, **kwargs) -> Figure:

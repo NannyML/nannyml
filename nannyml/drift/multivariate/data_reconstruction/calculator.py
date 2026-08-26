@@ -28,6 +28,14 @@ from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_t
 from nannyml.chunk import Chunker
 from nannyml.drift.multivariate.data_reconstruction.result import Result
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.instance_metrics import (
+    INSTANCE_IDENTIFIER_COLUMN_NAME,
+    InstanceMetricSelection,
+    build_instance_chunk_record,
+    combine_instance_chunk_records,
+    prepare_data_for_instance_metrics,
+    resolve_instance_metric_selection,
+)
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -35,6 +43,8 @@ from nannyml.usage_logging import UsageEvent, log_usage
 
 class DataReconstructionDriftCalculator(AbstractCalculator):
     """Multivariate Drift Calculator using PCA Reconstruction Error as a measure of drift."""
+
+    _supports_instance_metrics = True
 
     def __init__(
         self,
@@ -174,14 +184,27 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         return self
 
     @log_usage(UsageEvent.MULTIVAR_DRIFT_CALC_RUN)
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _calculate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: InstanceMetricSelection = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
         """Calculates the data reconstruction drift for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing(self.column_names, data)
+        selected_metrics = resolve_instance_metric_selection(include_instance_metrics, [self.column_name])
+        instance_identifier_column_name = None
+        chunk_columns = self.column_names
+        if selected_metrics:
+            data, instance_identifier_column_name = prepare_data_for_instance_metrics(data, identifier_column_name)
+            chunk_columns = self.column_names + [INSTANCE_IDENTIFIER_COLUMN_NAME]
 
-        chunks = self.chunker.split(data, columns=self.column_names)
+        chunks = self.chunker.split(data, columns=chunk_columns)
 
         res = pd.DataFrame.from_records(
             [
@@ -202,6 +225,24 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
         res.columns = multilevel_index
         res = res.reset_index(drop=True)
 
+        instance_data = None
+        if selected_metrics and instance_identifier_column_name is not None:
+            instance_data = combine_instance_chunk_records(
+                [
+                    build_instance_chunk_record(
+                        chunk,
+                        identifier_column_name=instance_identifier_column_name,
+                        period='analysis',
+                        contributions={
+                            f'{self.column_name}_contribution': self._calculate_dre_contributions(
+                                chunk.data.copy(deep=True)
+                            )
+                        },
+                    )
+                    for chunk in chunks
+                ]
+            )
+
         if self.result is None:
             self._set_thresholds(results=res)
             res = self._populate_thresholds(results=res)
@@ -216,6 +257,7 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
             self.result = self.result.filter(period='reference')
             res = self._populate_thresholds(results=res)
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
+        self.result.instance_data = instance_data
         return self.result
 
     def _calculate_chunk_record(self, data: pd.DataFrame) -> Dict[str, float]:
@@ -262,6 +304,22 @@ class DataReconstructionDriftCalculator(AbstractCalculator):
 
         # std returns nan there is only 1 row
         return (np.mean(tmp), np.std(tmp, ddof=1))
+
+    def _calculate_dre_contributions(self, data: pd.DataFrame) -> np.ndarray:
+        """Calculate the reconstruction norm for every row in a chunk."""
+        if self.categorical_column_names:
+            data[self.categorical_column_names] = self._imputer_categorical.transform(
+                data[self.categorical_column_names]
+            )
+        if self.continuous_column_names:
+            data[self.continuous_column_names] = self._imputer_continuous.transform(
+                data[self.continuous_column_names]
+            )
+
+        transformed = self._encoder.transform(data[self.column_names]).to_numpy()
+        transformed = self._scaler.transform(transformed)
+        reconstructed = self._pca.inverse_transform(self._pca.transform(transformed))
+        return np.linalg.norm(transformed - reconstructed, axis=1)
 
     def _set_thresholds(self, results: pd.DataFrame):
         lower, upper = calculate_threshold_values(

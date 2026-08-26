@@ -182,6 +182,14 @@ class Metric(abc.ABC):
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _estimate method"
         )
 
+    def estimate_with_contributions(self, data: pd.DataFrame, problem_type: ProblemType):
+        """Estimate the regular metric value and its optional per-row contributions."""
+        from nannyml.instance_metrics import estimated_metric_contributions
+
+        value = self._estimate(data)
+        contributions = estimated_metric_contributions(self, data, problem_type)
+        return value, contributions
+
     @abc.abstractmethod
     def _sampling_error(self, data: pd.DataFrame) -> float:
         raise NotImplementedError(
