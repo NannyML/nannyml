@@ -120,6 +120,14 @@ class Metric(abc.ABC):
         """
         return self._calculate(data)
 
+    def calculate_with_contributions(self, data: pd.DataFrame, problem_type: ProblemType):
+        """Calculate the regular metric value and its optional per-row contributions."""
+        from nannyml.instance_metrics import realized_metric_contributions
+
+        value = self._calculate(data)
+        contributions = realized_metric_contributions(self, data, problem_type)
+        return value, contributions
+
     def _calculate(self, data: pd.DataFrame):
         raise NotImplementedError(
             f"'{self.__class__.__name__}' is a subclass of Metric and it must implement the _calculate method"

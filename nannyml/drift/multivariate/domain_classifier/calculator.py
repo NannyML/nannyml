@@ -27,9 +27,18 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OrdinalEncoder
 
 from nannyml.base import AbstractCalculator, _list_missing, _split_features_by_type
-from nannyml.chunk import Chunker, Chunk
+from nannyml.chunk import Chunk, Chunker
 from nannyml.drift.multivariate.domain_classifier.result import Result
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.instance_metrics import (
+    INSTANCE_IDENTIFIER_COLUMN_NAME,
+    InstanceMetricSelection,
+    build_instance_chunk_record,
+    combine_instance_chunk_records,
+    mann_whitney_positive_contributions,
+    prepare_data_for_instance_metrics,
+    resolve_instance_metric_selection,
+)
 
 # from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.thresholds import ConstantThreshold, Threshold, calculate_threshold_values
@@ -76,6 +85,8 @@ class DomainClassifierCalculator(AbstractCalculator):
 
     Uses Drift Detection Classifier's cross validated performance as a measure of drift.
     """
+
+    _supports_instance_metrics = True
 
     def __init__(
         self,
@@ -251,16 +262,45 @@ class DomainClassifierCalculator(AbstractCalculator):
         return self
 
     @log_usage(UsageEvent.DC_CALC_RUN)
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _calculate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: InstanceMetricSelection = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
         """Calculate the data DC calculator metric for a given data set."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing(self.feature_column_names, data)
-        chunks = self.chunker.split(data, columns=self.feature_column_names)
+        selected_metrics = resolve_instance_metric_selection(
+            include_instance_metrics, ['domain_classifier_auroc']
+        )
+        instance_identifier_column_name = None
+        chunk_columns = self.feature_column_names
+        if selected_metrics:
+            data, instance_identifier_column_name = prepare_data_for_instance_metrics(data, identifier_column_name)
+            chunk_columns = self.feature_column_names + [INSTANCE_IDENTIFIER_COLUMN_NAME]
+        chunks = self.chunker.split(data, columns=chunk_columns)
 
-        res = pd.DataFrame.from_records(
-            [
+        instance_records = []
+        rows = []
+        for chunk in chunks:
+            if selected_metrics and instance_identifier_column_name is not None:
+                value, contribution_values = self._calculate_chunk_with_contributions(chunk)
+                instance_records.append(
+                    build_instance_chunk_record(
+                        chunk,
+                        identifier_column_name=instance_identifier_column_name,
+                        period='analysis',
+                        contributions={'domain_classifier_auroc_contribution': contribution_values},
+                    )
+                )
+            else:
+                value = self._calculate_chunk(chunk=chunk)
+            rows.append(
                 {
                     'key': chunk.key,
                     'chunk_index': chunk.chunk_index,
@@ -269,16 +309,15 @@ class DomainClassifierCalculator(AbstractCalculator):
                     'start_date': chunk.start_datetime,
                     'end_date': chunk.end_datetime,
                     'period': 'analysis',
-                    # 'sampling_error': sampling_error(self._sampling_error_components, chunk.data),
-                    'classifier_auroc_value': self._calculate_chunk(chunk=chunk),
+                    'classifier_auroc_value': value,
                 }
-                for chunk in chunks
-            ]
-        )
+            )
+        res = pd.DataFrame.from_records(rows)
 
         multilevel_index = _create_multilevel_index()
         res.columns = multilevel_index
         res = res.reset_index(drop=True)
+        instance_data = combine_instance_chunk_records(instance_records) if selected_metrics else None
 
         if not self._is_fitted:
             self._set_metric_thresholds(res)
@@ -294,6 +333,7 @@ class DomainClassifierCalculator(AbstractCalculator):
             res = self._populate_alert_thresholds(res)
             self.result = self.result.filter(period='reference')  # type: ignore
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
+        self.result.instance_data = instance_data
         return self.result
 
     def _calculate_chunk(self, chunk: Chunk):
@@ -350,6 +390,45 @@ class DomainClassifierCalculator(AbstractCalculator):
                 # by definition if reference and chunk exactly match we can't discriminate
                 result = 0.5
         return result
+
+    def _calculate_chunk_with_contributions(self, chunk: Chunk):
+        """Calculate DC AUROC and analysis-row Mann-Whitney scores from the same OOF predictions."""
+        chunk_X = chunk.data[self.feature_column_names]
+        reference_X = self._reference_X
+        chunk_y = np.ones(len(chunk_X))
+        reference_y = np.zeros(len(reference_X))
+        X = pd.concat([reference_X, chunk_X], ignore_index=True)
+        y = np.concatenate([reference_y, chunk_y])
+
+        transformed = preprocess_categorical_features(
+            X, self.continuous_column_names, self.categorical_column_names
+        )
+        if self.tune_hyperparameters:
+            self.tune_hyperparams(transformed, y)
+
+        out_of_fold_predictions = np.empty(len(transformed), dtype=float)
+        skf = StratifiedKFold(n_splits=self.cv_folds_num)
+        for train_index, test_index in skf.split(transformed, y):
+            train_x = transformed.iloc[train_index]
+            train_y = y[train_index]
+            test_x = transformed.iloc[test_index]
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="Using categorical_feature in Dataset.")
+                model = LGBMClassifier(**self.hyperparameters)
+                model.fit(train_x, train_y, categorical_feature=self.categorical_column_names)
+            out_of_fold_predictions[test_index] = model.predict_proba(test_x)[:, 1]
+
+        try:
+            value = roc_auc_score(y, out_of_fold_predictions)
+        except ValueError as err:
+            if str(err) != "Only one class present in y_true. ROC AUC score is not defined in that case.":
+                raise
+            value = 0.5
+
+        reference_scores = out_of_fold_predictions[: len(reference_X)]
+        analysis_scores = out_of_fold_predictions[len(reference_X) :]
+        contributions = mann_whitney_positive_contributions(reference_scores, analysis_scores)
+        return value, contributions
 
     def _set_metric_thresholds(self, result_data: pd.DataFrame):
         self.lower_threshold_value, self.upper_threshold_value = calculate_threshold_values(

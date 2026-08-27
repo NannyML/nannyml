@@ -218,6 +218,27 @@ def test_direct_error_estimation_yields_correct_results_for_metric(  # noqa: D10
     all(round(sut.loc[:, (metric, 'value')], 5) == expected)
 
 
+def test_dle_exposes_selected_instance_loss_predictions(estimates, direct_error_estimator, regression_data):
+    _, analysis = regression_data
+    analysis = analysis[~(analysis['y_pred'] < 0)].iloc[:100].copy()
+    analysis['row_id'] = [f'row-{index}' for index in range(len(analysis))]
+
+    result = direct_error_estimator.estimate(
+        analysis,
+        include_instance_metrics=['mae', 'rmse'],
+        identifier_column_name='row_id',
+    )
+    instance = result.to_instance_df()
+
+    assert instance['row_id'].tolist() == analysis['row_id'].tolist()
+    assert 'mae_contribution' in instance
+    assert 'rmse_contribution' in instance
+    assert 'mape_contribution' not in instance
+    analysis_chunk = result.filter(period='analysis').to_df().iloc[0]
+    assert instance['mae_contribution'].mean() == pytest.approx(analysis_chunk[('mae', 'value')])
+    assert instance['rmse_contribution'].mean() ** 0.5 == pytest.approx(analysis_chunk[('rmse', 'value')])
+
+
 @pytest.mark.parametrize(
     'metric, expected',
     [

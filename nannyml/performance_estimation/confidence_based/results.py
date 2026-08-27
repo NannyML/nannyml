@@ -36,6 +36,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
         chunker: Chunker,
         problem_type: ProblemType,
         timestamp_column_name: Optional[str] = None,
+        instance_data: Optional[pd.DataFrame] = None,
     ):
         """Initialize CBPE results class.
 
@@ -64,7 +65,7 @@ class Result(PerMetricResult[Metric], ResultCompareMixin):
             The name of the column containing the timestamp of the model prediction.
             If not given, plots will not use a time-based x-axis but will use the index of the chunks instead.
         """
-        super().__init__(results_data, metrics)
+        super().__init__(results_data, metrics, instance_data=instance_data)
 
         self.y_pred = y_pred
         self.y_pred_proba = y_pred_proba

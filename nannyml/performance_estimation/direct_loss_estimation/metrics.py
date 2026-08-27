@@ -198,6 +198,18 @@ class Metric(abc.ABC):
 
         return self._estimate(data)
 
+    def estimate_with_contributions(self, data: pd.DataFrame):
+        """Estimate the metric and expose the internal per-row loss predictions."""
+        observation_level_estimates = self._dee_model.predict(
+            X=data[self.feature_column_names + [self.y_pred]]
+        )
+        observation_level_estimates = np.maximum(0, observation_level_estimates)
+        if self.column_name in ['rmse', 'rmsle']:
+            value = np.sqrt(np.mean(observation_level_estimates))
+        else:
+            value = np.mean(observation_level_estimates)
+        return value, observation_level_estimates
+
     @abc.abstractmethod
     def _estimate(self, data: pd.DataFrame):
         raise NotImplementedError(

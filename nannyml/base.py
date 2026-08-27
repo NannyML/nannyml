@@ -34,7 +34,13 @@ class AbstractResult(ABC):
 
     DEFAULT_COLUMNS = ('key', 'chunk_index', 'start_index', 'end_index', 'start_date', 'end_date', 'period')
 
-    def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
+    def __init__(
+        self,
+        results_data: pd.DataFrame,
+        *args,
+        instance_data: Optional[pd.DataFrame] = None,
+        **kwargs,
+    ):
         """Creates a new :class:`~nannyml.base.AbstractCalculatorResult` instance.
 
         Parameters
@@ -43,6 +49,7 @@ class AbstractResult(ABC):
             The data returned by the Calculator.
         """
         self.data = results_data.copy(deep=True)
+        self.instance_data = instance_data.copy(deep=True) if instance_data is not None else None
 
     @property
     def _logger(self) -> logging.Logger:
@@ -73,6 +80,15 @@ class AbstractResult(ABC):
             single_level_data = self.data.copy(deep=True)
             single_level_data.columns = column_names
             return single_level_data
+
+    def to_instance_df(self) -> pd.DataFrame:
+        """Export optional instance-level metric contributions to a flat dataframe."""
+        if self.instance_data is None:
+            raise InvalidArgumentsException(
+                'instance-level metrics are not available. Re-run with include_instance_metrics=True '
+                'or a list of metric names.'
+            )
+        return self.instance_data.copy(deep=True)
 
     def filter(self, period: str = 'all', metrics: Optional[Union[str, List[str]]] = None, *args, **kwargs) -> Self:
         """Returns filtered result metric data."""
@@ -122,7 +138,7 @@ class AbstractResult(ABC):
 
 class Abstract1DResult(AbstractResult, ABC):
     def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
-        super().__init__(results_data)
+        super().__init__(results_data, *args, **kwargs)
 
     @property
     def chunk_keys(self) -> pd.Series:
@@ -164,12 +180,14 @@ class Abstract1DResult(AbstractResult, ABC):
 
         res = copy.deepcopy(self)
         res.data = data
+        if res.instance_data is not None and period != 'all':
+            res.instance_data = res.instance_data.loc[res.instance_data['period'] == period, :].reset_index(drop=True)
         return res
 
 
 class PerMetricResult(Abstract1DResult, ABC, Generic[MetricLike]):
     def __init__(self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], *args, **kwargs):
-        super().__init__(results_data)
+        super().__init__(results_data, *args, **kwargs)
         self.metrics = metrics
 
     def _filter(self, period: str, metrics: Optional[List[str]] = None, *args, **kwargs) -> Self:
@@ -183,13 +201,22 @@ class PerMetricResult(Abstract1DResult, ABC, Generic[MetricLike]):
 
         res.data = data
         res.metrics = [metric for metric in self.metrics if metric.column_name in metrics]
+        if res.instance_data is not None:
+            contribution_columns = [f'{metric}_contribution' for metric in metrics]
+            metadata_columns = [
+                column for column in res.instance_data.columns if not column.endswith('_contribution')
+            ]
+            available_contributions = [
+                column for column in contribution_columns if column in res.instance_data.columns
+            ]
+            res.instance_data = res.instance_data[metadata_columns + available_contributions]
 
         return res
 
 
 class PerColumnResult(Abstract1DResult, ABC):
     def __init__(self, results_data: pd.DataFrame, column_names: Union[str, List[str]] = [], *args, **kwargs):
-        super().__init__(results_data)
+        super().__init__(results_data, *args, **kwargs)
         if isinstance(column_names, str):
             self.column_names = [column_names]
         elif isinstance(column_names, list):
@@ -221,12 +248,21 @@ class PerColumnResult(Abstract1DResult, ABC):
 
         res.data = data
         res.column_names = [c for c in self.column_names if c in column_names]
+        if res.instance_data is not None:
+            contribution_columns = [f'{column_name}_contribution' for column_name in column_names]
+            metadata_columns = [
+                column for column in res.instance_data.columns if not column.endswith('_contribution')
+            ]
+            available_contributions = [
+                column for column in contribution_columns if column in res.instance_data.columns
+            ]
+            res.instance_data = res.instance_data[metadata_columns + available_contributions]
         return res
 
 
 class Abstract2DResult(AbstractResult, ABC):
     def __init__(self, results_data: pd.DataFrame, *args, **kwargs):
-        super().__init__(results_data)
+        super().__init__(results_data, *args, **kwargs)
 
     @property
     def chunk_keys(self) -> pd.Series:
@@ -281,7 +317,7 @@ class PerMetricPerColumnResult(Abstract2DResult, ABC, Generic[MetricLike]):
     def __init__(
         self, results_data: pd.DataFrame, metrics: list[MetricLike] = [], column_names: List[str] = [], *args, **kwargs
     ):
-        super().__init__(results_data)
+        super().__init__(results_data, *args, **kwargs)
         self.metrics = metrics
         self.column_names = column_names
 
@@ -314,6 +350,8 @@ class PerMetricPerColumnResult(Abstract2DResult, ABC, Generic[MetricLike]):
 
 class AbstractCalculator(ABC):
     """Base class for drift calculation."""
+
+    _supports_instance_metrics = False
 
     def __init__(
         self,
@@ -363,10 +401,27 @@ class AbstractCalculator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
-        """Performs a calculation on the provided data."""
+    def calculate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: Union[bool, Sequence[str]] = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
+        """Perform a calculation, optionally including selected per-row metric contributions."""
         try:
             self._logger.debug(f"calculating {str(self)}")
+            if include_instance_metrics is not False:
+                if not self._supports_instance_metrics:
+                    raise InvalidArgumentsException(f'{self.__class__.__name__} does not support instance metrics.')
+                return self._calculate(
+                    data,
+                    *args,
+                    include_instance_metrics=include_instance_metrics,
+                    identifier_column_name=identifier_column_name,
+                    **kwargs,
+                )
             return self._calculate(data, *args, **kwargs)
         except NannyMLException:
             raise
@@ -451,6 +506,8 @@ class AbstractEstimatorResult(ABC):
 class AbstractEstimator(ABC):
     """Base class for drift calculation."""
 
+    _supports_instance_metrics = False
+
     def __init__(
         self,
         chunk_size: Optional[int] = None,
@@ -501,10 +558,27 @@ class AbstractEstimator(ABC):
         except Exception as exc:
             raise CalculatorException(f"failed while fitting {str(self)}.\n{exc}")
 
-    def estimate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
-        """Performs a calculation on the provided data."""
+    def estimate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: Union[bool, Sequence[str]] = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
+        """Perform an estimation, optionally including selected per-row metric contributions."""
         try:
             self._logger.info(f"estimating {str(self)}")
+            if include_instance_metrics is not False:
+                if not self._supports_instance_metrics:
+                    raise InvalidArgumentsException(f'{self.__class__.__name__} does not support instance metrics.')
+                return self._estimate(
+                    data,
+                    *args,
+                    include_instance_metrics=include_instance_metrics,
+                    identifier_column_name=identifier_column_name,
+                    **kwargs,
+                )
             return self._estimate(data, *args, **kwargs)
         except NannyMLException:
             raise

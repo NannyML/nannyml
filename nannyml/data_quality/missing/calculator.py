@@ -14,6 +14,13 @@ from pandas import MultiIndex
 from nannyml.base import AbstractCalculator, _list_missing
 from nannyml.chunk import Chunker
 from nannyml.exceptions import InvalidArgumentsException
+from nannyml.instance_metrics import (
+    InstanceMetricSelection,
+    build_instance_chunk_record,
+    combine_instance_chunk_records,
+    prepare_data_for_instance_metrics,
+    resolve_instance_metric_selection,
+)
 from nannyml.sampling_error import SAMPLING_ERROR_RANGE
 from nannyml.thresholds import StandardDeviationThreshold, Threshold, calculate_threshold_values
 from nannyml.usage_logging import UsageEvent, log_usage
@@ -27,6 +34,8 @@ Missing Values Data Quality Module.
 
 class MissingValuesCalculator(AbstractCalculator):
     """MissingValuesCalculator implementation using missing value rate as a measure of data quality."""
+
+    _supports_instance_metrics = True
 
     def __init__(
         self,
@@ -136,12 +145,23 @@ class MissingValuesCalculator(AbstractCalculator):
         return self
 
     @log_usage(UsageEvent.DQ_CALC_MISSING_VALUES_RUN, metadata_from_self=['normalize'])
-    def _calculate(self, data: pd.DataFrame, *args, **kwargs) -> Result:
+    def _calculate(
+        self,
+        data: pd.DataFrame,
+        *args,
+        include_instance_metrics: InstanceMetricSelection = False,
+        identifier_column_name: Optional[str] = None,
+        **kwargs,
+    ) -> Result:
         """Calculates methods for both categorical and continuous columns."""
         if data.empty:
             raise InvalidArgumentsException('data contains no rows. Please provide a valid data set.')
 
         _list_missing(self.column_names, data)
+        selected_columns = resolve_instance_metric_selection(include_instance_metrics, self.column_names)
+        instance_identifier_column_name = None
+        if selected_columns:
+            data, instance_identifier_column_name = prepare_data_for_instance_metrics(data, identifier_column_name)
 
         chunks = self.chunker.split(data)
 
@@ -170,6 +190,23 @@ class MissingValuesCalculator(AbstractCalculator):
         res.columns = result_index
         res = res.reset_index(drop=True)
 
+        instance_data = None
+        if selected_columns and instance_identifier_column_name is not None:
+            instance_data = combine_instance_chunk_records(
+                [
+                    build_instance_chunk_record(
+                        chunk,
+                        identifier_column_name=instance_identifier_column_name,
+                        period='analysis',
+                        contributions={
+                            f'{column_name}_contribution': chunk.data[column_name].isna().astype(float).to_numpy()
+                            for column_name in selected_columns
+                        },
+                    )
+                    for chunk in chunks
+                ]
+            )
+
         if self.result is None:
             self._set_metric_thresholds(res)
             res = self._populate_alert_thresholds(res)
@@ -188,6 +225,8 @@ class MissingValuesCalculator(AbstractCalculator):
             res = self._populate_alert_thresholds(res)
             self.result = self.result.filter(period='reference')
             self.result.data = pd.concat([self.result.data, res], ignore_index=True)
+
+        self.result.instance_data = instance_data
 
         return self.result
 
