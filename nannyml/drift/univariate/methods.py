@@ -505,6 +505,7 @@ class Chi2Statistic(Method):
     def _calculate(self, data: pd.Series):
         data = _remove_nans(data)
         if data.empty:
+            self._p_value = np.nan
             return np.nan
         if not self._fitted:
             raise NotFittedException(
