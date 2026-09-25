@@ -7,6 +7,7 @@ from nannyml.chunk import CountBasedChunker, DefaultChunker
 from nannyml.drift.univariate.methods import (
     CategoricalHellingerDistance,
     CategoricalJensenShannonDistance,
+    Chi2Statistic,
     ContinuousHellingerDistance,
     ContinuousJensenShannonDistance,
     KolmogorovSmirnovStatistic,
@@ -178,6 +179,59 @@ def test_hellinger_for_categorical():  # noqa: D103
     hell_dist.fit(reference)
     distance = hell_dist.calculate(analysis)
     assert np.round(distance, 2) == 0.5
+
+
+# ************* Chi2 Tests *************
+
+
+@pytest.mark.parametrize(
+    'analysis, expected_alert',
+    [
+        (pd.Series(['a'] * 20 + ['b'] * 80, name='A'), True),
+        (pd.Series(['a'] * 78 + ['b'] * 22, name='A'), False),
+        (pd.Series(['a'] * 80 + ['b'] * 20, name='A'), False),
+    ],
+    ids=['drift', 'no_drift', 'same_distribution_as_reference'],
+)
+def test_chi2_alert_is_based_on_p_value(analysis, expected_alert):  # noqa: D103
+    reference = pd.Series(['a'] * 800 + ['b'] * 200, name='A')
+    chi2 = Chi2Statistic(chunker=chunker, threshold=threshold).fit(reference)
+    value = chi2.calculate(analysis)
+    assert chi2.alert(value) == expected_alert
+
+
+@pytest.mark.parametrize(
+    'previous_analysis',
+    [
+        pd.Series(['a'] * 20 + ['b'] * 80, name='A'),
+        pd.Series(['a'] * 78 + ['b'] * 22, name='A'),
+    ],
+    ids=['after_drift', 'after_no_drift'],
+)
+def test_chi2_does_not_alert_for_chunk_with_only_missing_values(previous_analysis):  # noqa: D103
+    reference = pd.Series(['a'] * 800 + ['b'] * 200, name='A')
+    chi2 = Chi2Statistic(chunker=chunker, threshold=threshold).fit(reference)
+    chi2.alert(chi2.calculate(previous_analysis))
+    value = chi2.calculate(pd.Series([None] * 100, name='A'))
+    assert np.isnan(value)
+    assert not chi2.alert(value)
+
+
+def test_chi2_does_not_alert_for_first_chunk_with_only_missing_values_after_fit():  # noqa: D103
+    # the last reference chunk only contains 'b' values, so it has drifted from the full reference data
+    reference = pd.Series(['a'] * 500 + ['b'] * 500, name='A')
+    chi2 = Chi2Statistic(chunker=CountBasedChunker(2), threshold=threshold).fit(reference)
+    value = chi2.calculate(pd.Series([None] * 100, name='A'))
+    assert np.isnan(value)
+    assert not chi2.alert(value)
+
+
+def test_chi2_alerts_for_chunk_with_some_missing_values_after_chunk_with_only_missing_values():  # noqa: D103
+    reference = pd.Series(['a'] * 800 + ['b'] * 200, name='A')
+    chi2 = Chi2Statistic(chunker=chunker, threshold=threshold).fit(reference)
+    chi2.alert(chi2.calculate(pd.Series([None] * 100, name='A')))
+    value = chi2.calculate(pd.Series(['a'] * 20 + ['b'] * 80 + [None] * 100, name='A'))
+    assert chi2.alert(value)
 
 
 @pytest.mark.parametrize(
