@@ -82,16 +82,22 @@ def calculate_chunk_distributions(
 
     get_kde_partial_application = partial(_get_kde, cut=kde_cut, clip=kde_clip)
 
+    data_to_chunk = pd.concat([data, timestamps], axis=1)
+    if data_periods is not None:
+        # Keep period labels attached to observations when chunking sorts or resets the index.
+        period_column = object()
+        data_to_chunk[period_column] = np.asarray(data_periods)
+
     data_with_chunk_keys = pd.concat(
         [
             chunk.data.assign(chunk_key=chunk.key, chunk_index=chunk.chunk_index)
-            for chunk in chunker.split(pd.concat([data, timestamps], axis=1))
+            for chunk in chunker.split(data_to_chunk)
         ]
     )
 
     group_by_cols = ['chunk_index', 'chunk_key']
     if data_periods is not None:
-        data_with_chunk_keys['period'] = data_periods
+        data_with_chunk_keys['period'] = data_with_chunk_keys.pop(period_column)
         group_by_cols += ['period']
     data = (
         #  group by period too, 'key' column can be there for both reference and analysis
