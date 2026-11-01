@@ -686,7 +686,10 @@ class WassersteinDistance(Method):
             data_histogram = data_histogram / len(data)
 
             data_cdf = np.cumsum(data_histogram)
-            data_cdf = data_cdf + amount_smaller  # if there's some data on the left-hand side
+            # shift by the share of chunk values left of the reference range;
+            # amount_smaller is (n_smaller + 1) / n because it also counts the
+            # helper point appended for the left-tail ECDF, so it cannot be reused
+            data_cdf = data_cdf + n_smaller / len(data)
             term_within = np.sum(np.abs(self._ref_cdf - data_cdf) * self._bin_width)
 
             distance = term_within + term_smaller + term_bigger

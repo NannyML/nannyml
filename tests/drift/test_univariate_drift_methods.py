@@ -216,3 +216,19 @@ def test_method_logs_warning_when_upper_threshold_is_overridden_by_metric_limits
         f'{method.display_name} upper threshold value 2 overridden by '
         f'upper threshold value limit {method.upper_threshold_value_limit}' in caplog.messages
     )
+
+
+def test_wasserstein_estimated_matches_exact_with_value_below_reference_min():  # noqa: D103
+    # one analysis value below the reference minimum must not shift the
+    # within-range CDF by an extra 1/n (regression of the 'estimated' path)
+    from scipy.stats import wasserstein_distance
+
+    rng = np.random.default_rng(3)
+    reference = pd.Series(rng.lognormal(10, 1, 50_000), name='A')
+    analysis = rng.lognormal(10, 1, 500)
+    analysis[0] = reference.min() * 0.99
+    analysis = pd.Series(analysis, name='A')
+    wass_dist = WassersteinDistance(chunker=chunker, threshold=threshold)
+    estimated = wass_dist.fit(reference).calculate(analysis)
+    exact = wasserstein_distance(reference, analysis)
+    assert estimated == pytest.approx(exact, rel=1e-3)
