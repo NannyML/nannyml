@@ -66,7 +66,7 @@ class Method(abc.ABC):
             Threshold class defining threshold strategy.
         upper_threshold_limit : float, default=None
             An optional upper threshold limit for the data quality metric.
-        lower_threshold_limit : float, default=0
+        lower_threshold_limit : float, default=None
             An optional lower threshold limit for the data quality metric.
         """
         self.display_name = display_name
