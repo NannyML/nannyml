@@ -405,8 +405,8 @@ class KolmogorovSmirnovStatistic(Method):
             self.calculation_method = 'auto'
             self.n_bins = 10_000
         else:
-            self.calculation_method = kwargs['computation_params'].get('calculation_method', 'auto')
-            self.n_bins = kwargs['computation_params'].get('n_bins', 10_000)
+            self.calculation_method = kwargs['computation_params'][self.column_name].get('calculation_method', 'auto')
+            self.n_bins = kwargs['computation_params'][self.column_name].get('n_bins', 10_000)
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_nans(reference_data)
@@ -628,8 +628,8 @@ class WassersteinDistance(Method):
             self.calculation_method = 'auto'
             self.n_bins = 10_000
         else:
-            self.calculation_method = kwargs['computation_params'].get('calculation_method', 'auto')
-            self.n_bins = kwargs['computation_params'].get('n_bins', 10_000)
+            self.calculation_method = kwargs['computation_params'][self.column_name].get('calculation_method', 'auto')
+            self.n_bins = kwargs['computation_params'][self.column_name].get('n_bins', 10_000)
 
     def _fit(self, reference_data: pd.Series, timestamps: Optional[pd.Series] = None) -> Self:
         reference_data = _remove_nans(reference_data)
