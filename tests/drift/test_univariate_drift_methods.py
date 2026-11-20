@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from nannyml import UnivariateDriftCalculator
 from nannyml.chunk import CountBasedChunker, DefaultChunker
 from nannyml.drift.univariate.methods import (
     CategoricalHellingerDistance,
@@ -216,3 +217,67 @@ def test_method_logs_warning_when_upper_threshold_is_overridden_by_metric_limits
         f'{method.display_name} upper threshold value 2 overridden by '
         f'upper threshold value limit {method.upper_threshold_value_limit}' in caplog.messages
     )
+
+
+@pytest.mark.parametrize('method_class', [KolmogorovSmirnovStatistic, WassersteinDistance])
+@pytest.mark.parametrize('calculation_method,reference_size', [('estimated', 100), ('exact', 10_000)])
+def test_method_uses_nested_computation_params(method_class, calculation_method, reference_size):
+    method = method_class(chunker=chunker, threshold=threshold)
+    params = {method.column_name: {'calculation_method': calculation_method, 'n_bins': 8}}
+    method = method_class(chunker=chunker, threshold=threshold, computation_params=params)
+    reference = pd.Series(np.linspace(0, 1, reference_size), name='A')
+
+    method.fit(reference)
+
+    assert method.calculation_method == calculation_method
+    assert method.n_bins == 8
+    if calculation_method == 'exact':
+        pd.testing.assert_series_equal(method._reference_data, reference)
+    else:
+        assert method._reference_data is None
+        assert len(method._ref_rel_freqs) == 8
+    assert np.isfinite(method.calculate(reference + 0.2))
+    assert params == {method.column_name: {'calculation_method': calculation_method, 'n_bins': 8}}
+
+
+@pytest.mark.parametrize('method_class', [KolmogorovSmirnovStatistic, WassersteinDistance])
+@pytest.mark.parametrize('params', [{}, {'unrelated': {'calculation_method': 'exact', 'n_bins': 8}}])
+def test_method_preserves_default_computation_params(method_class, params):
+    method = method_class(chunker=chunker, threshold=threshold, computation_params=params)
+
+    assert method.calculation_method == 'auto'
+    assert method.n_bins == 10_000
+
+
+@pytest.mark.parametrize('method_class', [KolmogorovSmirnovStatistic, WassersteinDistance])
+@pytest.mark.parametrize('settings', [{}, {'n_bins': 8}, {'calculation_method': 'exact'}])
+def test_method_fills_missing_computation_params(method_class, settings):
+    method = method_class(chunker=chunker, threshold=threshold)
+    params = {method.column_name: settings}
+    method = method_class(chunker=chunker, threshold=threshold, computation_params=params)
+
+    assert method.calculation_method == settings.get('calculation_method', 'auto')
+    assert method.n_bins == settings.get('n_bins', 10_000)
+
+
+def test_calculator_keeps_computation_params_separate_for_each_method():
+    reference = pd.DataFrame({'A': np.linspace(0, 1, 100)})
+    calculator = UnivariateDriftCalculator(
+        column_names=['A'],
+        continuous_methods=['kolmogorov_smirnov', 'wasserstein'],
+        chunk_size=10,
+        computation_params={
+            'kolmogorov_smirnov': {'calculation_method': 'estimated', 'n_bins': 8},
+            'wasserstein': {'calculation_method': 'exact', 'n_bins': 16},
+        },
+    ).fit(reference)
+    ks, wasserstein = calculator._column_to_models_mapping['A']
+
+    assert ks.calculation_method == 'estimated'
+    assert len(ks._ref_rel_freqs) == 8
+    assert wasserstein.calculation_method == 'exact'
+    assert wasserstein.n_bins == 16
+    pd.testing.assert_series_equal(wasserstein._reference_data, reference['A'])
+    result = calculator.calculate(reference + 0.2)
+    assert np.isfinite(result.filter(period='analysis').data['A']['kolmogorov_smirnov']['value']).all()
+    assert np.isfinite(result.filter(period='analysis').data['A']['wasserstein']['value']).all()
